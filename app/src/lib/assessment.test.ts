@@ -96,6 +96,30 @@ describe('typeStatsForResult', () => {
     expect(stats[0].type).toBe('밀도');
   });
 
+  it('한 문항에 유형이 여러 개면 각 유형에 모두 집계된다', () => {
+    const multi: Exam = {
+      id: 'e2',
+      title: 't2',
+      subject: '수학',
+      date: '2026-09-19',
+      questions: [
+        { no: 1, type: '표현 해석' },
+        { no: 2, type: '표현 해석;다단계 해결' },
+        { no: 3, type: '다단계 해결' },
+      ],
+    };
+    const stats = typeStatsForResult(multi, [
+      { no: 1, correct: true },
+      { no: 2, correct: false },
+      { no: 3, correct: true },
+    ]);
+    // 2번은 두 유형 모두에 오답으로 반영된다
+    expect(stats.find((s) => s.type === '표현 해석')).toMatchObject({ total: 2, correct: 1 });
+    expect(stats.find((s) => s.type === '다단계 해결')).toMatchObject({ total: 2, correct: 1 });
+    // 유형별 문항 수의 합(4)은 실제 문항 수(3)보다 크다
+    expect(stats.reduce((a, s) => a + s.total, 0)).toBe(4);
+  });
+
   it('scoreOf: 전체 점수/정답률', () => {
     const s = scoreOf([
       { no: 1, correct: true },

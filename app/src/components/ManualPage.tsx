@@ -92,6 +92,116 @@ export default function ManualPage() {
       </section>
 
       <section className="assess-card">
+        <h3>수학 유형 8가지</h3>
+        <p className="muted">
+          한국교육과정평가원이 수능 수학 문항에 붙이는 <b>행동 영역</b> 4개(계산·이해·추론·문제 해결)의 세부 항목 18개를
+          성격이 같은 것끼리 8개로 묶은 것입니다. 중학교에서 쓰다가 고등·수능까지 그대로 이어집니다.
+        </p>
+        <table className="assess-table manual-table">
+          <thead>
+            <tr>
+              <th style={{ width: 132 }}>유형</th>
+              <th style={{ width: 92 }}>평가원 대영역</th>
+              <th>이런 문항</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="nowrap"><b>연산·식 정리</b></td>
+              <td>계산</td>
+              <td>연산 법칙·성질을 적용해 식을 간단히 하는 문항</td>
+            </tr>
+            <tr>
+              <td className="nowrap"><b>공식·절차 적용</b></td>
+              <td>계산</td>
+              <td>공식이나 정해진 풀이 절차를 그대로 적용하는 문항</td>
+            </tr>
+            <tr>
+              <td className="nowrap"><b>개념 이해</b></td>
+              <td>이해</td>
+              <td>교과서 기본 예제 수준. 개념을 알면 바로 풀리는 문항</td>
+            </tr>
+            <tr>
+              <td className="nowrap"><b>표현 해석</b></td>
+              <td>이해</td>
+              <td>그래프·표·기호의 의미를 읽거나, 상황을 식으로 바꾸는 문항</td>
+            </tr>
+            <tr>
+              <td className="nowrap"><b>규칙 발견</b></td>
+              <td>추론</td>
+              <td>나열·관찰·유추로 규칙을 찾아야 풀리는 문항</td>
+            </tr>
+            <tr>
+              <td className="nowrap"><b>논증·정당화</b></td>
+              <td>추론</td>
+              <td>참·거짓 판별, 반례 찾기, 증명 읽고 결론 내기</td>
+            </tr>
+            <tr>
+              <td className="nowrap"><b>다단계 해결</b></td>
+              <td>문제 해결</td>
+              <td>두 개 이상의 개념을 엮거나, 두 단계 이상 거쳐야 하는 문항</td>
+            </tr>
+            <tr>
+              <td className="nowrap"><b>실생활 적용</b></td>
+              <td>문제 해결</td>
+              <td>실생활이나 타 교과 상황에서 수학을 끌어내 푸는 문항</td>
+            </tr>
+          </tbody>
+        </table>
+        <p className="hint">
+          문항 배분은 TIMSS 중2 권고 비중을 따르면 <b>연산·공식·개념 35% / 표현·규칙·논증 40% / 다단계·실생활 25%</b>{' '}
+          정도가 됩니다.
+        </p>
+      </section>
+
+      <section className="assess-card">
+        <h3>과학 유형 8가지</h3>
+        <p className="muted">
+          2022 개정 교육과정 통합과학 기준 <b>평가 목표의 행동 영역</b>이 그대로 8개입니다. 따로 묶거나 쪼갤 필요가
+          없습니다.
+        </p>
+        <table className="assess-table manual-table">
+          <thead>
+            <tr>
+              <th style={{ width: 132 }}>유형 (차트 표기)</th>
+              <th>평가원 원문</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td className="nowrap"><b>개념 이해</b></td><td>과학 지식 및 개념에 대한 이해</td></tr>
+            <tr><td className="nowrap"><b>적용</b></td><td>적용</td></tr>
+            <tr><td className="nowrap"><b>문제 인식·가설</b></td><td>문제 인식 및 가설 설정</td></tr>
+            <tr><td className="nowrap"><b>탐구 설계</b></td><td>탐구 설계</td></tr>
+            <tr><td className="nowrap"><b>탐구 수행</b></td><td>탐구 수행 및 자료 수집</td></tr>
+            <tr><td className="nowrap"><b>자료 변환·해석</b></td><td>자료 변환 및 해석</td></tr>
+            <tr><td className="nowrap"><b>결론·일반화</b></td><td>결론 도출 및 일반화</td></tr>
+            <tr><td className="nowrap"><b>의사소통</b></td><td>의사소통</td></tr>
+          </tbody>
+        </table>
+        <p className="hint">
+          원문 이름이 길어 차트에서 잘리므로 왼쪽의 짧은 이름을 CSV에 쓰시기를 권합니다. 유형 이름은 CSV에 적은 글자
+          그대로 묶이므로, 한번 정하면 바꾸지 말고 복사해 쓰세요.
+        </p>
+      </section>
+
+      <section className="assess-card">
+        <h3>한 문항에 유형 두 개</h3>
+        <p className="muted">
+          CSV의 유형 칸에 <code>표현 해석;다단계 해결</code> 처럼 <code>;</code> 로 구분해 적으면 두 유형 모두에
+          집계됩니다.
+        </p>
+        <div className="assess-warn">
+          ⚠ <b>평가원은 문항당 행동영역을 하나만 붙입니다.</b> 예시문항 6개가 모두 단일 값입니다. 둘을 붙이면 그 문항을
+          틀렸을 때 두 유형 모두 정답률이 내려가는데, 실제로 어디서 막혔는지는 알 수 없습니다. 약점이 실제보다 넓게
+          보이므로 <b>가장 결정적인 능력 하나만</b> 고르시길 권합니다.
+        </div>
+        <ul className="bullets" style={{ marginTop: 10 }}>
+          <li>유형을 두 개 붙이면 그 문항은 유형별 문항 수에 두 번 세어집니다. 유형별 합계가 실제 문항 수보다 커집니다.</li>
+          <li>판단이 어려우면 &apos;이 문항을 틀린 학생은 무엇을 못한 것인가&apos;를 기준으로 하나를 고르세요.</li>
+        </ul>
+      </section>
+
+      <section className="assess-card">
         <h3>유형을 어떻게 나눌까</h3>
         <p className="muted">
           유형 이름은 <b>글자가 정확히 같아야</b> 한 묶음이 됩니다. <code>자료 해석</code>과 <code>자료해석</code>은 다른

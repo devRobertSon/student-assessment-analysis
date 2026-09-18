@@ -353,6 +353,15 @@ export function parseGradingCsv(text: string): { date?: string; ox: Record<numbe
 }
 
 // ── 집계 ─────────────────────────────────────────────────
+// 한 문항에 유형을 여러 개 붙일 수 있다. CSV의 유형 칸에 '표현 해석;다단계 해결'처럼 적는다.
+// 평가원은 문항당 행동영역을 하나만 붙이므로 기본은 하나를 권장하고, 이 함수는 예외를 허용할 뿐이다.
+export function splitTypes(raw: string): string[] {
+  return raw
+    .split(/[;|]/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
 export interface TypeStat {
   type: string;
   total: number;
@@ -361,16 +370,16 @@ export interface TypeStat {
 }
 
 export function typeStatsForResult(exam: Exam, marks: Mark[]): TypeStat[] {
-  const typeByNo = new Map<number, string>();
-  exam.questions.forEach((q) => typeByNo.set(q.no, q.type));
+  const typeByNo = new Map<number, string[]>();
+  exam.questions.forEach((q) => typeByNo.set(q.no, splitTypes(q.type)));
   const acc = new Map<string, { total: number; correct: number }>();
   for (const m of marks) {
-    const type = typeByNo.get(m.no);
-    if (!type) continue;
-    const a = acc.get(type) ?? { total: 0, correct: 0 };
-    a.total += 1;
-    if (m.correct) a.correct += 1;
-    acc.set(type, a);
+    for (const type of typeByNo.get(m.no) ?? []) {
+      const a = acc.get(type) ?? { total: 0, correct: 0 };
+      a.total += 1;
+      if (m.correct) a.correct += 1;
+      acc.set(type, a);
+    }
   }
   return [...acc.entries()]
     .map(([type, a]) => ({ type, total: a.total, correct: a.correct, rate: a.total ? a.correct / a.total : 0 }))
@@ -384,15 +393,15 @@ export function typeStatsCumulative(exams: Exam[], results: Result[]): TypeStat[
   for (const res of results) {
     const exam = examById.get(res.examId);
     if (!exam) continue;
-    const typeByNo = new Map<number, string>();
-    exam.questions.forEach((q) => typeByNo.set(q.no, q.type));
+    const typeByNo = new Map<number, string[]>();
+    exam.questions.forEach((q) => typeByNo.set(q.no, splitTypes(q.type)));
     for (const m of res.marks) {
-      const type = typeByNo.get(m.no);
-      if (!type) continue;
-      const a = acc.get(type) ?? { total: 0, correct: 0 };
-      a.total += 1;
-      if (m.correct) a.correct += 1;
-      acc.set(type, a);
+      for (const type of typeByNo.get(m.no) ?? []) {
+        const a = acc.get(type) ?? { total: 0, correct: 0 };
+        a.total += 1;
+        if (m.correct) a.correct += 1;
+        acc.set(type, a);
+      }
     }
   }
   return [...acc.entries()]
@@ -404,7 +413,7 @@ export function typeStatsCumulative(exams: Exam[], results: Result[]): TypeStat[
 // 홈 화면의 '분석 유형' 숫자 — 유형 분류를 바꿔도 이 값이 저절로 따라온다.
 export function countTypes(exams: Exam[]): number {
   const seen = new Set<string>();
-  for (const e of exams) for (const q of e.questions) if (q.type) seen.add(q.type);
+  for (const e of exams) for (const q of e.questions) for (const t of splitTypes(q.type)) seen.add(t);
   return seen.size;
 }
 
