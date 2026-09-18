@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { exportAssessmentJson, loadAssessment, parseAssessmentJson, saveAssessment } from './lib/assessment';
-import { useCloudDoc } from './lib/cloud';
+import { CLOUD_DOC, useCloudDoc } from './lib/cloud';
 import { buildSeedExams } from './lib/seed';
+import { pushPendingFiles } from './lib/cloudfiles';
+import { useAuthUser } from './lib/cloud';
 import Logo from './components/Logo';
 import CloudBar from './components/CloudBar';
 import HomePage, { HomeTarget } from './components/HomePage';
@@ -21,10 +23,6 @@ const NAV: { key: View; label: string }[] = [
   { key: 'grading', label: '채점' },
   { key: 'manual', label: '사용법' },
 ];
-
-// 기존 시간표 앱과 같은 도메인(devrobertson.github.io)에 배포되므로
-// Firestore 문서 이름을 분리해 데이터가 섞이지 않게 한다.
-const CLOUD_DOC = 'diagnostic-assessment';
 
 export default function App() {
   const { value: data, setValue: setData, status: cloudStatus } = useCloudDoc(
@@ -55,6 +53,21 @@ export default function App() {
       setData({ ...cur, exams: [...cur.exams, ...exams], seeded: true });
     });
   }, [data, setData]);
+
+  // 로그아웃 상태에서 올려 둔 인쇄물을 로그인한 뒤 클라우드로 올린다.
+  // 그래야 다른 기기에서도 같은 파일을 받을 수 있다.
+  const { user } = useAuthUser();
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    pushPendingFiles(dataRef.current.exams).then((exams) => {
+      if (!alive || !exams) return;
+      setData({ ...dataRef.current, exams });
+    });
+    return () => {
+      alive = false;
+    };
+  }, [user, data.exams, setData]);
 
   const importJson = async (file: File) => {
     try {

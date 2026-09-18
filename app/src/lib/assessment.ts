@@ -48,6 +48,11 @@ export interface Attachment {
   src: 'site' | 'local';
   size?: number;
   type?: string;
+  /**
+   * 클라우드(Storage)에 올려 둔 경로. 있으면 다른 기기에서도 받아 쓸 수 있다.
+   * 파일 자체는 Firestore 문서(1MB 한도)에 못 넣으므로 경로만 동기화한다.
+   */
+  remote?: string;
 }
 
 export interface Exam {
