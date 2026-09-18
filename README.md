@@ -42,11 +42,26 @@ Node.js 20 이상이 필요합니다.
 | 브라우저 | `localStorage` 키 `sda.assess.v1` | 로그인 없이도 동작 |
 | 클라우드 | Firestore `sync/diagnostic-assessment` | 구글 로그인 시 기기 간 동기화 |
 
-기존 시간표 앱과 **같은 도메인**(`devrobertson.github.io`)에 배포되므로 localStorage가 공유됩니다.
-그래서 키(`sda.assess.v1`)와 Firestore 문서 이름(`diagnostic-assessment`)을 기존 앱과 다르게 분리했습니다.
-기존 데이터를 가져오려면 기존 앱에서 **JSON 내보내기** → 이 앱에서 **JSON 가져오기** 하세요.
+Firebase는 **이 앱 전용 프로젝트**를 씁니다 (`alpha-sodam-academy-schedule`의 `sodam-alpha`와 분리).
 
-접근 통제는 Firestore 보안 규칙(허용 이메일)으로 합니다. `firebaseConfig` 값은 공개용 식별자입니다.
+localStorage 키도 분리돼 있습니다. GitHub Pages 프로젝트 페이지는 모두 `devrobertson.github.io`
+한 도메인을 쓰기 때문에, 키가 같으면 두 앱이 서로의 데이터를 덮어씁니다.
+
+기존 앱의 평가 데이터를 옮기려면 기존 앱에서 **JSON 내보내기** → 이 앱에서 **JSON 가져오기** 하세요.
+
+### Firebase 설정
+
+1. [Firebase 콘솔](https://console.firebase.google.com/)에서 새 프로젝트 생성
+2. **Authentication → Sign-in method → Google** 사용 설정
+3. **Authentication → Settings → 승인된 도메인**에 `devrobertson.github.io` 추가
+4. **Firestore Database** 생성 (프로덕션 모드)
+5. **규칙** 탭에 [`firestore.rules`](firestore.rules) 내용을 붙여넣고, `CHANGE_ME@gmail.com`을 실제 계정으로 교체 후 게시
+6. **프로젝트 설정 → 내 앱 → 웹 앱 추가** 후 `firebaseConfig` 값을
+   [`app/src/lib/firebase.ts`](app/src/lib/firebase.ts)에 붙여넣기
+
+6번을 하기 전까지는 `firebaseEnabled`가 `false`가 되어 로그인 없이 로컬 저장만으로 동작합니다.
+
+`firebaseConfig`는 공개 식별자라 저장소에 그대로 두어도 됩니다. 접근 통제는 보안 규칙이 담당합니다.
 
 ## CSV 형식
 
