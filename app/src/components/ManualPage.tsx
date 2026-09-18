@@ -51,6 +51,53 @@ export default function ManualPage() {
       </section>
 
       <section className="assess-card">
+        <h3>학생</h3>
+        <p className="muted">
+          왼쪽 목록에서 학생을 고르면 오른쪽에 그 학생의 정보·응시 결과·정답률이 나옵니다. 목록의 이름 옆 숫자는{' '}
+          <b>지금까지의 누적 정답률</b>입니다.
+        </p>
+        <ul className="bullets">
+          <li>
+            <b>[＋ 학생 추가]</b> — 이름과 학년만 넣으면 됩니다. 나머지는 나중에 채워도 됩니다.
+          </li>
+          <li>
+            <b>[CSV 가져오기]</b> — 여러 명을 한 번에 넣습니다. <b>[내려받기]</b>는 지금 등록된 학생을 같은 형식의
+            CSV로 받습니다.
+          </li>
+          <li>
+            <b>학생 정보</b> — 학교·연락처·학부모 연락처·형제 재원 여부·메모·목표 고등학교·과목별 진도를 적습니다.
+            여기 적은 값이 <b>리포트 마지막 쪽 상담 카드</b>에 그대로 들어갑니다. 비워 두면 밑줄만 인쇄돼 손으로
+            적습니다.
+          </li>
+          <li>
+            <b>응시 결과</b> — 이 학생이 본 시험과 점수가 한 줄씩 나옵니다. 줄 끝 ✕ 로 그 응시만 지웁니다. 시험지와
+            학생은 그대로 남습니다.
+          </li>
+          <li>
+            <b>유형별 정답률</b> — 여러 번 응시했으면 <b>전부 합친</b> 결과입니다. 여기서는 레이더와 막대를 같이
+            보여줍니다(리포트 1쪽은 레이더만).
+          </li>
+          <li>
+            <b>[채점 입력]</b> · <b>[리포트 열기]</b> 로 바로 넘어갑니다. 리포트는 채점 결과가 하나라도 있어야
+            눌립니다.
+          </li>
+        </ul>
+
+        <p className="muted" style={{ marginTop: 14 }}>
+          <b>학생 CSV</b> — 필요한 열은 <b>이름</b> 하나입니다. 학년은 없으면 비워 둡니다.
+        </p>
+        <pre className="manual-code">{STUDENT_CSV}</pre>
+        <p className="hint">
+          같은 이름이 이미 있으면 학년만 갱신하고 <b>채점 결과는 그대로 둡니다.</b> 학교·연락처처럼 나머지 정보는
+          CSV로 못 넣습니다 — 학생을 고른 뒤 [학생 정보]에서 적으세요.
+        </p>
+        <div className="assess-warn" style={{ marginTop: 12 }}>
+          ⚠ 학생을 지우면 <b>그 학생의 채점 결과도 함께 지워집니다.</b> 응시 한 건만 지우려면 [응시 결과] 표의 ✕ 를
+          쓰세요.
+        </div>
+      </section>
+
+      <section className="assess-card">
         <h3>시험지 CSV</h3>
         <p className="muted">
           시험지는 <b>저장소에서만</b> 들어옵니다. 앱에 올리는 길은 없습니다. 엑셀·구글 시트에서 만들어{' '}
@@ -314,15 +361,6 @@ export default function ManualPage() {
             <b>응시 결과</b> 표에서도 한 건씩 지울 수 있습니다. 시험지와 학생은 그대로 남습니다.
           </li>
         </ul>
-      </section>
-
-      <section className="assess-card">
-        <h3>학생 CSV</h3>
-        <pre className="manual-code">{STUDENT_CSV}</pre>
-        <p className="hint">
-          같은 이름이 이미 있으면 학년만 갱신하고 <b>채점 결과는 그대로 둡니다.</b> 학교·연락처·목표 고등학교·진도는 학생을
-          고른 뒤 [학생 정보]에서 적습니다.
-        </p>
       </section>
 
       <section className="assess-card">
