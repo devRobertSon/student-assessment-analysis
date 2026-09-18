@@ -71,7 +71,6 @@ describe('typeStatsForResult', () => {
     id: 'e1',
     title: 't',
     subject: '과학',
-    kind: '진단',
     date: '2026-07-04',
     questions: [
       { no: 1, type: '밀도' },
