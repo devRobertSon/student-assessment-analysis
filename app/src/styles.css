@@ -685,3 +685,6 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
   .flow li { grid-template-columns: 24px minmax(0, 1fr); }
   .flow li span { grid-column: 2; }
 }
+
+/* 줄바꿈하면 어색한 짧은 나열에만 붙인다 */
+.nowrap { white-space: nowrap; }

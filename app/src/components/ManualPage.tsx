@@ -54,7 +54,7 @@ export default function ManualPage() {
         <table className="assess-table manual-table">
           <thead>
             <tr>
-              <th style={{ width: 110 }}>열</th>
+              <th style={{ width: 146 }}>열</th>
               <th style={{ width: 70 }}>필수</th>
               <th>설명</th>
             </tr>
@@ -82,7 +82,7 @@ export default function ManualPage() {
               <td>시험지 이름. 없으면 파일명을 씁니다.</td>
             </tr>
             <tr>
-              <td>과목 · 정답 · 배점</td>
+              <td className="nowrap">과목 · 정답 · 배점</td>
               <td>선택</td>
               <td>배점은 3.5처럼 소수점도 됩니다.</td>
             </tr>
