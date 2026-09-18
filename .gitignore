@@ -4,6 +4,13 @@ analysis/raw/
 *.xls
 *.csv
 
+# 예외: papers/ 는 사이트에 같이 배포되는 인쇄물·서식 폴더다.
+# 시험지 CSV는 문항 정보(단원·유형·난이도·정답)뿐이고, 채점표는 빈 서식이라
+# 학생 정보가 들어 있지 않다.
+# 이 폴더는 공개 사이트로 그대로 나간다. 이름이 든 채점표를 여기에 두지 말 것.
+!app/public/papers/*.csv
+!docs/papers/*.csv
+
 # Firebase 비밀키
 **/serviceAccount*.json
 .env
