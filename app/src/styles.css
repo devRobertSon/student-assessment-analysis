@@ -266,6 +266,15 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .ox-btns button { width: 34px; height: 30px; padding: 0; font-size: 14px; font-weight: 600; color: var(--ink-3); border-radius: 6px; }
 .ox-o.on { color: #fff; background: var(--navy); border-color: var(--navy); }
 .ox-x.on { color: #fff; background: var(--bad-ink); border-color: var(--bad-ink); }
+/* 서술형 — 색만으로 구분하지 않도록 '서술형' 글자 배지를 함께 단다 */
+.ox-item .t { display: flex; align-items: center; gap: 7px; }
+.q-lv { flex-shrink: 0; margin-left: 4px; padding: 1px 5px; font-size: 10px; font-weight: 700; color: #5F5E5A; background: #f1efe8; border-radius: 4px; }
+.q-fmt { flex-shrink: 0; padding: 2px 6px; font-size: 10px; font-weight: 700; color: var(--navy); background: #eaf0fb; border: 1px solid #d3deef; border-radius: 4px; }
+.ox-item.essay { box-shadow: inset 2px 0 0 var(--navy); }
+.ox-score { width: 46px; height: 30px; padding: 0 4px; font-size: 14px; font-weight: 600; text-align: center; border: 1px solid var(--line); border-radius: 6px; }
+.ox-score::-webkit-outer-spin-button, .ox-score::-webkit-inner-spin-button { margin: 0; -webkit-appearance: none; }
+.ox-score { -moz-appearance: textfield; }
+.ox-max { min-width: 22px; font-size: 12px; color: var(--ink-3); }
 .assess-scorebar {
   background: var(--navy);
   border-radius: var(--r-lg);
@@ -278,7 +287,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 
 /* ── 리포트: 유형별 막대·레이더 ─────────────────────── */
 .type-bars-wrap { display: flex; gap: 22px; align-items: center; }
-.type-radar-wrap { flex: none; }
+.type-radar-wrap { flex: none; width: 320px; }
 .type-radar { display: block; }
 .type-bars { flex-grow: 1; display: flex; flex-direction: column; gap: 9px; }
 .type-bar-row { display: flex; align-items: center; gap: 10px; }
@@ -340,7 +349,10 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
   padding: 38px 52px 26px;
   display: flex;
   flex-direction: column;
-  gap: 11px;
+  /* 레이더를 키운 만큼 블록 사이를 좁혀 A4 한 쪽을 지킨다. */
+  gap: 9px;
+  --radar-w: 420px;
+  --radar-w-wide: 600px;
 }
 .report-letterhead {
   display: flex;
@@ -368,14 +380,14 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .report-info-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .report-info-table th, .report-info-table td { border: 1px solid #d8d8d2; padding: 6px 9px; text-align: left; }
 .report-info-table thead th { background: #f7f7f4; font-weight: 600; }
-.rp-blank { height: 28px; }
+.rp-blank { height: 34px; }
 .rp-eg, .rp-muted { font-weight: 400; color: var(--ink-3); }
 .rp-checks { display: flex; flex-wrap: wrap; gap: 8px 22px; }
 .rp-check { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
 .rp-memo-box { background: #fcfcfa; border: 1px solid #e4e4de; border-radius: 4px; height: 105px; }
 .rp-privacy { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; line-height: 1.55; color: #2e3136; }
 .rp-agree { margin: 2px 0 0; font-size: 13px; line-height: 1.6; }
-.rp-sign { display: flex; align-items: flex-end; gap: 18px; padding-top: 9px; border-top: 1px solid #edede8; font-size: 13px; }
+.rp-sign { display: flex; align-items: flex-end; gap: 26px; padding-top: 9px; border-top: 1px solid #edede8; font-size: 13px; }
 
 .report-footer {
   display: flex;
@@ -587,6 +599,12 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .grade-side .assess-card { margin-top: 0; }
 .grade-tools { margin: 14px 0; padding-bottom: 14px; border-bottom: 1px solid var(--line-2); }
 .grade-save { padding: 13px 0; font-size: 15px; }
+/* 집계 축 전환 — 유형 / 단원 / 난이도 */
+.tally-head { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; }
+.tally-head h3 { margin: 0; }
+.axis-tabs { display: flex; gap: 2px; margin-left: auto; padding: 2px; background: #f2f4f7; border-radius: 7px; }
+.axis-tabs button { padding: 4px 9px; font-size: 11.5px; font-weight: 600; color: var(--ink-3); background: none; border: 0; border-radius: 5px; }
+.axis-tabs button.on { color: var(--navy); background: #fff; box-shadow: 0 1px 2px rgba(22, 34, 78, .08); }
 .tally { display: flex; flex-direction: column; gap: 9px; }
 .tally-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .tally-row .t { flex-grow: 1; }
@@ -597,8 +615,10 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 /* ── 리포트: 편집 영역 ───────────────────────────── */
 .edit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; }
 .edit-grid .fld > span { font-size: 12px; }
-.print-preview { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
-.report-capture { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+/* 지면은 794px 고정이다. 창이 좁다고 지면까지 줄어들면 줄바꿈이 달라져
+   미리보기와 PDF가 서로 다른 물건이 된다. 줄이지 말고 가로로 넘기게 둔다. */
+.print-preview { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; overflow-x: auto; }
+.report-capture { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); flex: none; }
 
 /* ── 리포트: 1쪽 ─────────────────────────────────── */
 .rp-title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
@@ -620,14 +640,19 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .rp-sec-row { display: flex; align-items: baseline; justify-content: space-between; }
 
 /* ── 리포트: 2쪽 ─────────────────────────────────── */
-.rp-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px 20px; }
+.rp-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 20px; }
 .rp-fields > div { display: flex; flex-direction: column; }
 .rp-fields span { font-size: 11px; color: var(--ink-3); margin-bottom: 3px; }
+/* 아래 칸들은 인쇄해서 손으로 적는 자리다. 34px는 A4에서 약 9mm로,
+   어른 글씨가 들어가는 최소 높이다. 화면에서 좁아 보여도 줄이지 말 것. */
 .rp-line {
-  height: 27px; font-size: 14px;
+  height: 34px; font-size: 14px;
   border-bottom: 1px solid #c8c8c2; padding: 2px 6px;
   display: flex; align-items: center;
 }
+.rp-date { display: inline-flex; align-items: baseline; white-space: nowrap; }
+/* 20[   ]년[   ]월[   ]일 — 숫자를 적을 빈 칸. */
+.rp-gap { display: inline-block; width: 38px; }
 .rp-line-checks { gap: 14px; }
 .rp-memo-box {
   padding: 9px 12px; font-size: 14px; line-height: 1.9; color: #2e3136;
@@ -637,7 +662,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .rp-sign > div:first-child { width: 168px; }
 .rp-sign span { font-size: 11px; color: var(--ink-3); margin-bottom: 3px; }
 .rp-sign b { align-self: flex-end; padding-bottom: 5px; color: var(--navy); white-space: nowrap; }
-.report-info-table td.rp-blank { height: 25px; font-size: 13px; }
+.report-capture .rp-blank { height: 32px; font-size: 13px; }
 
 @media (max-width: 1180px) {
   .grade-layout { grid-template-columns: minmax(0, 1fr); }
@@ -646,13 +671,35 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 }
 
 /* 리포트는 794px 고정 지면이므로 화면 폭에 반응하면 안 된다.
-   위 미디어 쿼리가 세로로 쌓는 것을 여기서 되돌린다(선택자 특이도가 더 높다). */
-.report-capture .type-bars-wrap { flex-direction: row; align-items: center; gap: 20px; }
-.report-capture .type-radar-wrap { width: 260px; max-width: none; align-self: center; }
-.report-capture .type-radar { width: 100%; height: auto; display: block; }
-.report-capture .type-bar-label { width: 84px; }
-.report-capture .report-sec { padding: 11px 18px; }
-.report-capture .report-note-body { line-height: 1.7; }
+   레이더 하나만 놓고 가운데로 모은다. 폭을 키우면 세로도 같이 커지는데,
+   A4 한 쪽이 정해진 높이라 420px가 뒤 블록을 밀지 않는 상한이다. */
+/* 응시 이력과 의견은 한 덩어리로 움직인다. 1쪽 안에 있을 때와 따로 한 쪽을
+   차지할 때의 생김새가 같도록 지면과 같은 간격을 준다. */
+.rp-movable { display: flex; flex-direction: column; gap: 9px; }
+
+/* 레이더 두 크기. 쪽이 나뉘어 1쪽이 분석 전용이 되면 넓은 쪽을 쓴다.
+   쪽 나눔을 판정하는 코드가 --radar-w를 그대로 읽으므로, 폭은 여기서만 정한다. */
+.rp-radar-only { display: flex; justify-content: center; }
+.rp-radar-only .type-radar { width: var(--radar-w); max-width: 100%; height: auto; display: block; }
+.rp-wide .rp-radar-only .type-radar { width: var(--radar-w-wide); }
+.rp-wide .type-bars { margin-top: 8px; }
+.report-capture .report-sec { padding: 8px 18px; gap: 6px; }
+.report-capture .report-note-body { font-size: 14px; line-height: 1.62; }
+/* 응시 이력만 행을 얇게 잡는다. 2쪽의 진도 표는 손으로 적는 칸이라
+   같이 줄이면 글씨를 못 쓴다. */
+.report-capture .rp-history th,
+.report-capture .rp-history td { padding: 4px 9px; }
+
+/* 선생님 의견은 인쇄에서 3줄까지만 내보낸다. 더 쓰면 화면 미리보기에서
+   잘린 채로 보이므로, 무엇이 인쇄될지는 쓰는 동안 그대로 드러난다. */
+.rp-note-3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  /* line-clamp를 못 쓰는 경우에도 3줄에서 끊기도록 줄높이와 같은 값으로 잠근다. */
+  max-height: calc(1.62em * 3);
+  overflow: hidden;
+}
 
 /* ── 사용법 ──────────────────────────────────────── */
 .manual { max-width: 880px; margin: 0 auto; width: 100%; }
@@ -710,3 +757,10 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 
 /* 줄바꿈하면 어색한 짧은 나열에만 붙인다 */
 .nowrap { white-space: nowrap; }
+
+/* 리포트 — 난이도는 섹션 머리줄에 얹어 세로 자리를 쓰지 않는다 */
+.rp-levels { display: inline-flex; align-items: baseline; gap: 2px; line-height: 1.15; }
+.rp-lv { display: inline-flex; align-items: baseline; gap: 4px; padding: 0 7px; border-left: 1px solid var(--line); }
+.rp-lv:first-child { border-left: 0; padding-left: 0; }
+.rp-lv b { font-size: 10.5px; font-weight: 600; color: var(--ink-3); }
+.rp-lv em { font-size: 11.5px; font-weight: 700; font-style: normal; color: var(--navy); }

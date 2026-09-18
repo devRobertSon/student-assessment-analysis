@@ -5,15 +5,21 @@ import {
   ExamQuestion,
   downloadText,
   examQuestionsFromCsv,
+  fmtPoints,
+  isEssay,
   newId,
+  pointsOf,
+  splitTypes,
   todayStr,
 } from '../lib/assessment';
 
 // 업로드 예시(양식) — 받아서 내용만 바꿔 다시 올리면 됩니다.
-const SAMPLE_EXAM_CSV = `시험지,과목,문항번호,유형,정답,배점
-중2 1차 진단,수학,1,연산·식 정리,3,4
-중2 1차 진단,수학,2,개념 이해,①,4
-중2 1차 진단,수학,3,표현 해석,5,5`;
+const SAMPLE_EXAM_CSV = `시험지,과목,문항번호,단원,유형,난이도,형식,배점,정답,출처,원문항
+중2 1차 진단,수학,1,식의 계산,연산·식 정리,표준,객관식,3,③,심화,7
+중2 1차 진단,수학,2,식의 계산,개념 이해,상,객관식,3,①,응용,12
+중2 1차 진단,수학,3,부등식,표현 해석,상,객관식,3,⑤,심화,5
+중2 1차 진단,수학,4,방정식,다단계 해결,최상,서술형,6,12,심화형,9
+중2 1차 진단,수학,5,일차함수,논증·정당화,최상,서술형,6,-4,심화,30`;
 
 interface Props {
   data: AssessmentData;
@@ -125,10 +131,13 @@ export default function ExamManager({ data, setData }: Props) {
       <div className="screen-head">
         <div>
           <h1>시험지 관리</h1>
-          <p className="muted">CSV 한 개가 시험지 한 개입니다. 문항마다 유형을 적어두면 그 유형으로 분석됩니다.</p>
+          <p className="muted">
+            CSV 한 개가 시험지 한 개입니다. 유형은 필수이고, 단원·난이도를 함께 적으면 그 축으로도 분석됩니다.
+          </p>
         </div>
         <div className="assess-row">
-          <button className="ghost" onClick={() => downloadText('시험지_예시.csv', SAMPLE_EXAM_CSV)}>
+          {/* 엑셀이 UTF-8로 열도록 BOM을 붙인다. 화면에 보여주는 쪽은 BOM 없이 그대로 쓴다. */}
+          <button className="ghost" onClick={() => downloadText('시험지_예시.csv', '﻿' + SAMPLE_EXAM_CSV)}>
             예시 CSV
           </button>
           <button className="primary" onClick={() => fileRef.current?.click()}>
@@ -172,7 +181,8 @@ export default function ExamManager({ data, setData }: Props) {
         <div>
           <div className="dz-title">여기로 CSV 파일을 끌어다 놓거나 [＋ CSV 업로드]를 누르세요</div>
           <div className="hint">
-            필수 열 <b>문항번호</b>, <b>유형</b> · 선택 열 시험지, 과목, 정답, 배점 · 여러 개 동시 업로드 가능
+            필수 열 <b>문항번호</b>, <b>유형</b> · 선택 열 시험지, 과목, 단원, 난이도, 형식, 배점, 정답, 출처, 원문항 ·
+            여러 개 동시 업로드 가능
           </div>
         </div>
       </div>
@@ -195,7 +205,23 @@ export default function ExamManager({ data, setData }: Props) {
             <b>시험지</b> — 시험지 이름 (선택, 없으면 파일명 사용)
           </li>
           <li>
-            <b>과목·정답·배점</b> — 선택 (배점은 3.5처럼 소수점 가능)
+            <b>형식</b> — <b>서술형</b>이라고 적으면 채점 화면에서 O/X 대신 <b>부분점수</b>를 입력합니다.
+            비워두거나 다른 값이면 객관식으로 봅니다 (선택)
+          </li>
+          <li>
+            <b>단원</b> — 적어 두면 채점 화면에서 <b>단원별</b>로도 집계됩니다. 유형이 "어디서 막히는가"라면
+            단원은 "무엇을 안 배웠는가"입니다 (선택)
+          </li>
+          <li>
+            <b>난이도</b> — <b>표준 · 상 · 최상</b>으로 적으면 그 순서대로 집계됩니다. 기초가 무너진 것인지
+            응용에서만 멈추는 것인지 갈립니다 (선택)
+          </li>
+          <li>
+            <b>과목·정답·배점</b> — 선택 (배점은 3.5처럼 소수점 가능). 배점을 적지 않으면 모든 문항을 1점으로 봅니다
+          </li>
+          <li>
+            <b>출처·원문항</b> — 교재 이름과 그 교재에서의 번호. 약점 문항과 비슷한 문제를 다시 낼 때
+            찾아가는 용도입니다 (선택)
           </li>
         </ul>
         <pre className="manual-code">{SAMPLE_EXAM_CSV}</pre>
@@ -217,12 +243,15 @@ export default function ExamManager({ data, setData }: Props) {
           </div>
           {drafts.map((d) => {
             const typeCount = new Set(d.questions.map((q) => q.type)).size;
+            const essays = d.questions.filter(isEssay).length;
+            const full = d.questions.reduce((a, q) => a + pointsOf(q), 0);
             return (
               <div key={d.key} className="draft-item">
                 <div className="draft-item-head">
                   <b>{d.filename}</b>
                   <span className="hint">
                     {d.questions.length}문항 · 유형 {typeCount}종
+                    {essays > 0 && ` · 서술형 ${essays}문항`} · 만점 {fmtPoints(full)}점
                   </span>
                   <button className="del" style={{ marginLeft: 'auto' }} onClick={() => removeDraft(d.key)} title="이 파일 제외">
                     ✕
@@ -277,7 +306,8 @@ export default function ExamManager({ data, setData }: Props) {
                 <th style={{ width: 84 }}>과목</th>
                 <th style={{ width: 118 }}>등록일</th>
                 <th style={{ width: 70, textAlign: 'center' }}>문항</th>
-                <th style={{ width: 70 }}>유형</th>
+                <th style={{ width: 62 }}>유형</th>
+                <th style={{ width: 62 }}>단원</th>
                 <th style={{ width: 92 }}></th>
                 <th style={{ width: 44 }}></th>
               </tr>
@@ -298,7 +328,13 @@ export default function ExamManager({ data, setData }: Props) {
                     <td>{ex.subject}</td>
                     <td>{ex.date}</td>
                     <td style={{ textAlign: 'center' }}>{ex.questions.length}</td>
-                    <td>{new Set(ex.questions.map((q) => q.type)).size}종</td>
+                    <td>{new Set(ex.questions.flatMap((q) => splitTypes(q.type))).size}종</td>
+                    <td>
+                      {(() => {
+                        const n = new Set(ex.questions.map((q) => q.unit).filter(Boolean)).size;
+                        return n ? `${n}개` : '—';
+                      })()}
+                    </td>
                     <td>
                       <button className="mini ghost" onClick={() => setOpenId(openId === ex.id ? null : ex.id)}>
                         {openId === ex.id ? '접기' : '유형 보기'}
@@ -312,15 +348,24 @@ export default function ExamManager({ data, setData }: Props) {
                   </tr>
                   {openId === ex.id && (
                     <tr>
-                      <td colSpan={8}>
+                      <td colSpan={9}>
                         <div className="hint" style={{ marginBottom: 7 }}>
-                          {ex.title} · 문항별 유형
+                          {ex.title} · 문항별 유형 · 만점{' '}
+                          {fmtPoints(ex.questions.reduce((a, q) => a + pointsOf(q), 0))}점
+                          {(() => {
+                            const n = ex.questions.filter(isEssay).length;
+                            return n > 0 ? ` · 서술형 ${n}문항` : '';
+                          })()}
                         </div>
                         <div className="assess-preview-grid">
                           {ex.questions.map((q) => (
                             <span key={q.no} className="assess-chip">
                               <b>{q.no}</b> {q.type}
+                              {isEssay(q) && <span className="q-fmt">서술형</span>}
+                              {q.level ? <span className="q-lv">{q.level}</span> : null}
+                              {q.unit ? ` · ${q.unit}` : ''}
                               {q.answer ? ` · 답 ${q.answer}` : ''}
+                              {q.source ? ` · ${q.source}${q.sourceNo ? ' ' + q.sourceNo + '번' : ''}` : ''}
                             </span>
                           ))}
                         </div>

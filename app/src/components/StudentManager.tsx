@@ -8,9 +8,9 @@ import {
   newId,
   parseStudentsCsv,
   scoreOf,
+  statsCumulative,
   studentsToCsv,
   todayStr,
-  typeStatsCumulative,
   upsertStudents,
 } from '../lib/assessment';
 import { rateTag } from './TypeRadar';
@@ -66,7 +66,7 @@ export default function StudentManager({
     [data.results, selectedId]
   );
   const stats = useMemo(
-    () => (selectedId ? typeStatsCumulative(data.exams, studentResults) : []),
+    () => (selectedId ? statsCumulative(data.exams, studentResults) : []),
     [selectedId, data.exams, studentResults]
   );
   const total = scoreOf(studentResults.flatMap((r) => r.marks));

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { toJpeg } from 'html-to-image';
 import {
   AssessmentData,
@@ -6,15 +6,29 @@ import {
   TypeStat,
   scoreOf,
   todayStr,
-  typeStatsCumulative,
+  statsCumulative,
 } from '../lib/assessment';
 import { logoUrl, sealUrl } from '../lib/brand';
 import TypeRadar from './TypeRadar';
 import TypeBars from './TypeBars';
 
+// styles.css의 .report-capture min-height와 같은 값. A4 한 쪽(96dpi)이다.
+const PAGE_H = 1123;
+
 const SUMMARY_MAX = 130;
 const NOTE_MAX = 170;
 const MEMO_MAX = 200;
+
+/**
+ * 손으로 적을 날짜 칸. '20    년    월    일'처럼 공백을 늘어놓으면
+ * HTML이 공백을 하나로 합쳐 버려서 인쇄했을 때 적을 자리가 남지 않는다.
+ * 폭을 가진 빈 칸을 끼워 넣어 실제 여백을 만든다.
+ */
+const DateBlank = () => (
+  <span className="rp-date">
+    20<span className="rp-gap" />년<span className="rp-gap" />월<span className="rp-gap" />일
+  </span>
+);
 
 const SEAL_ROWS = [
   ['알', '파', '학'],
@@ -87,7 +101,13 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
   const [toDate, setToDate] = useState('');
   const [busy, setBusy] = useState(false);
   const page1Ref = useRef<HTMLDivElement>(null);
+  const notesPageRef = useRef<HTMLDivElement>(null);
   const page2Ref = useRef<HTMLDivElement>(null);
+  const movedRef = useRef<HTMLDivElement>(null);
+  const analysisRef = useRef<HTMLElement>(null);
+  // 응시 이력이 길어지면 의견 두 칸이 1쪽에서 밀려난다. 그때만 쪽을 하나 더 낸다.
+  const [splitNotes, setSplitNotes] = useState(false);
+  const pageCount = splitNotes ? 3 : 2;
 
   const student = data.students.find((s) => s.id === studentId);
   const examById = useMemo(() => new Map(data.exams.map((e) => [e.id, e])), [data.exams]);
@@ -120,10 +140,15 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
     [studentResults, selectedIds]
   );
   const stats: TypeStat[] = useMemo(
-    () => (studentId ? typeStatsCumulative(data.exams, selectedResults) : []),
+    () => (studentId ? statsCumulative(data.exams, selectedResults) : []),
     [studentId, data.exams, selectedResults]
   );
   const total = scoreOf(selectedResults.flatMap((r) => r.marks));
+  // 난이도를 적어 둔 시험지에서만 나온다. 기초가 무너진 것인지 응용에서만 멈추는지 갈린다.
+  const levels = useMemo(
+    () => (studentId ? statsCumulative(data.exams, selectedResults, 'level') : []),
+    [studentId, data.exams, selectedResults]
+  );
 
   // 선생님이 손대기 전까지는 자동 문안을 따라간다.
   const draftSummary = useMemo(() => autoSummary(stats, total.correct, total.total), [stats, total.correct, total.total]);
@@ -143,6 +168,41 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
   const lastExam = selectedResults.length ? examById.get(selectedResults[selectedResults.length - 1].examId) : undefined;
   const lastDate = selectedResults.length ? selectedResults[selectedResults.length - 1].date : '';
   const questionCount = selectedResults.reduce((a, r) => a + r.marks.length, 0);
+
+  /*
+   * 1쪽이 A4를 넘으면 응시 이력과 의견을 통째로 다음 쪽으로 보낸다.
+   *
+   * 나뉘고 나면 1쪽은 분석 전용이 되어 레이더가 커지고 막대가 붙는다.
+   * 그 상태를 그대로 재면 "합치면 들어가는가"를 영영 알 수 없으므로,
+   * 유형 섹션을 좁은 배치였을 때의 높이로 되돌려 놓고 잰다.
+   * 그래서 이 값은 지금 나뉘어 있는지와 무관하고, 나눔과 합침을 오가지 않는다.
+   */
+  useLayoutEffect(() => {
+    const page = page1Ref.current;
+    const sec = analysisRef.current;
+    const moved = movedRef.current;
+    const svg = sec?.querySelector('svg');
+    if (!page || !sec || !moved || !svg) return;
+
+    const H = (el: Element) => el.getBoundingClientRect().height;
+    const cs = getComputedStyle(page);
+    const gap = parseFloat(cs.rowGap) || 0;
+
+    const box = svg.viewBox.baseVal;
+    const narrowRadarH = (parseFloat(cs.getPropertyValue('--radar-w')) * box.height) / box.width;
+    const bars = sec.querySelector('.type-bars');
+    const secGap = parseFloat(getComputedStyle(sec).rowGap) || 0;
+    const narrowSecH = H(sec) - H(svg) + narrowRadarH - (bars ? H(bars) + secGap : 0);
+
+    const stable = [...page.children]
+      .filter((el) => el !== sec && el !== moved)
+      .reduce((a, el) => a + H(el), 0);
+
+    // 좁은 배치의 1쪽은 여섯 덩이 — 레터헤드·제목·학생·유형·이동그룹·푸터. 사이는 다섯 칸.
+    const whole =
+      stable + narrowSecH + H(moved) + gap * 5 + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    setSplitNotes(whole > PAGE_H);
+  }, [splitNotes, summary, session.note, selectedResults, stats, levels, student]);
 
   const downloadPdf = async () => {
     if (!page1Ref.current || !student) return;
@@ -171,6 +231,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
       };
 
       await addCapture(page1Ref.current, false);
+      if (notesPageRef.current) await addCapture(notesPageRef.current, true);
       if (page2Ref.current) await addCapture(page2Ref.current, true);
       pdf.save(`리포트_${student.name}_${today}.pdf`);
     } catch (e) {
@@ -191,6 +252,61 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
       <span style={{ flexGrow: 1 }} />
       <span className="report-footer-date">발행일 {today}</span>
       <span className="report-footer-date">{page}</span>
+    </div>
+  );
+
+  const PlainFooter = () => (
+    <div className="report-footer">
+      <div className="report-footer-left">
+        <div className="report-footer-org">알파학원 교육연구소</div>
+        <div className="report-footer-en">ALPHA ACADEMY · Education Research Institute</div>
+      </div>
+    </div>
+  );
+
+  // 1쪽에 그대로 두거나, 자리가 없으면 통째로 다음 쪽으로 옮긴다.
+  const movableBlocks = (
+    <div ref={movedRef} className="rp-movable">
+      <section className="report-sec">
+        <span className="report-sec-h">응시 이력</span>
+        <table className="report-info-table rp-history">
+          <thead>
+            <tr>
+              <th>시험지</th>
+              <th style={{ width: 120 }}>응시일</th>
+              <th style={{ width: 150 }}>정답률</th>
+            </tr>
+          </thead>
+          <tbody>
+            {selectedResults.map((r) => {
+              const ex = examById.get(r.examId);
+              const sc = scoreOf(r.marks);
+              return (
+                <tr key={r.id}>
+                  <td>{ex?.title ?? '—'}</td>
+                  <td>{r.date}</td>
+                  <td>
+                    {sc.correct}/{sc.total} · {Math.round(sc.rate * 100)}%
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </section>
+
+      {summary.trim() && (
+        <section className="report-sec">
+          <span className="report-sec-h">종합 의견</span>
+          <p className="report-note-body">{summary}</p>
+        </section>
+      )}
+      {session.note.trim() && (
+        <section className="report-sec">
+          <span className="report-sec-h">선생님 의견</span>
+          <p className="report-note-body rp-note-3">{session.note}</p>
+        </section>
+      )}
     </div>
   );
 
@@ -215,7 +331,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
         </div>
         {student && selectedResults.length > 0 && (
           <button className="primary" onClick={downloadPdf} disabled={busy}>
-            {busy ? '저장 중…' : '📄 PDF 저장 (2쪽)'}
+            {busy ? '저장 중…' : `📄 PDF 저장 (${pageCount}쪽)`}
           </button>
         )}
       </div>
@@ -301,7 +417,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
 
               <label className="fld">
                 <span>
-                  선생님 의견 <span className="hint">비워두면 인쇄에서 빠집니다 · {session.note.length}/{NOTE_MAX}자</span>
+                  선생님 의견 <span className="hint">비워두면 인쇄에서 빠집니다 · 3줄까지 인쇄 · {session.note.length}/{NOTE_MAX}자</span>
                 </span>
                 <textarea
                   className="report-note-input"
@@ -350,8 +466,8 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
 
           <div className="print-preview">
             {/* ── 1쪽 ── */}
-            <div ref={page1Ref} className="report-capture">
-              <Letterhead page="1 / 2" />
+            <div ref={page1Ref} className={`report-capture${splitNotes ? ' rp-wide' : ''}`}>
+              <Letterhead page={`1 / ${pageCount}`} />
 
               <div className="rp-title-row">
                 <h1 className="rp-title">진단평가 결과 리포트</h1>
@@ -391,60 +507,34 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
                 </div>
               </div>
 
-              <section className="report-sec">
+              <section ref={analysisRef} className="report-sec">
                 <div className="rp-sec-row">
                   <span className="report-sec-h">유형별 강점과 약점</span>
-                  <span className="hint">정답률이 낮은 유형부터</span>
+                  {/* 난이도는 자리를 더 쓰지 않도록 이 머리줄에 얹는다.
+                      A4 한 쪽을 넘기지 않으려면 여기가 유일하게 남는 가로 공간이다. */}
+                  {levels.length > 0 ? (
+                    <span className="rp-levels">
+                      {levels.map((l) => (
+                        <span key={l.type} className="rp-lv">
+                          <b>{l.type}</b>
+                          <em>{Math.round(l.rate * 100)}%</em>
+                        </span>
+                      ))}
+                    </span>
+                  ) : (
+                    <span className="hint">정답률이 낮은 유형부터</span>
+                  )}
                 </div>
-                <div className="type-bars-wrap">
-                  <div className="type-radar-wrap">
-                    <TypeRadar stats={stats} />
-                  </div>
-                  <TypeBars stats={stats} />
+                {/* 막대를 옆에 세우면 레이더가 작아져 여덟 유형의 균형이 안 보인다.
+                    쪽이 나뉘어 1쪽이 분석 전용이 될 때만 레이더를 키우고 막대를 아래에 붙인다. */}
+                <div className="rp-radar-only">
+                  <TypeRadar stats={stats} />
                 </div>
+                {splitNotes && <TypeBars stats={stats} />}
               </section>
 
-              <section className="report-sec">
-                <span className="report-sec-h">응시 이력</span>
-                <table className="report-info-table">
-                  <thead>
-                    <tr>
-                      <th>시험지</th>
-                      <th style={{ width: 120 }}>응시일</th>
-                      <th style={{ width: 150 }}>정답률</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedResults.map((r) => {
-                      const ex = examById.get(r.examId);
-                      const sc = scoreOf(r.marks);
-                      return (
-                        <tr key={r.id}>
-                          <td>{ex?.title ?? '—'}</td>
-                          <td>{r.date}</td>
-                          <td>
-                            {sc.correct}/{sc.total} · {Math.round(sc.rate * 100)}%
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </section>
 
-              {summary.trim() && (
-                <section className="report-sec">
-                  <span className="report-sec-h">종합 의견</span>
-                  <p className="report-note-body">{summary}</p>
-                </section>
-              )}
-
-              {session.note.trim() && (
-                <section className="report-sec">
-                  <span className="report-sec-h">선생님 의견</span>
-                  <p className="report-note-body">{session.note}</p>
-                </section>
-              )}
+              {!splitNotes && movableBlocks}
 
               <div className="report-footer">
                 <div className="report-footer-left">
@@ -457,9 +547,18 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
               </div>
             </div>
 
-            {/* ── 2쪽 ── */}
+            {/* ── 기록·의견 쪽 (1쪽에 다 안 들어갈 때만) ── */}
+            {splitNotes && (
+              <div ref={notesPageRef} className="report-capture">
+                <Letterhead title="응시 이력 · 의견" page={`2 / ${pageCount}`} />
+                {movableBlocks}
+                <PlainFooter />
+              </div>
+            )}
+
+            {/* ── 마지막 쪽: 상담 카드 ── */}
             <div ref={page2Ref} className="report-capture">
-              <Letterhead title="상담 카드 · 추가 정보" page="2 / 2" />
+              <Letterhead title="상담 카드 · 추가 정보" page={`${pageCount} / ${pageCount}`} />
 
               <section className="report-sec">
                 <span className="report-sec-h">학생 정보</span>
@@ -489,7 +588,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
                   </div>
                   <div>
                     <span>상담일</span>
-                    <div className="rp-line">{session.consultDate || '20        년        월        일'}</div>
+                    <div className="rp-line">{session.consultDate || <DateBlank />}</div>
                   </div>
                 </div>
               </section>
@@ -564,7 +663,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
                 <div className="rp-sign">
                   <div>
                     <span>작성일</span>
-                    <div className="rp-line">{session.signDate || '20        년        월        일'}</div>
+                    <div className="rp-line">{session.signDate || <DateBlank />}</div>
                   </div>
                   <div style={{ flexGrow: 1 }}>
                     <span>성명 (서명/인)</span>

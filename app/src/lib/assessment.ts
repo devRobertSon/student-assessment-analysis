@@ -1,10 +1,33 @@
 // src/lib/assessment.ts — 진단평가 데이터(학생·시험지·채점) + CSV 임포트 + 집계
 // 저장: localStorage 단일 키 + JSON 백업
+// 채점 방식이 갈린다. 객관식은 O/X, 서술형은 0점~배점 사이의 부분점수를 준다.
+export type QFormat = '객관식' | '서술형';
+
 export interface ExamQuestion {
   no: number;
-  type: string; // 유형
+  type: string; // 유형 — 무엇을 하다 막히는가 (행동영역)
+  format?: QFormat; // 없으면 객관식
   answer?: string;
   points?: number;
+  // 아래 넷은 선택이다. 적어 두면 유형 말고 다른 축으로도 집계된다.
+  unit?: string; // 단원 — 무엇을 안 배웠는가
+  level?: string; // 난이도 — 어디서 멈추는가 (표준·상·최상)
+  source?: string; // 출처 교재
+  sourceNo?: string; // 그 교재에서의 문항 번호
+}
+
+export function isEssay(q: ExamQuestion): boolean {
+  return q.format === '서술형';
+}
+
+// 배점을 안 적은 시험지는 한 문항 1점으로 본다. 그러면 득점률이 곧 정답률이 된다.
+export function pointsOf(q: ExamQuestion): number {
+  return typeof q.points === 'number' && q.points > 0 ? q.points : 1;
+}
+
+// 4, 3.5처럼 필요한 자리까지만 보여준다
+export function fmtPoints(v: number): string {
+  return Number.isInteger(v) ? String(v) : String(Math.round(v * 10) / 10);
 }
 
 export interface Exam {
@@ -40,7 +63,25 @@ export interface Student {
 
 export interface Mark {
   no: number;
-  correct: boolean;
+  // 채점 당시의 값을 함께 적어둔다. 시험지를 나중에 고쳐도
+  // 이미 저장된 채점의 점수가 흔들리지 않는다.
+  earned: number; // 득점
+  points: number; // 배점
+}
+
+/** 만점을 받았는가. 객관식은 O, 서술형은 배점을 다 받은 경우. */
+export function isFullMark(m: Mark): boolean {
+  return m.earned >= m.points;
+}
+
+/**
+ * 채점 한 칸을 기록으로 만든다. 득점은 0~배점 사이로 자른다.
+ * 손으로 친 숫자든 CSV로 올린 값이든 여기를 지나므로, 저장된 뒤에는
+ * 득점이 배점을 넘는 기록이 있을 수 없다.
+ */
+export function makeMark(q: ExamQuestion, earned: number): Mark {
+  const points = pointsOf(q);
+  return { no: q.no, points, earned: Math.max(0, Math.min(points, earned)) };
 }
 
 export interface Result {
@@ -148,8 +189,21 @@ const HEADER_ALIASES: Record<string, string[]> = {
   subject: ['과목', 'subject'],
   answer: ['정답', 'answer', 'ans'],
   points: ['배점', '점수', 'points', 'score'],
+  format: ['형식', '문항형식', '유형구분', '문제형식', 'format'],
+  unit: ['단원', '영역', '대단원', 'unit'],
+  level: ['난이도', '수준', 'level'],
+  source: ['출처', '교재', '원교재', 'source'],
+  sourceNo: ['원문항', '원문항번호', '교재문항', 'sourceno'],
   title: ['시험지', '시험', '시험지명', '시험명', 'title', 'exam'],
 };
+
+// 서술형/논술형/서답형만 부분점수 대상으로 보고 나머지(객관식·단답형)는 O/X로 채점한다.
+const ESSAY_WORDS = ['서술', '논술', '서답'];
+
+export function normalizeFormat(raw: string): QFormat {
+  const v = raw.trim();
+  return ESSAY_WORDS.some((w) => v.includes(w)) ? '서술형' : '객관식';
+}
 
 function matchHeader(header: string): string | null {
   const h = header.trim().toLowerCase();
@@ -182,7 +236,11 @@ export function examQuestionsFromCsv(text: string): CsvParseResult {
   const idxSubject = header.indexOf('subject');
   const idxAnswer = header.indexOf('answer');
   const idxPoints = header.indexOf('points');
+  const idxFormat = header.indexOf('format');
   const idxTitle = header.indexOf('title');
+  const extra: [string, number][] = (['unit', 'level', 'source', 'sourceNo'] as const)
+    .map((k) => [k, header.indexOf(k)] as [string, number])
+    .filter(([, i]) => i !== -1);
 
   let title: string | undefined;
   let subject: string | undefined;
@@ -212,6 +270,13 @@ export function examQuestionsFromCsv(text: string): CsvParseResult {
     if (idxPoints !== -1) {
       const p = Number((cells[idxPoints] ?? '').trim());
       if (Number.isFinite(p)) q.points = p;
+    }
+    if (idxFormat !== -1 && (cells[idxFormat] ?? '').trim()) {
+      q.format = normalizeFormat(cells[idxFormat]);
+    }
+    for (const [key, idx] of extra) {
+      const v = (cells[idx] ?? '').trim();
+      if (v) (q as unknown as Record<string, string>)[key] = v;
     }
     if (idxTitle !== -1 && !title && (cells[idxTitle] ?? '').trim()) title = cells[idxTitle].trim();
     if (idxSubject !== -1 && !subject && (cells[idxSubject] ?? '').trim()) subject = cells[idxSubject].trim();
@@ -313,43 +378,75 @@ export function resultToCsv(
   questions: ExamQuestion[],
   marks: Mark[]
 ): string {
-  const byNo = new Map(marks.map((m) => [m.no, m.correct]));
-  const lines = ['학생,시험지,응시일,문항번호,OX'];
+  const byNo = new Map(marks.map((m) => [m.no, m]));
+  const lines = ['학생,시험지,응시일,문항번호,형식,배점,득점,OX'];
   for (const q of questions) {
-    const v = byNo.get(q.no);
-    const ox = v === undefined ? '' : v ? 'O' : 'X';
+    const m = byNo.get(q.no);
+    // 서술형은 득점 칸을, 객관식은 OX 칸을 채운다. 미입력 문항은 둘 다 비워 둔다.
+    const ox = m === undefined ? '' : isFullMark(m) ? 'O' : 'X';
+    const earned = m === undefined ? '' : fmtPoints(m.earned);
     lines.push(
-      [csvEscape(studentName), csvEscape(examTitle), csvEscape(date), String(q.no), ox].join(',')
+      [
+        csvEscape(studentName),
+        csvEscape(examTitle),
+        csvEscape(date),
+        String(q.no),
+        isEssay(q) ? '서술형' : '객관식',
+        fmtPoints(pointsOf(q)),
+        earned,
+        ox,
+      ].join(',')
     );
   }
   return '﻿' + lines.join('\r\n');
 }
 
-export function parseGradingCsv(text: string): { date?: string; ox: Record<number, boolean>; errors: string[] } {
+// 문항번호 → 득점. 서술형은 '득점' 열을, 객관식은 'OX' 열을 읽는다.
+// 둘 다 있으면 득점을 우선한다(부분점수가 더 구체적인 정보라서).
+/** 'full' = O 표시. 몇 점인지는 시험지의 배점이 정하므로 여기서 짐작하지 않는다. */
+export type GradedCell = number | 'full';
+
+export function parseGradingCsv(text: string): {
+  date?: string;
+  earned: Record<number, GradedCell>;
+  errors: string[];
+} {
   const rows = parseCsv(text);
   const errors: string[] = [];
-  if (rows.length < 2) return { ox: {}, errors: ['CSV에 데이터 행이 없습니다.'] };
+  if (rows.length < 2) return { earned: {}, errors: ['CSV에 데이터 행이 없습니다.'] };
   const header = rows[0];
   const idxNo = findCol(header, ['문항번호', '번호', '문항', '문제번호', 'no']);
   const idxOx = findCol(header, ['ox', 'o/x', '정답여부', '채점', 'result', '맞음']);
+  const idxEarned = findCol(header, ['득점', '획득점수', '점수', 'earned']);
   const idxDate = findCol(header, ['응시일', '날짜', 'date']);
-  if (idxNo === -1 || idxOx === -1) {
-    errors.push('문항번호·OX 열을 찾지 못했습니다.');
-    return { ox: {}, errors };
+  if (idxNo === -1 || (idxOx === -1 && idxEarned === -1)) {
+    errors.push('문항번호와 OX(또는 득점) 열을 찾지 못했습니다.');
+    return { earned: {}, errors };
   }
-  const ox: Record<number, boolean> = {};
+  const earned: Record<number, GradedCell> = {};
   let date: string | undefined;
   for (let r = 1; r < rows.length; r++) {
     const cells = rows[r];
     const no = Number((cells[idxNo] ?? '').replace(/[^0-9]/g, ''));
     if (!no) continue;
     if (idxDate >= 0 && !date && (cells[idxDate] ?? '').trim()) date = cells[idxDate].trim();
-    const val = (cells[idxOx] ?? '').trim().toUpperCase();
-    if (['O', '1', '맞음', '정답', 'TRUE', '○'].includes(val)) ox[no] = true;
-    else if (['X', '0', '틀림', '오답', 'FALSE', '×'].includes(val)) ox[no] = false;
+
+    const rawEarned = idxEarned >= 0 ? (cells[idxEarned] ?? '').trim() : '';
+    if (rawEarned !== '') {
+      const v = Number(rawEarned);
+      if (Number.isFinite(v) && v >= 0) {
+        earned[no] = v;
+        continue;
+      }
+      errors.push(`${r + 1}행: 득점이 숫자가 아닙니다 ("${rawEarned}").`);
+    }
+
+    const val = idxOx >= 0 ? (cells[idxOx] ?? '').trim().toUpperCase() : '';
+    if (['O', '1', '맞음', '정답', 'TRUE', '○'].includes(val)) earned[no] = 'full';
+    else if (['X', '0', '틀림', '오답', 'FALSE', '×'].includes(val)) earned[no] = 0;
     // 그 외(빈칸 등)는 미입력으로 둔다
   }
-  return { date, ox, errors };
+  return { date, earned, errors };
 }
 
 // ── 집계 ─────────────────────────────────────────────────
@@ -364,49 +461,100 @@ export function splitTypes(raw: string): string[] {
 
 export interface TypeStat {
   type: string;
+  total: number; // 문항 수
+  correct: number; // 만점 문항 수
+  points: number; // 배점 합
+  earned: number; // 득점 합
+  rate: number; // 득점률 0~1 (배점·서술형 부분점수가 없으면 정답률과 같다)
+}
+
+interface TypeAcc {
   total: number;
   correct: number;
-  rate: number; // 0~1
+  points: number;
+  earned: number;
 }
 
-export function typeStatsForResult(exam: Exam, marks: Mark[]): TypeStat[] {
-  const typeByNo = new Map<number, string[]>();
-  exam.questions.forEach((q) => typeByNo.set(q.no, splitTypes(q.type)));
-  const acc = new Map<string, { total: number; correct: number }>();
-  for (const m of marks) {
-    for (const type of typeByNo.get(m.no) ?? []) {
-      const a = acc.get(type) ?? { total: 0, correct: 0 };
-      a.total += 1;
-      if (m.correct) a.correct += 1;
-      acc.set(type, a);
+function accumulate(acc: Map<string, TypeAcc>, types: string[], m: Mark): void {
+  for (const type of types) {
+    const a = acc.get(type) ?? { total: 0, correct: 0, points: 0, earned: 0 };
+    a.total += 1;
+    if (isFullMark(m)) a.correct += 1;
+    a.points += m.points;
+    a.earned += m.earned;
+    acc.set(type, a);
+  }
+}
+
+function finishStats(acc: Map<string, TypeAcc>, order?: string[]): TypeStat[] {
+  const rows = [...acc.entries()].map(([type, a]) => ({
+    ...a,
+    type,
+    rate: a.points ? a.earned / a.points : 0,
+  }));
+  if (!order) {
+    // 유형은 약한 것부터 — 리포트의 레이더·막대가 이 순서를 그대로 쓴다
+    return rows.sort((a, b) => a.rate - b.rate || b.total - a.total);
+  }
+  const rank = new Map(order.map((k, i) => [k, i]));
+  return rows.sort((a, b) => (rank.get(a.type) ?? 999) - (rank.get(b.type) ?? 999));
+}
+
+// ── 집계 축 ──────────────────────────────────────────────
+// 한 시험에서 세 가지를 읽는다.
+//   유형   무엇을 하다 막히는가   — 약한 순
+//   단원   무엇을 안 배웠는가     — 시험지에 나온 순(교육과정 순)
+//   난이도 어디서 멈추는가        — 표준 → 상 → 최상
+export type Axis = 'type' | 'unit' | 'level';
+
+const LEVEL_ORDER = ['표준', '상', '최상'];
+
+function keysOf(q: ExamQuestion, axis: Axis): string[] {
+  if (axis === 'type') return splitTypes(q.type);
+  const v = (axis === 'unit' ? q.unit : q.level)?.trim();
+  return v ? [v] : [];
+}
+
+/** 축에 따른 정렬 기준. 유형은 undefined(약한 순), 나머지는 고정 순서. */
+function orderFor(exams: Exam[], axis: Axis): string[] | undefined {
+  if (axis === 'type') return undefined;
+  if (axis === 'level') return LEVEL_ORDER;
+  const seen: string[] = [];
+  for (const e of exams) {
+    for (const q of e.questions) {
+      for (const k of keysOf(q, axis)) if (!seen.includes(k)) seen.push(k);
     }
   }
-  return [...acc.entries()]
-    .map(([type, a]) => ({ type, total: a.total, correct: a.correct, rate: a.total ? a.correct / a.total : 0 }))
-    .sort((a, b) => a.rate - b.rate || b.total - a.total);
+  return seen;
 }
 
-// 학생의 여러 시험 결과를 유형별로 누적
-export function typeStatsCumulative(exams: Exam[], results: Result[]): TypeStat[] {
+export function statsForResult(exam: Exam, marks: Mark[], axis: Axis = 'type'): TypeStat[] {
+  const byNo = new Map<number, string[]>();
+  exam.questions.forEach((q) => byNo.set(q.no, keysOf(q, axis)));
+  const acc = new Map<string, TypeAcc>();
+  for (const m of marks) accumulate(acc, byNo.get(m.no) ?? [], m);
+  return finishStats(acc, orderFor([exam], axis));
+}
+
+// 학생의 여러 시험 결과를 한 축으로 누적
+export function statsCumulative(exams: Exam[], results: Result[], axis: Axis = 'type'): TypeStat[] {
   const examById = new Map(exams.map((e) => [e.id, e]));
-  const acc = new Map<string, { total: number; correct: number }>();
+  const acc = new Map<string, TypeAcc>();
+  const used: Exam[] = [];
   for (const res of results) {
     const exam = examById.get(res.examId);
     if (!exam) continue;
-    const typeByNo = new Map<number, string[]>();
-    exam.questions.forEach((q) => typeByNo.set(q.no, splitTypes(q.type)));
-    for (const m of res.marks) {
-      for (const type of typeByNo.get(m.no) ?? []) {
-        const a = acc.get(type) ?? { total: 0, correct: 0 };
-        a.total += 1;
-        if (m.correct) a.correct += 1;
-        acc.set(type, a);
-      }
-    }
+    used.push(exam);
+    const byNo = new Map<number, string[]>();
+    exam.questions.forEach((q) => byNo.set(q.no, keysOf(q, axis)));
+    for (const m of res.marks) accumulate(acc, byNo.get(m.no) ?? [], m);
   }
-  return [...acc.entries()]
-    .map(([type, a]) => ({ type, total: a.total, correct: a.correct, rate: a.total ? a.correct / a.total : 0 }))
-    .sort((a, b) => a.rate - b.rate || b.total - a.total);
+  return finishStats(acc, orderFor(used, axis));
+}
+
+/** 그 축을 쓸 수 있는 시험지인지 — 단원·난이도를 안 적었으면 탭을 숨긴다. */
+export function hasAxis(exam: Exam, axis: Axis): boolean {
+  return exam.questions.some((q) => keysOf(q, axis).length > 0);
 }
 
 // 등록된 시험지들에 실제로 등장하는 문항 유형의 가짓수.
@@ -417,10 +565,23 @@ export function countTypes(exams: Exam[]): number {
   return seen.size;
 }
 
-export function scoreOf(marks: Mark[]): { correct: number; total: number; rate: number } {
+// total·correct는 문항 수, points·earned는 점수.
+export function scoreOf(marks: Mark[]): {
+  correct: number;
+  total: number;
+  earned: number;
+  points: number;
+  rate: number;
+} {
   const total = marks.length;
-  const correct = marks.filter((m) => m.correct).length;
-  return { correct, total, rate: total ? correct / total : 0 };
+  const correct = marks.filter(isFullMark).length;
+  let earned = 0;
+  let points = 0;
+  for (const m of marks) {
+    earned += m.earned;
+    points += m.points;
+  }
+  return { correct, total, earned, points, rate: points ? earned / points : 0 };
 }
 
 export function exportAssessmentJson(d: AssessmentData): void {

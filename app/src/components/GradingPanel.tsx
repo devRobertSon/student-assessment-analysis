@@ -1,15 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AssessmentData,
+  Axis,
   Mark,
   Result,
   downloadText,
+  fmtPoints,
+  hasAxis,
+  isEssay,
+  makeMark,
   newId,
   parseGradingCsv,
+  pointsOf,
   resultToCsv,
   scoreOf,
+  statsForResult,
   todayStr,
-  typeStatsForResult,
 } from '../lib/assessment';
 import { rateTag } from './TypeRadar';
 
@@ -18,13 +24,24 @@ interface Props {
   setData: (d: AssessmentData) => void;
 }
 
-type Cell = boolean | null; // true=O(맞음), false=X(틀림), null=미입력
+// 칸에 담기는 값은 '득점'이다. 객관식은 0 아니면 배점,
+// 서술형은 그 사이 아무 값이나 올 수 있다. null은 미입력.
+type Cell = number | null;
+
+// 한 시험에서 읽어 내는 세 가지 축
+const AXES: { key: Axis; label: string }[] = [
+  { key: 'type', label: '유형' },
+  { key: 'unit', label: '단원' },
+  { key: 'level', label: '난이도' },
+];
+const AXIS_LABEL: Record<Axis, string> = { type: '유형', unit: '단원', level: '난이도' };
 
 export default function GradingPanel({ data, setData }: Props) {
   const [studentId, setStudentId] = useState('');
   const [examId, setExamId] = useState('');
   const [cells, setCells] = useState<Record<number, Cell>>({});
   const [date, setDate] = useState(todayStr());
+  const [axis, setAxis] = useState<Axis>('type');
   const csvRef = useRef<HTMLInputElement>(null);
 
   const exam = data.exams.find((e) => e.id === examId);
@@ -44,7 +61,7 @@ export default function GradingPanel({ data, setData }: Props) {
     const map: Record<number, Cell> = {};
     exam.questions.forEach((q) => (map[q.no] = null));
     if (existing) {
-      existing.marks.forEach((m) => (map[m.no] = m.correct));
+      existing.marks.forEach((m) => (map[m.no] = m.earned));
       setDate(existing.date);
     } else {
       setDate(todayStr());
@@ -52,22 +69,36 @@ export default function GradingPanel({ data, setData }: Props) {
     setCells(map);
   }, [examId, studentId, exam, existing]);
 
-  const setCell = (no: number, v: Cell) => setCells((c) => ({ ...c, [no]: c[no] === v ? null : v }));
-  const setAll = (v: Cell) => {
+  // 같은 값을 다시 누르면 미입력으로 되돌린다(O를 잘못 눌렀을 때 지우는 길).
+  const setCell = (no: number, v: number) => setCells((c) => ({ ...c, [no]: c[no] === v ? null : v }));
+  const setScore = (no: number, raw: string, max: number) =>
+    setCells((c) => {
+      if (raw.trim() === '') return { ...c, [no]: null };
+      const v = Number(raw);
+      if (!Number.isFinite(v)) return c;
+      return { ...c, [no]: Math.max(0, Math.min(max, v)) };
+    });
+  const setAll = (v: 'full' | 'zero' | 'clear') => {
     if (!exam) return;
     const map: Record<number, Cell> = {};
-    exam.questions.forEach((q) => (map[q.no] = v));
+    exam.questions.forEach((q) => {
+      map[q.no] = v === 'clear' ? null : v === 'full' ? pointsOf(q) : 0;
+    });
     setCells(map);
   };
 
   const marks: Mark[] = exam
     ? exam.questions
         .filter((q) => cells[q.no] !== null && cells[q.no] !== undefined)
-        .map((q) => ({ no: q.no, correct: cells[q.no] === true }))
+        .map((q) => makeMark(q, cells[q.no] as number))
     : [];
   const answered = marks.length;
   const score = scoreOf(marks);
-  const stats = exam ? typeStatsForResult(exam, marks) : [];
+  const stats = exam ? statsForResult(exam, marks, axis) : [];
+  const fullPoints = exam ? exam.questions.reduce((a, q) => a + pointsOf(q), 0) : 0;
+  const essayCount = exam ? exam.questions.filter(isEssay).length : 0;
+  // 배점이나 서술형이 있는 시험지인지. 둘 다 없으면 한 문항 1점이라 점수 = 문항 수다.
+  const scoredExam = !!exam && (essayCount > 0 || fullPoints !== exam.questions.length);
 
   const save = () => {
     if (!studentId || !exam) {
@@ -96,9 +127,12 @@ export default function GradingPanel({ data, setData }: Props) {
       alert('먼저 학생과 시험지를 선택하세요.');
       return;
     }
-    const { date: d, ox, errors } = parseGradingCsv(await file.text());
+    const { date: d, earned, errors } = parseGradingCsv(await file.text());
     const map: Record<number, Cell> = {};
-    exam.questions.forEach((q) => (map[q.no] = q.no in ox ? ox[q.no] : null));
+    exam.questions.forEach((q) => {
+      const v = earned[q.no];
+      map[q.no] = v === undefined ? null : makeMark(q, v === 'full' ? pointsOf(q) : v).earned;
+    });
     setCells(map);
     if (d) setDate(d);
     alert('채점표를 불러왔습니다. 확인 후 [채점 저장]을 누르세요.' + (errors.length ? '\n\n주의:\n' + errors.join('\n') : ''));
@@ -111,7 +145,10 @@ export default function GradingPanel({ data, setData }: Props) {
       <div className="screen-head">
         <div>
           <h1>채점 입력</h1>
-          <p className="muted">문항마다 O/X만 누르면 유형별 집계가 바로 갱신됩니다.</p>
+          <p className="muted">
+            객관식은 O/X만 누르면 됩니다. 서술형은 가운데 칸에 부분점수를 적고, 만점·0점은 O·X로
+            바로 넣습니다.
+          </p>
         </div>
       </div>
 
@@ -165,13 +202,13 @@ export default function GradingPanel({ data, setData }: Props) {
             {exam && (
               <>
                 <div className="assess-row grade-tools">
-                  <button className="mini" onClick={() => setAll(true)}>
+                  <button className="mini" onClick={() => setAll('full')}>
                     전체 O
                   </button>
-                  <button className="mini" onClick={() => setAll(false)}>
+                  <button className="mini" onClick={() => setAll('zero')}>
                     전체 X
                   </button>
-                  <button className="mini ghost" onClick={() => setAll(null)}>
+                  <button className="mini ghost" onClick={() => setAll('clear')}>
                     초기화
                   </button>
                   <span style={{ marginLeft: 'auto' }} />
@@ -197,24 +234,45 @@ export default function GradingPanel({ data, setData }: Props) {
                 <div className="ox-grid">
                   {exam.questions.map((q) => {
                     const v = cells[q.no];
+                    const pts = pointsOf(q);
+                    const essay = isEssay(q);
                     return (
-                      <div key={q.no} className="ox-item">
+                      <div key={q.no} className={`ox-item ${essay ? 'essay' : ''}`}>
                         <span className="ox-no">{q.no}</span>
-                        <span className="t">{q.type}</span>
+                        <span className="t">
+                          {q.type}
+                          {essay && <span className="q-fmt">서술형</span>}
+                        </span>
                         <span className="ox-btns">
+                          {/* 서술형은 O/X 사이에 부분점수 칸을 둔다. O는 만점, X는 0점. */}
                           <button
-                            className={`ox-o ${v === true ? 'on' : ''}`}
-                            onClick={() => setCell(q.no, true)}
-                            aria-label={`${q.no}번 맞음`}
-                            aria-pressed={v === true}
+                            className={`ox-o ${v === pts ? 'on' : ''}`}
+                            onClick={() => setCell(q.no, pts)}
+                            aria-label={`${q.no}번 ${essay ? '만점' : '맞음'}`}
+                            aria-pressed={v === pts}
                           >
                             O
                           </button>
+                          {essay && (
+                            <>
+                              <input
+                                className="ox-score"
+                                type="number"
+                                min={0}
+                                max={pts}
+                                step={0.5}
+                                value={v === null || v === undefined ? '' : v}
+                                onChange={(e) => setScore(q.no, e.target.value, pts)}
+                                aria-label={`${q.no}번 득점 (만점 ${fmtPoints(pts)}점)`}
+                              />
+                              <span className="ox-max">/{fmtPoints(pts)}</span>
+                            </>
+                          )}
                           <button
-                            className={`ox-x ${v === false ? 'on' : ''}`}
-                            onClick={() => setCell(q.no, false)}
-                            aria-label={`${q.no}번 틀림`}
-                            aria-pressed={v === false}
+                            className={`ox-x ${v === 0 ? 'on' : ''}`}
+                            onClick={() => setCell(q.no, 0)}
+                            aria-label={`${q.no}번 ${essay ? '0점' : '틀림'}`}
+                            aria-pressed={v === 0}
                           >
                             X
                           </button>
@@ -231,13 +289,18 @@ export default function GradingPanel({ data, setData }: Props) {
             <aside className="grade-side">
               <div className="assess-scorebar">
                 <div className="lbl">입력 중인 점수</div>
+                {/* 퍼센트와 분수는 둘 다 '입력한 문항'을 기준으로 한다.
+                    전체 만점은 아랫줄에 따로 적어 두 수가 서로 어긋나 보이지 않게 한다. */}
                 <div className="assess-row" style={{ alignItems: 'baseline', gap: 8 }}>
                   <span className="big">{Math.round(score.rate * 100)}</span>
                   <span style={{ fontSize: 17, fontWeight: 500, color: 'var(--navy-pale)' }}>
-                    % · {score.correct}/{exam.questions.length}
+                    % · {fmtPoints(score.earned)}/{fmtPoints(score.points)}점
                   </span>
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--navy-soft)', marginTop: 5 }}>
+                  만점 {score.correct}/{exam.questions.length}문항 · 전체 {fmtPoints(fullPoints)}점
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--navy-soft)', marginTop: 3 }}>
                   {answered === exam.questions.length
                     ? `${exam.questions.length}문항 모두 입력 완료`
                     : `${exam.questions.length - answered}문항 남음`}
@@ -245,16 +308,34 @@ export default function GradingPanel({ data, setData }: Props) {
               </div>
 
               <div className="assess-card grow">
-                <h3>유형별 집계</h3>
+                <div className="tally-head">
+                  <h3>집계</h3>
+                  {/* 단원·난이도를 적어 둔 시험지에서만 그 축이 나온다 */}
+                  <span className="axis-tabs">
+                    {AXES.filter((a) => a.key === 'type' || hasAxis(exam, a.key)).map((a) => (
+                      <button
+                        key={a.key}
+                        className={axis === a.key ? 'on' : ''}
+                        onClick={() => setAxis(a.key)}
+                        aria-pressed={axis === a.key}
+                      >
+                        {a.label}
+                      </button>
+                    ))}
+                  </span>
+                </div>
                 {stats.length === 0 ? (
-                  <p className="hint">O/X를 입력하면 유형별로 집계됩니다.</p>
+                  <p className="hint">O/X를 입력하면 {AXIS_LABEL[axis]}별로 집계됩니다.</p>
                 ) : (
                   <div className="tally">
                     {stats.map((s) => (
                       <div key={s.type} className="tally-row">
                         <span className="t">{s.type}</span>
+                        {/* 배점이나 서술형이 있으면 점수로, 아니면 문항 수로 보여준다 */}
                         <span className="c">
-                          {s.correct}/{s.total}
+                          {scoredExam
+                            ? `${fmtPoints(s.earned)}/${fmtPoints(s.points)}점`
+                            : `${s.correct}/${s.total}`}
                         </span>
                         <span className="p">{Math.round(s.rate * 100)}%</span>
                         <span className="g">{rateTag(s.rate).label}</span>
