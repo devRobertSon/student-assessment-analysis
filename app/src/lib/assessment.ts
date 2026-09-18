@@ -11,7 +11,7 @@ export interface Exam {
   id: string;
   title: string;
   subject: string;
-  date: string; // YYYY-MM-DD
+  date: string; // 등록일 YYYY-MM-DD (응시일은 채점 결과 Result.date에 학생별로 기록된다)
   questions: ExamQuestion[];
 }
 

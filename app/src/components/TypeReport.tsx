@@ -1,48 +1,64 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toJpeg } from 'html-to-image';
-import { AssessmentData, TypeStat, scoreOf, todayStr, typeStatsCumulative } from '../lib/assessment';
+import {
+  AssessmentData,
+  TARGET_SCHOOLS,
+  TypeStat,
+  scoreOf,
+  todayStr,
+  typeStatsCumulative,
+} from '../lib/assessment';
 import { logoUrl, sealUrl } from '../lib/brand';
-import TypeRadar, { rateColor } from './TypeRadar';
+import TypeRadar from './TypeRadar';
 import TypeBars from './TypeBars';
 
-// 리포트 뒤 상담 카드에 넣을 목표 고등학교 선택지
-const TARGET_SCHOOLS = ['영재학교', '과학고', '외고', '국제고', '전사고', '의대 준비'];
+const SUMMARY_MAX = 130;
+const NOTE_MAX = 170;
+const MEMO_MAX = 200;
 
-// 자동 생성 직인(도장) — assets/brand/seal.* 이미지가 없을 때 사용.
-// 일반 회사·연구소 원형 직인 형태: 기관명이 원을 따라 곡선으로 둘러싸고,
-// 좌우 구분 마름모, 중앙 별, 하단 짧은 라벨.
-const SEAL_RED = '#C0392B';
-// 사각 직인(전각 인장) — 기관명 9자를 3×3 격자로, 이중 사각 테두리.
 const SEAL_ROWS = [
   ['알', '파', '학'],
   ['원', '교', '육'],
   ['연', '구', '소'],
 ];
 const SEAL_CELL = [32, 66, 100];
+const SEAL_RED = '#C0392B';
+
 function SealStamp() {
   return (
     <svg viewBox="0 0 132 132" className="report-seal-svg" role="img" aria-label="알파학원 교육연구소 직인">
-      {/* 이중 사각 테두리 */}
       <rect x="6" y="6" width="120" height="120" rx="7" fill="rgba(192,57,43,0.05)" stroke={SEAL_RED} strokeWidth="5" />
       <rect x="15" y="15" width="102" height="102" rx="3" fill="none" stroke={SEAL_RED} strokeWidth="1.3" />
-      {/* 기관명 3×3 격자(좌→우, 위→아래) */}
       {SEAL_ROWS.map((row, r) =>
         row.map((ch, c) => (
-          <text
-            key={`${r}-${c}`}
-            x={SEAL_CELL[c]}
-            y={SEAL_CELL[r] + 10}
-            textAnchor="middle"
-            fontSize="27"
-            fontWeight="800"
-            fill={SEAL_RED}
-          >
+          <text key={`${r}-${c}`} x={SEAL_CELL[c]} y={SEAL_CELL[r] + 10} textAnchor="middle" fontSize="27" fontWeight="800" fill={SEAL_RED}>
             {ch}
           </text>
         ))
       )}
     </svg>
   );
+}
+
+// 유형별 결과에서 종합 의견 초안을 만든다. 선생님이 그대로 쓰거나 고쳐 쓴다.
+function autoSummary(stats: TypeStat[], correct: number, total: number): string {
+  if (stats.length === 0 || total === 0) return '';
+  const name = (list: TypeStat[]) => list.slice(0, 3).map((s) => s.type).join(', ');
+  const weak = stats.filter((s) => s.rate < 0.5);
+  const strong = stats.filter((s) => s.rate >= 0.8);
+  const wrong = total - correct;
+  const weakWrong = weak.reduce((a, s) => a + (s.total - s.correct), 0);
+
+  const parts: string[] = [];
+  if (weak.length > 0) {
+    parts.push(`${name(weak)} 유형에서 실점이 집중되었습니다.`);
+    if (wrong > 0 && weakWrong > 0) parts.push(`오답 ${wrong}문항 중 ${weakWrong}문항이 여기에서 나왔습니다.`);
+  } else {
+    parts.push('특별히 약한 유형 없이 고르게 맞혔습니다.');
+  }
+  if (strong.length > 0) parts.push(`${name(strong)}은(는) 안정적입니다.`);
+  const text = parts.join(' ');
+  return text.length > SUMMARY_MAX ? text.slice(0, SUMMARY_MAX - 1) + '…' : text;
 }
 
 interface Props {
@@ -52,44 +68,26 @@ interface Props {
   onBack: () => void;
 }
 
-// 이 문제 수 이상인 유형만 차트(막대·레이더)에 표시. 그 미만은 아래 비고 표로.
-// 1로 두면 문항이 1개인 유형도 모두 차트에 포함(비고 표는 사실상 생략).
-const MIN_CHART_TOTAL = 1;
-
-function MinorNote({ stats }: { stats: TypeStat[] }) {
-  if (stats.length === 0) return null;
-  return (
-    <div className="type-minor">
-      <div className="type-minor-head">
-        참고 · 문제 수가 적은 유형 (각 {MIN_CHART_TOTAL}문제 미만이라 차트에서 제외)
-      </div>
-      <table className="type-minor-table">
-        <thead>
-          <tr><th>유형</th><th>정답률</th><th>문항</th></tr>
-        </thead>
-        <tbody>
-          {stats.map((s) => (
-            <tr key={s.type}>
-              <td>{s.type}</td>
-              <td style={{ color: rateColor(s.rate), fontWeight: 700 }}>{Math.round(s.rate * 100)}%</td>
-              <td className="muted">{s.correct}/{s.total}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+// 인쇄물에만 쓰이고 저장하지 않는 입력들
+interface SessionFields {
+  summary: string;
+  note: string;
+  consultDate: string;
+  memo: string;
+  signDate: string;
+  signName: string;
 }
+const EMPTY_SESSION: SessionFields = { summary: '', note: '', consultDate: '', memo: '', signDate: '', signName: '' };
 
 export default function TypeReport({ data, studentId, setStudentId, onBack }: Props) {
-  // 선생님 종합 의견은 저장하지 않는 임시 입력 — 학생을 바꾸면 비워짐
-  const [note, setNote] = useState('');
+  const [session, setSession] = useState<SessionFields>(EMPTY_SESSION);
+  const [summaryTouched, setSummaryTouched] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [busy, setBusy] = useState(false);
-  const captureRef = useRef<HTMLDivElement>(null);
-  const appendRef = useRef<HTMLDivElement>(null);
+  const page1Ref = useRef<HTMLDivElement>(null);
+  const page2Ref = useRef<HTMLDivElement>(null);
 
   const student = data.students.find((s) => s.id === studentId);
   const examById = useMemo(() => new Map(data.exams.map((e) => [e.id, e])), [data.exams]);
@@ -99,19 +97,17 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
     [data.results, studentId]
   );
 
-  // 학생이 바뀌면 기간 초기화 + 그 학생의 모든 응시를 기본 선택
   useEffect(() => {
     setFromDate('');
     setToDate('');
     setSelectedIds(new Set(studentResults.map((r) => r.id)));
   }, [studentId, studentResults.length]);
 
-  // 학생이 바뀌면 선생님 의견 칸 비움(저장하지 않음)
   useEffect(() => {
-    setNote('');
+    setSession(EMPTY_SESSION);
+    setSummaryTouched(false);
   }, [studentId]);
 
-  // 기간을 정하면 그 기간에 응시한 시험을 선택(날짜 문자열 YYYY-MM-DD 사전순 비교)
   const applyRange = (from: string, to: string) => {
     setFromDate(from);
     setToDate(to);
@@ -123,13 +119,17 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
     () => studentResults.filter((r) => selectedIds.has(r.id)),
     [studentResults, selectedIds]
   );
-
   const stats: TypeStat[] = useMemo(
     () => (studentId ? typeStatsCumulative(data.exams, selectedResults) : []),
     [studentId, data.exams, selectedResults]
   );
-  const mainStats = useMemo(() => stats.filter((s) => s.total >= MIN_CHART_TOTAL), [stats]);
-  const minorStats = useMemo(() => stats.filter((s) => s.total < MIN_CHART_TOTAL), [stats]);
+  const total = scoreOf(selectedResults.flatMap((r) => r.marks));
+
+  // 선생님이 손대기 전까지는 자동 문안을 따라간다.
+  const draftSummary = useMemo(() => autoSummary(stats, total.correct, total.total), [stats, total.correct, total.total]);
+  const summary = summaryTouched ? session.summary : draftSummary;
+
+  const set = (patch: Partial<SessionFields>) => setSession((s) => ({ ...s, ...patch }));
 
   const toggle = (id: string) =>
     setSelectedIds((prev) => {
@@ -138,47 +138,40 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
       else next.add(id);
       return next;
     });
-  const selectAll = () => applyRange('', '');
-  const clearAll = () => {
-    setFromDate('');
-    setToDate('');
-    setSelectedIds(new Set());
-  };
 
   const today = todayStr();
+  const lastExam = selectedResults.length ? examById.get(selectedResults[selectedResults.length - 1].examId) : undefined;
+  const lastDate = selectedResults.length ? selectedResults[selectedResults.length - 1].date : '';
+  const questionCount = selectedResults.reduce((a, r) => a + r.marks.length, 0);
 
   const downloadPdf = async () => {
-    if (!captureRef.current || !student) return;
+    if (!page1Ref.current || !student) return;
     setBusy(true);
     try {
       const { jsPDF } = await import('jspdf');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
-      const MARGIN = 12; // 상하좌우 여백(mm) — 인쇄 시 잘림 방지
+      const MARGIN = 12;
       const contentW = pageW - MARGIN * 2;
       const contentH = pageH - MARGIN * 2;
 
-      // 캡처 영역(div)을 이미지로 만들어 여백 안쪽에 페이지 단위로 배치
       const addCapture = async (el: HTMLElement, startNewPage: boolean) => {
         const url = await toJpeg(el, { backgroundColor: '#ffffff', quality: 0.92, pixelRatio: 2, cacheBust: true });
         const props = pdf.getImageProperties(url);
         const imgH = (props.height * contentW) / props.width;
-        // -0.5mm 여유: 딱 한 페이지 높이일 때 부동소수 오차로 빈 페이지가 더 생기는 것 방지
         const nPages = Math.max(1, Math.ceil((imgH - 0.5) / contentH));
         for (let k = 0; k < nPages; k++) {
           if (startNewPage || k > 0) pdf.addPage();
           pdf.addImage(url, 'JPEG', MARGIN, MARGIN - k * contentH, contentW, imgH);
-          // 인접 구간이 상·하 여백으로 넘쳐 보이지 않도록 여백 영역을 흰색으로 덮음
           pdf.setFillColor(255, 255, 255);
           pdf.rect(0, 0, pageW, MARGIN, 'F');
           pdf.rect(0, pageH - MARGIN, pageW, MARGIN, 'F');
         }
       };
 
-      await addCapture(captureRef.current, false); // 1페이지~: 리포트
-      if (appendRef.current) await addCapture(appendRef.current, true); // 뒤: 상담 카드(3개 표)
-
+      await addCapture(page1Ref.current, false);
+      if (page2Ref.current) await addCapture(page2Ref.current, true);
       pdf.save(`리포트_${student.name}_${today}.pdf`);
     } catch (e) {
       console.error(e);
@@ -188,47 +181,71 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
     }
   };
 
+  const Letterhead = ({ title, page }: { title?: string; page: string }) => (
+    <div className="report-letterhead">
+      {logoUrl ? <img src={logoUrl} className="report-lh-logo" alt="" /> : null}
+      <div className="report-lh-text">
+        <div className="report-lh-org">알파학원 교육연구소</div>
+        {title && <div className="report-lh-title">{title}</div>}
+      </div>
+      <span style={{ flexGrow: 1 }} />
+      <span className="report-footer-date">발행일 {today}</span>
+      <span className="report-footer-date">{page}</span>
+    </div>
+  );
+
   return (
     <div className="assess-pane">
-      <div className="assess-row wrap no-print">
-        <button className="mini ghost" onClick={onBack}>← 학생</button>
-        <label className="assess-field">
-          학생
-          <select value={studentId} onChange={(e) => setStudentId(e.target.value)}>
-            <option value="">선택</option>
-            {data.students.map((s) => (
-              <option key={s.id} value={s.id}>{s.name} ({s.grade})</option>
-            ))}
-          </select>
-        </label>
-        {studentId && studentResults.length > 0 && (
-          <button className="primary" onClick={downloadPdf} disabled={busy || selectedResults.length === 0}>
-            {busy ? '저장 중…' : '📄 리포트 PDF 저장'}
+      <div className="screen-head no-print">
+        <div className="assess-row">
+          <button className="mini ghost" onClick={onBack}>
+            ← 학생
+          </button>
+          <label className="assess-field">
+            학생
+            <select value={studentId} onChange={(e) => setStudentId(e.target.value)}>
+              <option value="">선택</option>
+              {data.students.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.grade})
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        {student && selectedResults.length > 0 && (
+          <button className="primary" onClick={downloadPdf} disabled={busy}>
+            {busy ? '저장 중…' : '📄 PDF 저장 (2쪽)'}
           </button>
         )}
       </div>
 
       {!studentId ? (
-        <p className="muted">학생을 선택하면 유형별 정답률이 표시됩니다.</p>
+        <p className="muted">학생을 선택하면 리포트가 표시됩니다.</p>
       ) : studentResults.length === 0 ? (
-        <p className="muted">이 학생의 채점 결과가 없습니다. [채점 입력]에서 먼저 채점하세요.</p>
+        <p className="muted">이 학생의 채점 결과가 없습니다. [채점]에서 먼저 채점하세요.</p>
       ) : (
         <>
-          <div className="assess-card">
+          <div className="assess-card no-print">
             <div className="report-pick-head">
-              <b>리포트에 포함할 시험</b>
+              <h3 style={{ margin: 0 }}>리포트에 포함할 시험</h3>
               <span className="report-pick-actions">
-                <button className="mini" onClick={selectAll}>전체 선택</button>
-                <button className="mini ghost" onClick={clearAll}>전체 해제</button>
-                <span className="muted">{selectedResults.length}/{studentResults.length}개 선택</span>
+                <button className="mini ghost" onClick={() => applyRange('', '')}>
+                  전체 선택
+                </button>
+                <button className="mini ghost" onClick={() => setSelectedIds(new Set())}>
+                  전체 해제
+                </button>
+                <span className="hint">
+                  {selectedResults.length}/{studentResults.length}개 선택
+                </span>
               </span>
             </div>
             <div className="report-range">
               <span className="report-range-label">기간으로 선택</span>
-              <input type="date" value={fromDate} max={toDate || undefined} onChange={(e) => applyRange(e.target.value, toDate)} />
+              <input type="date" value={fromDate} onChange={(e) => applyRange(e.target.value, toDate)} aria-label="시작일" />
               <span>~</span>
-              <input type="date" value={toDate} min={fromDate || undefined} onChange={(e) => applyRange(fromDate, e.target.value)} />
-              <span className="muted">기간을 정하면 그 기간에 응시한 시험이 선택됩니다. (개별 체크로 조정 가능)</span>
+              <input type="date" value={toDate} onChange={(e) => applyRange(fromDate, e.target.value)} aria-label="종료일" />
             </div>
             <div className="report-exam-list">
               {studentResults.map((r) => {
@@ -238,7 +255,9 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
                   <label key={r.id} className={`report-exam-item ${selectedIds.has(r.id) ? 'on' : ''}`}>
                     <input type="checkbox" checked={selectedIds.has(r.id)} onChange={() => toggle(r.id)} />
                     <span className="report-exam-name">{ex?.title ?? '시험'}</span>
-                    <span className="muted">{r.date} · {sc.correct}/{sc.total} ({Math.round(sc.rate * 100)}%)</span>
+                    <span className="hint">
+                      {r.date} · {sc.correct}/{sc.total} ({Math.round(sc.rate * 100)}%)
+                    </span>
                   </label>
                 );
               })}
@@ -246,202 +265,323 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
           </div>
 
           <div className="assess-card no-print report-note-edit">
-            <h3>✍ 선생님 종합 의견 · 추천 수업</h3>
-            <p className="muted">상담 결과, 추천 수업 등을 적으면 아래 리포트와 <b>PDF 출력에 함께</b> 나옵니다. (저장되지 않는 임시 입력 — 학생을 바꾸면 비워집니다)</p>
-            <textarea
-              className="report-note-input"
-              rows={5}
-              placeholder="예) 자료 해석·분석 추론 유형이 약해 원자료 해석 훈련이 필요합니다. 다음 학기에는 '수학 중2-1'과 '과학 중2-1' 수강을 추천합니다."
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
+            <h3>인쇄 전 입력</h3>
+            <p className="hint" style={{ marginBottom: 12 }}>
+              여기에 적은 내용이 아래 미리보기와 PDF에 그대로 들어갑니다. (저장되지 않는 임시 입력 — 학생을 바꾸면 비워집니다)
+            </p>
+
+            <div className="edit-grid">
+              <label className="fld">
+                <span>
+                  종합 의견 <span className="hint">자동 생성 · 고쳐 쓸 수 있습니다 · {summary.length}/{SUMMARY_MAX}자</span>
+                </span>
+                <textarea
+                  className="report-note-input"
+                  rows={3}
+                  maxLength={SUMMARY_MAX}
+                  value={summary}
+                  onChange={(e) => {
+                    setSummaryTouched(true);
+                    set({ summary: e.target.value });
+                  }}
+                />
+                {summaryTouched && (
+                  <button
+                    className="mini ghost"
+                    style={{ alignSelf: 'flex-start' }}
+                    onClick={() => {
+                      setSummaryTouched(false);
+                      set({ summary: '' });
+                    }}
+                  >
+                    자동 문안으로 되돌리기
+                  </button>
+                )}
+              </label>
+
+              <label className="fld">
+                <span>
+                  선생님 의견 <span className="hint">비워두면 인쇄에서 빠집니다 · {session.note.length}/{NOTE_MAX}자</span>
+                </span>
+                <textarea
+                  className="report-note-input"
+                  rows={4}
+                  maxLength={NOTE_MAX}
+                  placeholder="상담 내용이나 추천 수업을 적으세요."
+                  value={session.note}
+                  onChange={(e) => set({ note: e.target.value })}
+                />
+              </label>
+
+              <label className="fld">
+                <span>
+                  상담 메모 · 특이사항 <span className="hint">2쪽 · {session.memo.length}/{MEMO_MAX}자</span>
+                </span>
+                <textarea
+                  className="report-note-input"
+                  rows={4}
+                  maxLength={MEMO_MAX}
+                  placeholder="비워두면 빈칸으로 인쇄되어 손으로 적을 수 있습니다."
+                  value={session.memo}
+                  onChange={(e) => set({ memo: e.target.value })}
+                />
+              </label>
+
+              <div className="fld">
+                <span>2쪽 · 상담일과 서명란</span>
+                <div className="assess-row wrap">
+                  <label className="assess-field">
+                    상담일
+                    <input type="text" placeholder={today} value={session.consultDate} onChange={(e) => set({ consultDate: e.target.value })} />
+                  </label>
+                  <label className="assess-field">
+                    동의서 작성일
+                    <input type="text" placeholder={today} value={session.signDate} onChange={(e) => set({ signDate: e.target.value })} />
+                  </label>
+                  <label className="assess-field">
+                    성명
+                    <input type="text" placeholder="비워두면 빈칸" value={session.signName} onChange={(e) => set({ signName: e.target.value })} />
+                  </label>
+                </div>
+                <p className="hint">학생 정보·목표 고등학교·진도는 [학생] 화면에 적어둔 값이 그대로 들어갑니다.</p>
+              </div>
+            </div>
           </div>
 
-          {selectedResults.length === 0 ? (
-            <p className="muted">시험을 하나 이상 선택하세요.</p>
-          ) : (
-            <div ref={captureRef} className="report-capture">
-              <div className="report-letterhead">
-                {logoUrl && <img src={logoUrl} className="report-lh-logo" alt="" />}
-                <div className="report-lh-text">
-                  <div className="report-lh-org">알파학원 교육연구소</div>
-                  <div className="report-lh-title">학생 개별 평가 리포트</div>
+          <div className="print-preview">
+            {/* ── 1쪽 ── */}
+            <div ref={page1Ref} className="report-capture">
+              <Letterhead page="1 / 2" />
+
+              <div className="rp-title-row">
+                <h1 className="rp-title">진단평가 결과 리포트</h1>
+                <div className="rp-title-meta">
+                  <div>{lastExam?.title ?? '진단평가'}</div>
+                  <div>
+                    {lastDate} 응시 · {questionCount}문항
+                  </div>
                 </div>
               </div>
 
-              <table className="report-info-table">
-                <tbody>
-                  <tr>
-                    <th>학생</th><td>{student?.name}</td>
-                    <th>학년</th><td>{student?.grade}</td>
-                  </tr>
-                  <tr>
-                    <th>학교</th><td>{student?.school || '—'}</td>
-                    <th>발행일</th><td>{today}</td>
-                  </tr>
-                  <tr>
-                    <th>대상 기간</th><td>{fromDate || toDate ? `${fromDate || '처음'} ~ ${toDate || '끝'}` : '전체'}</td>
-                    <th>대상 시험</th><td>{selectedResults.length}개</td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <div className="assess-card">
-                <h3>유형별 정답률</h3>
-                {mainStats.length === 0 ? (
-                  <p className="muted">
-                    {stats.length === 0
-                      ? '표시할 데이터가 없습니다.'
-                      : `문제 수가 ${MIN_CHART_TOTAL}개 이상인 유형이 없어 차트를 생략합니다. (아래 참고 표)`}
-                  </p>
-                ) : (
-                  <>
-                    <div className="type-radar-wrap">
-                      <TypeRadar stats={mainStats} />
+              <div className="rp-id-row">
+                <div className="rp-id">
+                  <div>
+                    <span>학생</span>
+                    <b>{student?.name}</b>
+                  </div>
+                  <div>
+                    <span>학년</span>
+                    <b>{student?.grade}</b>
+                  </div>
+                  {student?.school && (
+                    <div>
+                      <span>학교</span>
+                      <b>{student.school}</b>
                     </div>
-                    <div className="type-bars-wrap">
-                      <TypeBars stats={mainStats} />
-                    </div>
-                  </>
-                )}
-                <MinorNote stats={minorStats} />
+                  )}
+                </div>
+                <div className="rp-score">
+                  <span>전체 정답률</span>
+                  <div>
+                    <b>{Math.round(total.rate * 100)}</b>
+                    <em>
+                      % · {total.correct}/{total.total}
+                    </em>
+                  </div>
+                </div>
               </div>
 
-              <div className="assess-card">
-                <h3>응시 이력 (선택한 시험)</h3>
-                {(() => {
-                  // 응시이력이 10개를 넘으면 한 줄에 2개씩 배치해 세로 길이를 절반으로 줄임
-                  const twoCol = selectedResults.length > 10;
-                  const cells = (r: (typeof selectedResults)[number]) => {
-                    const ex = examById.get(r.examId);
-                    const sc = scoreOf(r.marks);
-                    return (
-                      <>
-                        <td>{ex?.title ?? '—'}</td>
-                        <td>{r.date}</td>
-                        <td>{sc.correct}/{sc.total} · {Math.round(sc.rate * 100)}%</td>
-                      </>
-                    );
-                  };
-                  if (!twoCol) {
-                    return (
-                      <table className="assess-table">
-                        <thead>
-                          <tr><th>시험지</th><th>응시일</th><th>정답률</th></tr>
-                        </thead>
-                        <tbody>
-                          {selectedResults.map((r) => <tr key={r.id}>{cells(r)}</tr>)}
-                        </tbody>
-                      </table>
-                    );
-                  }
-                  const half = Math.ceil(selectedResults.length / 2);
-                  const left = selectedResults.slice(0, half);
-                  const right = selectedResults.slice(half);
-                  return (
-                    <table className="assess-table exam-2col">
-                      <thead>
-                        <tr>
-                          <th>시험지</th><th>응시일</th><th>정답률</th>
-                          <th>시험지</th><th>응시일</th><th>정답률</th>
+              <section className="report-sec">
+                <div className="rp-sec-row">
+                  <span className="report-sec-h">유형별 강점과 약점</span>
+                  <span className="hint">정답률이 낮은 유형부터</span>
+                </div>
+                <div className="type-bars-wrap">
+                  <div className="type-radar-wrap">
+                    <TypeRadar stats={stats} />
+                  </div>
+                  <TypeBars stats={stats} />
+                </div>
+              </section>
+
+              <section className="report-sec">
+                <span className="report-sec-h">응시 이력</span>
+                <table className="report-info-table">
+                  <thead>
+                    <tr>
+                      <th>시험지</th>
+                      <th style={{ width: 120 }}>응시일</th>
+                      <th style={{ width: 150 }}>정답률</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedResults.map((r) => {
+                      const ex = examById.get(r.examId);
+                      const sc = scoreOf(r.marks);
+                      return (
+                        <tr key={r.id}>
+                          <td>{ex?.title ?? '—'}</td>
+                          <td>{r.date}</td>
+                          <td>
+                            {sc.correct}/{sc.total} · {Math.round(sc.rate * 100)}%
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {left.map((r, i) => {
-                          const rr = right[i];
-                          return (
-                            <tr key={r.id}>
-                              {cells(r)}
-                              {rr ? cells(rr) : <><td /><td /><td /><td /></>}
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  );
-                })()}
-              </div>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </section>
 
-              {note.trim() && (
-                <div className="assess-card report-note-print">
-                  <h3>선생님 종합 의견 · 추천 수업</h3>
-                  <div className="report-note-body">{note}</div>
-                </div>
+              {summary.trim() && (
+                <section className="report-sec">
+                  <span className="report-sec-h">종합 의견</span>
+                  <p className="report-note-body">{summary}</p>
+                </section>
+              )}
+
+              {session.note.trim() && (
+                <section className="report-sec">
+                  <span className="report-sec-h">선생님 의견</span>
+                  <p className="report-note-body">{session.note}</p>
+                </section>
               )}
 
               <div className="report-footer">
                 <div className="report-footer-left">
                   <div className="report-footer-org">알파학원 교육연구소</div>
                   <div className="report-footer-en">ALPHA ACADEMY · Education Research Institute</div>
-                  <div className="report-footer-date">발행일 {today}</div>
                 </div>
                 <div className="report-footer-seal">
-                  {sealUrl ? <img src={sealUrl} className="report-seal-img" alt="직인" /> : <SealStamp />}
+                  {sealUrl ? <img src={sealUrl} className="report-seal-img" alt="" /> : <SealStamp />}
                 </div>
               </div>
             </div>
-          )}
 
-          {/* 뒤 페이지: 상담 카드 — 화면에는 숨기고(래퍼 클리핑) PDF 출력에만 추가 */}
-          {selectedResults.length > 0 && (
-            <div className="report-append-wrap" aria-hidden>
-            <div ref={appendRef} className="report-capture report-append">
-              <div className="report-letterhead">
-                {logoUrl && <img src={logoUrl} className="report-lh-logo" alt="" />}
-                <div className="report-lh-text">
-                  <div className="report-lh-org">알파학원 교육연구소</div>
-                  <div className="report-lh-title">상담 카드 · 추가 정보</div>
+            {/* ── 2쪽 ── */}
+            <div ref={page2Ref} className="report-capture">
+              <Letterhead title="상담 카드 · 추가 정보" page="2 / 2" />
+
+              <section className="report-sec">
+                <span className="report-sec-h">학생 정보</span>
+                <div className="rp-fields">
+                  <div>
+                    <span>학생 성명</span>
+                    <div className="rp-line">{student?.name}</div>
+                  </div>
+                  <div>
+                    <span>학교 / 학년</span>
+                    <div className="rp-line">{[student?.school, student?.grade].filter(Boolean).join(' / ')}</div>
+                  </div>
+                  <div>
+                    <span>학생 연락처</span>
+                    <div className="rp-line">{student?.contact ?? ''}</div>
+                  </div>
+                  <div>
+                    <span>학부모 연락처</span>
+                    <div className="rp-line">{student?.parentContact ?? ''}</div>
+                  </div>
+                  <div>
+                    <span>형제 재원 여부</span>
+                    <div className="rp-line rp-line-checks">
+                      <span>{student?.sibling === '없음' ? '☑' : '☐'} 없음</span>
+                      <span>{student?.sibling === '있음' ? '☑' : '☐'} 있음</span>
+                    </div>
+                  </div>
+                  <div>
+                    <span>상담일</span>
+                    <div className="rp-line">{session.consultDate || '20        년        월        일'}</div>
+                  </div>
                 </div>
-              </div>
+              </section>
 
-              <div className="assess-card">
-                <h3>목표 고등학교 <span className="rp-muted">(복수 선택 가능)</span></h3>
+              <section className="report-sec">
+                <span className="report-sec-h">
+                  목표 고등학교 <span className="rp-muted">(복수 선택 가능)</span>
+                </span>
                 <div className="rp-checks">
-                  {TARGET_SCHOOLS.map((o) => (
-                    <span key={o} className="rp-check">☐ {o}</span>
+                  {TARGET_SCHOOLS.map((t) => (
+                    <span key={t} className="rp-check">
+                      {(student?.targetSchools ?? []).includes(t) ? '☑' : '☐'} {t}
+                    </span>
                   ))}
                 </div>
-              </div>
+              </section>
 
-              <div className="assess-card">
-                <h3>현재 진도 · 학습 내용</h3>
-                <table className="report-info-table rp-progress">
+              <section className="report-sec">
+                <span className="report-sec-h">현재 진도 · 학습 내용</span>
+                <table className="report-info-table">
                   <thead>
                     <tr>
-                      <th>과목</th>
-                      <th>현재 진도 <span className="rp-eg">(예시: 중 3-2, 대수)</span></th>
-                      <th>학습 내용 <span className="rp-eg">(문제집 예시: 중등 - 쎈, 고등 - 수학의 정석)</span></th>
+                      <th style={{ width: 68 }}>과목</th>
+                      <th>
+                        현재 진도 <span className="rp-eg">(예: 중 3-2, 대수)</span>
+                      </th>
+                      <th>
+                        학습 내용 <span className="rp-eg">(예: 중등 - 쎈)</span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr><th>수학</th><td className="rp-blank" /><td className="rp-blank" /></tr>
-                    <tr><th>과학</th><td className="rp-blank" /><td className="rp-blank" /></tr>
+                    <tr>
+                      <th>수학</th>
+                      <td className="rp-blank">{student?.mathProgress ?? ''}</td>
+                      <td className="rp-blank">{student?.mathBooks ?? ''}</td>
+                    </tr>
+                    <tr>
+                      <th>과학</th>
+                      <td className="rp-blank">{student?.sciProgress ?? ''}</td>
+                      <td className="rp-blank">{student?.sciBooks ?? ''}</td>
+                    </tr>
                   </tbody>
                 </table>
-              </div>
+              </section>
 
-              <div className="assess-card rp-memo">
-                <h3>상담 메모 · 특이사항</h3>
-                <div className="rp-memo-box" />
-              </div>
+              <section className="report-sec">
+                <span className="report-sec-h">상담 메모 · 특이사항</span>
+                <div className="rp-memo-box">{session.memo}</div>
+              </section>
 
-              <div className="assess-card">
-                <h3>개인정보 수집 · 이용 동의서</h3>
+              <section className="report-sec">
+                <span className="report-sec-h">개인정보 수집 · 이용 동의서</span>
                 <ol className="rp-privacy">
-                  <li><b>수집·이용 목적</b> : 학원 수강 상담, 학습 정보 제공, 공지사항 및 소식지 전달</li>
-                  <li><b>수집 항목</b> : 학생 성명, 학교/학년, 학생·학부모 휴대폰 번호, 성적 정보, 목표(희망) 고등학교, 형제 재원 여부, 학습 이력(진도·교재)</li>
-                  <li><b>보유·이용 기간</b> : 수집된 개인정보는 학원 등록 후 재원 기간 동안 보유하며 관계 법령에 따라 보존이 필요한 경우 해당 기간 동안 별도 보관합니다. 개인정보 제공자가 동의한 내용 외에 다른 목적으로 활용하지 않으며, 제공된 개인정보의 이용을 거부하고자 할 때에는 개인정보처리책임자를 통해 열람·정정·삭제를 요구할 수 있습니다.</li>
+                  <li>
+                    <b>수집·이용 목적</b> : 학원 수강 상담, 학습 정보 제공, 공지사항 및 소식지 전달
+                  </li>
+                  <li>
+                    <b>수집 항목</b> : 학생 성명, 학교/학년, 학생·학부모 휴대폰 번호, 성적 정보, 목표(희망) 고등학교, 형제
+                    재원 여부, 학습 이력(진도·교재)
+                  </li>
+                  <li>
+                    <b>보유·이용 기간</b> : 수집된 개인정보는 학원 등록 후 재원 기간 동안 보유하며 관계 법령에 따라 보존이
+                    필요한 경우 해당 기간 동안 별도 보관합니다. 개인정보 제공자가 동의한 내용 외에 다른 목적으로 활용하지
+                    않으며, 제공된 개인정보의 이용을 거부하고자 할 때에는 개인정보처리책임자를 통해 열람·정정·삭제를 요구할
+                    수 있습니다.
+                  </li>
                 </ol>
-                <p className="rp-agree">「개인정보 보호법」 등 관련 법규에 의거하여, 상기 본인은 위와 같이 개인정보 수집 및 이용에 동의합니다.</p>
+                <p className="rp-agree">
+                  「개인정보 보호법」 등 관련 법규에 의거하여, 상기 본인은 위와 같이 개인정보 수집 및 이용에 동의합니다.
+                </p>
                 <div className="rp-sign">
-                  <span>20 _____ 년 _____ 월 _____ 일</span>
-                  <span>성명 : ______________ (서명/인)</span>
-                  <span>알파학원 귀하</span>
+                  <div>
+                    <span>작성일</span>
+                    <div className="rp-line">{session.signDate || '20        년        월        일'}</div>
+                  </div>
+                  <div style={{ flexGrow: 1 }}>
+                    <span>성명 (서명/인)</span>
+                    <div className="rp-line">{session.signName}</div>
+                  </div>
+                  <b>알파학원 귀하</b>
+                </div>
+              </section>
+
+              <div className="report-footer">
+                <div className="report-footer-left">
+                  <div className="report-footer-org">알파학원 교육연구소</div>
+                  <div className="report-footer-en">ALPHA ACADEMY · Education Research Institute</div>
                 </div>
               </div>
             </div>
-            </div>
-          )}
+          </div>
         </>
       )}
     </div>
