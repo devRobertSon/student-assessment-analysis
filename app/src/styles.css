@@ -138,6 +138,10 @@ h1, h2, h3 { margin: 0; }
   gap: 11px;
   cursor: pointer;
 }
+/* button의 전역 white-space:nowrap(짧은 버튼 글자가 쪼개지는 것 방지)을
+   여러 줄이 필요한 카드에서는 되돌린다. keep-all은 한글을 단어 중간에서
+   끊지 않게 한다. */
+.home-card { white-space: normal; word-break: keep-all; }
 .home-card:hover { border-color: var(--navy-soft); }
 .home-card .n { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: var(--cream-ink); }
 .home-card .t { font-size: 19px; font-weight: 600; color: var(--ink); }
