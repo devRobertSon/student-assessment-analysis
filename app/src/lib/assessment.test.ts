@@ -96,7 +96,7 @@ describe('typeStatsForResult', () => {
     expect(stats[0].type).toBe('밀도');
   });
 
-  it('한 문항에 유형이 여러 개면 각 유형에 모두 집계된다', () => {
+  it('실수로 유형을 둘 적어도 한 덩어리로 묶이지 않고 각 유형에 집계된다', () => {
     const multi: Exam = {
       id: 'e2',
       title: 't2',

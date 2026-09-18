@@ -13,7 +13,7 @@ import {
 const SAMPLE_EXAM_CSV = `시험지,과목,문항번호,유형,정답,배점
 중2 1차 진단,수학,1,연산·식 정리,3,4
 중2 1차 진단,수학,2,개념 이해,①,4
-중2 1차 진단,수학,3,표현 해석;다단계 해결,5,5`;
+중2 1차 진단,수학,3,표현 해석,5,5`;
 
 interface Props {
   data: AssessmentData;
@@ -189,7 +189,7 @@ export default function ExamManager({ data, setData }: Props) {
           </li>
           <li>
             <b>유형</b> — 문항 유형. 이 값이 강점·약점 분석의 기준이 됩니다 (필수).
-            한 문항에 둘 이상이면 <code>표현 해석;다단계 해결</code> 처럼 <code>;</code> 로 구분합니다
+            평가원과 같이 <b>문항당 하나</b>만 적습니다
           </li>
           <li>
             <b>시험지</b> — 시험지 이름 (선택, 없으면 파일명 사용)
