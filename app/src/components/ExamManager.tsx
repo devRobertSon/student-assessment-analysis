@@ -1,16 +1,11 @@
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useState } from 'react';
 import {
   AssessmentData,
-  Exam,
-  ExamQuestion,
   downloadText,
-  examQuestionsFromCsv,
   fmtPoints,
   isEssay,
-  newId,
   pointsOf,
   splitTypes,
-  todayStr,
 } from '../lib/assessment';
 import ExamFiles from './ExamFiles';
 
@@ -27,70 +22,9 @@ interface Props {
   setData: (d: AssessmentData) => void;
 }
 
-interface Draft {
-  key: string;
-  filename: string;
-  title: string;
-  subject: string;
-  date: string;
-  questions: ExamQuestion[];
-  files?: Exam['files'];
-  errors: string[];
-}
-
 export default function ExamManager({ data, setData }: Props) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [drafts, setDrafts] = useState<Draft[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [dragging, setDragging] = useState(false);
-
-  const draftFromCsv = (file: File, text: string): Draft | null => {
-    const res = examQuestionsFromCsv(text);
-    if (res.questions.length === 0) return null;
-    const base = file.name.replace(/\.csv$/i, '');
-    return {
-      key: newId('draft'),
-      filename: file.name,
-      title: res.title || base,
-      subject: res.subject || '과학',
-      date: todayStr(),
-      questions: res.questions,
-      files: res.files,
-      errors: res.errors,
-    };
-  };
-
-  const onFiles = async (files: File[]) => {
-    const csv = files.filter((f) => /\.csv$/i.test(f.name) || f.type === 'text/csv');
-    if (csv.length === 0) {
-      alert('CSV 파일만 올릴 수 있습니다.');
-      return;
-    }
-    const parsed = await Promise.all(csv.map(async (f) => draftFromCsv(f, await f.text())));
-    const ok = parsed.filter((d): d is Draft => d !== null);
-    const failed = csv.filter((_, i) => parsed[i] === null).map((f) => f.name);
-    if (ok.length) setDrafts((prev) => [...prev, ...ok]);
-    if (failed.length) alert('문항을 읽지 못한 파일: ' + failed.join(', '));
-  };
-
-  const updateDraft = (key: string, patch: Partial<Draft>) =>
-    setDrafts((prev) => prev.map((d) => (d.key === key ? { ...d, ...patch } : d)));
-  const removeDraft = (key: string) => setDrafts((prev) => prev.filter((d) => d.key !== key));
-
-  const saveAll = () => {
-    if (drafts.length === 0) return;
-    const newExams: Exam[] = drafts.map((d) => ({
-      id: newId('exam'),
-      title: d.title.trim() || '제목 없음',
-      subject: d.subject.trim() || '과학',
-      date: d.date,
-      questions: d.questions,
-      files: d.files,
-    }));
-    setData({ ...data, exams: [...data.exams, ...newExams] });
-    setDrafts([]);
-  };
 
   const removeExam = (id: string) => {
     const e = data.exams.find((x) => x.id === id);
@@ -100,6 +34,8 @@ export default function ExamManager({ data, setData }: Props) {
       ...data,
       exams: data.exams.filter((x) => x.id !== id),
       results: data.results.filter((r) => r.examId !== id),
+      // 저장소에 CSV가 남아 있어도 다시 들어오지 않게 이름을 적어 둔다.
+      dismissed: [...(data.dismissed ?? []), e?.title ?? ''].filter(Boolean),
     });
     setSelected((prev) => {
       const n = new Set(prev);
@@ -112,10 +48,12 @@ export default function ExamManager({ data, setData }: Props) {
     if (selected.size === 0) return;
     const cnt = data.results.filter((r) => selected.has(r.examId)).length;
     if (!confirm(`선택한 시험지 ${selected.size}개를 삭제할까요?${cnt ? ` (채점 결과 ${cnt}건도 함께 삭제)` : ''}`)) return;
+    const gone = data.exams.filter((x) => selected.has(x.id)).map((x) => x.title);
     setData({
       ...data,
       exams: data.exams.filter((x) => !selected.has(x.id)),
       results: data.results.filter((r) => !selected.has(r.examId)),
+      dismissed: [...(data.dismissed ?? []), ...gone].filter(Boolean),
     });
     setSelected(new Set());
   };
@@ -136,7 +74,7 @@ export default function ExamManager({ data, setData }: Props) {
         <div>
           <h1>시험지 관리</h1>
           <p className="muted">
-            CSV 한 개가 시험지 한 개입니다. 유형은 필수이고, 단원·난이도를 함께 적으면 그 축으로도 분석됩니다.
+            시험지는 저장소의 <code>papers/</code> 에서만 들어옵니다. CSV 한 개가 시험지 한 개입니다.
           </p>
         </div>
         <div className="assess-row">
@@ -144,37 +82,10 @@ export default function ExamManager({ data, setData }: Props) {
           <button className="ghost" onClick={() => downloadText('시험지_예시.csv', '﻿' + SAMPLE_EXAM_CSV)}>
             예시 CSV
           </button>
-          <button className="primary" onClick={() => fileRef.current?.click()}>
-            ＋ CSV 업로드
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".csv,text/csv"
-            multiple
-            style={{ display: 'none' }}
-            onChange={(e) => {
-              const fs = Array.from(e.target.files ?? []);
-              if (fs.length) onFiles(fs);
-              e.target.value = '';
-            }}
-          />
         </div>
       </div>
 
-      <div
-        className={`dropzone ${dragging ? 'on' : ''}`}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragging(false);
-          onFiles(Array.from(e.dataTransfer.files));
-        }}
-      >
+      <div className="repo-note">
         <span className="dz-icon" aria-hidden>
           <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 16V4" />
@@ -183,19 +94,22 @@ export default function ExamManager({ data, setData }: Props) {
           </svg>
         </span>
         <div>
-          <div className="dz-title">여기로 CSV 파일을 끌어다 놓거나 [＋ CSV 업로드]를 누르세요</div>
+          <div className="dz-title">
+            새 시험지는 <code>app/public/papers/</code> 에 <code>&lt;이름&gt;_시험지.csv</code> 를 넣고 push 하세요
+          </div>
           <div className="hint">
-            필수 열 <b>문항번호</b>, <b>유형</b> · 선택 열 시험지, 과목, 단원, 난이도, 형식, 배점, 정답, 출처, 원문항 ·
-            여러 개 동시 업로드 가능
+            배포되면(약 1분) 이 목록에 저절로 나타납니다. CSV를 고쳐 push 하면 문항도 따라서 바뀝니다 ·
+            필수 열 <b>문항번호</b>, <b>유형</b>
           </div>
         </div>
       </div>
 
       <details className="csv-help">
-        <summary>CSV 어떻게 만드나요?</summary>
+        <summary>시험지 CSV 어떻게 만드나요?</summary>
         <p>
-          엑셀·구글 시트에서 <b>CSV 한 개 = 시험지 한 개</b>로 만들어 <b>CSV로 저장</b>해 올리거나, <b>[예시 CSV]</b>{' '}
-          버튼으로 양식을 받아 내용만 바꿔 올리세요.
+          엑셀·구글 시트에서 <b>CSV 한 개 = 시험지 한 개</b>로 만들어 <b>CSV로 저장</b>하거나, <b>[예시 CSV]</b>{' '}
+          버튼으로 양식을 받아 내용만 바꾸세요. 그 파일을 <code>app/public/papers/</code> 에{' '}
+          <code>&lt;이름&gt;_시험지.csv</code> 로 넣고 push 하면 목록에 나타납니다.
         </p>
         <ul>
           <li>
@@ -234,63 +148,11 @@ export default function ExamManager({ data, setData }: Props) {
           </li>
         </ul>
         <pre className="manual-code">{SAMPLE_EXAM_CSV}</pre>
-        <p className="hint">열 순서는 무관하고 헤더 이름으로 인식합니다.</p>
+        <p className="hint">
+          열 순서는 무관하고 헤더 이름으로 인식합니다. 같은 이름의 시험지를 고쳐 push 하면 문항이
+          그 내용으로 바뀌고, 이미 저장된 채점 결과는 그대로 이어집니다.
+        </p>
       </details>
-
-      {drafts.length > 0 && (
-        <div className="assess-card draft">
-          <div className="report-pick-head">
-            <h3 style={{ margin: 0 }}>업로드 미리보기 · {drafts.length}개 시험지</h3>
-            <span className="report-pick-actions">
-              <button className="primary mini" onClick={saveAll}>
-                모두 저장
-              </button>
-              <button className="ghost mini" onClick={() => setDrafts([])}>
-                모두 취소
-              </button>
-            </span>
-          </div>
-          {drafts.map((d) => {
-            const typeCount = new Set(d.questions.map((q) => q.type)).size;
-            const essays = d.questions.filter(isEssay).length;
-            const full = d.questions.reduce((a, q) => a + pointsOf(q), 0);
-            return (
-              <div key={d.key} className="draft-item">
-                <div className="draft-item-head">
-                  <b>{d.filename}</b>
-                  <span className="hint">
-                    {d.questions.length}문항 · 유형 {typeCount}종
-                    {essays > 0 && ` · 서술형 ${essays}문항`} · 만점 {fmtPoints(full)}점
-                  </span>
-                  <button className="del" style={{ marginLeft: 'auto' }} onClick={() => removeDraft(d.key)} title="이 파일 제외">
-                    ✕
-                  </button>
-                </div>
-                <div className="assess-row wrap">
-                  <label className="assess-field">
-                    시험지명
-                    <input type="text" value={d.title} onChange={(e) => updateDraft(d.key, { title: e.target.value })} />
-                  </label>
-                  <label className="assess-field">
-                    과목
-                    <input type="text" value={d.subject} onChange={(e) => updateDraft(d.key, { subject: e.target.value })} />
-                  </label>
-                  <label className="assess-field">
-                    등록일
-                    <input type="date" value={d.date} onChange={(e) => updateDraft(d.key, { date: e.target.value })} />
-                  </label>
-                </div>
-                {d.errors.length > 0 && (
-                  <div className="assess-warn">
-                    ⚠ {d.errors.slice(0, 5).join(' / ')}
-                    {d.errors.length > 5 ? ' …' : ''}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
 
       {data.exams.length === 0 ? (
         <p className="muted">등록된 시험지가 없습니다. CSV를 업로드하세요.</p>

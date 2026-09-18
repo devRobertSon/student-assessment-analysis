@@ -122,8 +122,8 @@ export interface AssessmentData {
   students: Student[];
   exams: Exam[];
   results: Result[];
-  /** 기본 진단평가를 한 번 넣었는지. 지우고 나서 다시 살아나지 않게 한다. */
-  seeded?: boolean;
+  /** 손으로 지운 시험지 이름. papers/ 에 남아 있어도 다시 넣지 않는다. */
+  dismissed?: string[];
 }
 
 const KEY = 'sda.assess.v1';
@@ -141,7 +141,7 @@ export function loadAssessment(): AssessmentData {
       students: Array.isArray(p.students) ? p.students : [],
       exams: Array.isArray(p.exams) ? p.exams : [],
       results: Array.isArray(p.results) ? p.results : [],
-      seeded: p.seeded === true,
+      dismissed: Array.isArray(p.dismissed) ? p.dismissed : [],
     };
   } catch {
     return emptyAssessment();
