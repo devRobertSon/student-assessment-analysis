@@ -69,10 +69,10 @@ export default function App() {
         <div className="admin-toolbar">
           <CloudBar status={cloudStatus} />
           <button className="mini ghost" onClick={() => exportAssessmentJson(data)}>
-            JSON 내보내기
+            <span className="lbl-long">JSON </span>내보내기
           </button>
           <button className="mini ghost" onClick={() => fileRef.current?.click()}>
-            JSON 가져오기
+            <span className="lbl-long">JSON </span>가져오기
           </button>
           <input
             ref={fileRef}

@@ -1,15 +1,20 @@
 import { logoUrl } from '../lib/brand';
 
-// 원본 로고는 정사각형 안에 α 마크 아래로 '알파학원' 글자가 붙어 있다.
-// 헤더 크기(30~36px)로 줄이면 그 글자가 뭉개져 오히려 지저분하므로 α 마크만 잘라 쓴다.
-// 아래 세 값은 원본 이미지에서 마크가 차지하는 영역의 비율.
-const MARK_SCALE = 0.455;
-const MARK_LEFT = 0.27;
-const MARK_TOP = 0.165;
+// 원본 로고(3378×3378)는 정사각형 안에 α 마크가 있고 그 아래 '알파학원' 글자가 붙어 있다.
+// 헤더 크기(30~36px)로 줄이면 글자가 뭉개지므로 α 마크만 잘라 쓴다.
+//
+// 아래 값은 눈대중이 아니라 원본 픽셀에서 잰 마크의 경계다.
+//   x 923~2508 (폭 1586), y 602~2150 (높이 1549)
+// 마크가 정사각형이 아니고 이미지 정중앙에 있지도 않아서,
+// 긴 변(폭)을 기준으로 배율을 잡고 마크의 중심을 컨테이너 중심에 맞춘다.
+const MARK_W = 1586 / 3378; // 0.4695
+const CENTER_X = (923 + 2508) / 2 / 3378; // 0.5078
+const CENTER_Y = (602 + 2150) / 2 / 3378; // 0.4073
+const FILL = 0.9; // 가장자리 여백 — 반올림으로 1px 잘리는 것까지 방지
 
 export default function Logo({ size = 32 }: { size?: number }) {
   if (logoUrl) {
-    const img = Math.round(size / MARK_SCALE);
+    const img = Math.round((size * FILL) / MARK_W);
     return (
       <span className="brand-mark" style={{ width: size, height: size }}>
         <img
@@ -18,8 +23,8 @@ export default function Logo({ size = 32 }: { size?: number }) {
           style={{
             width: img,
             height: img,
-            left: -Math.round(img * MARK_LEFT),
-            top: -Math.round(img * MARK_TOP),
+            left: Math.round(size / 2 - CENTER_X * img),
+            top: Math.round(size / 2 - CENTER_Y * img),
           }}
         />
       </span>
