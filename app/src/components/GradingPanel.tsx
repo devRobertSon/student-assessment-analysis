@@ -18,6 +18,7 @@ import {
   todayStr,
 } from '../lib/assessment';
 import { rateTag } from './TypeRadar';
+import GradeDialog from './GradeDialog';
 
 interface Props {
   data: AssessmentData;
@@ -43,6 +44,7 @@ export default function GradingPanel({ data, setData }: Props) {
   const [date, setDate] = useState(todayStr());
   const [axis, setAxis] = useState<Axis>('type');
   const csvRef = useRef<HTMLInputElement>(null);
+  const [dialog, setDialog] = useState(false);
 
   const exam = data.exams.find((e) => e.id === examId);
   const student = data.students.find((s) => s.id === studentId);
@@ -78,6 +80,10 @@ export default function GradingPanel({ data, setData }: Props) {
       if (!Number.isFinite(v)) return c;
       return { ...c, [no]: Math.max(0, Math.min(max, v)) };
     });
+  // 팝업에서 쓰는 setter. 표의 setCell은 같은 값을 다시 누르면 지우는 토글이지만
+  // 여기서는 누른 값을 그대로 넣는다(넘어간 뒤 되돌아와도 값이 흔들리지 않게).
+  const putCell = (no: number, v: Cell) => setCells((c) => ({ ...c, [no]: v }));
+
   const setAll = (v: 'full' | 'zero' | 'clear') => {
     if (!exam) return;
     const map: Record<number, Cell> = {};
@@ -212,6 +218,9 @@ export default function GradingPanel({ data, setData }: Props) {
                     초기화
                   </button>
                   <span style={{ marginLeft: 'auto' }} />
+                  <button className="mini" onClick={() => setDialog(true)}>
+                    직접 입력
+                  </button>
                   <button className="mini ghost" onClick={exportGradingCsv}>
                     채점 CSV 내려받기
                   </button>
@@ -230,6 +239,10 @@ export default function GradingPanel({ data, setData }: Props) {
                     }}
                   />
                 </div>
+
+                {dialog && (
+                  <GradeDialog exam={exam} cells={cells} onSet={putCell} onClose={() => setDialog(false)} />
+                )}
 
                 <div className="ox-grid">
                   {exam.questions.map((q) => {

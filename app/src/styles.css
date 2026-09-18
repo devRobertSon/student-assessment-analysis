@@ -251,6 +251,55 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .pick-meta em { font-style: normal; color: var(--navy); }
 .pick-foot { margin: 0; border-top: 1px solid var(--line); padding-top: 9px; }
 
+/* ── 채점: 한 문항씩 띄우는 직접 입력 창 ───────────── */
+.gd-back {
+  position: fixed; inset: 0; z-index: 50; background: rgba(20, 22, 30, 0.38);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.gd-box {
+  width: min(460px, 100%); background: #fff; border-radius: 12px; padding: 18px 22px 16px;
+  display: flex; flex-direction: column; gap: 12px; text-align: left;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.24); outline: none;
+}
+.gd-head { display: flex; align-items: baseline; gap: 10px; }
+.gd-head b { font-size: 16px; }
+.gd-bar { height: 4px; border-radius: 2px; background: var(--fill); overflow: hidden; }
+.gd-bar span { display: block; height: 100%; background: var(--navy); transition: width 0.15s; }
+.gd-count { font-size: 12px; color: var(--ink-3); text-align: center; margin-top: -6px; }
+
+.gd-q { text-align: center; padding: 6px 0 2px; }
+.gd-no { font-size: 27px; font-weight: 700; letter-spacing: -0.02em; }
+.gd-no em { font-style: normal; font-size: 14px; font-weight: 500; color: var(--ink-3); margin-left: 8px; }
+.gd-type { font-size: 17px; font-weight: 600; margin-top: 4px; }
+.gd-meta { font-size: 12.5px; color: var(--ink-3); margin-top: 5px; }
+.gd-ans { margin-left: 10px; padding-left: 10px; border-left: 1px solid var(--line); }
+
+.gd-btns { display: flex; align-items: stretch; gap: 10px; }
+.gd-btns > button {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  font-size: 26px; font-weight: 700; padding: 14px 0; border-radius: 10px;
+  border: 1.5px solid var(--line); background: #fff;
+}
+.gd-btns > button em { font-style: normal; font-size: 11.5px; font-weight: 500; color: var(--ink-3); }
+.gd-o:hover { border-color: var(--good-ink); }
+.gd-x:hover { border-color: var(--bad); }
+.gd-o.on { border-color: var(--good-ink); background: #f2fbf2; }
+.gd-x.on { border-color: var(--bad); background: #fdf4f4; }
+.gd-score { flex: 0 0 116px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.gd-score input {
+  width: 100%; text-align: center; font-size: 22px; font-weight: 700;
+  border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 4px;
+}
+.gd-score span { font-size: 11.5px; color: var(--ink-3); }
+
+.gd-nav { display: flex; align-items: center; gap: 10px; }
+.gd-nav .hint { flex: 1; text-align: center; font-size: 11.5px; }
+.gd-foot {
+  display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2);
+  border-top: 1px solid var(--line); padding-top: 11px;
+}
+.gd-foot b { font-size: 15px; color: var(--ink); }
+
 /* ── 표 ──────────────────────────────────────────── */
 .assess-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .assess-table th {
