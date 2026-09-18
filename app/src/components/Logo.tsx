@@ -1,16 +1,28 @@
 import { logoUrl } from '../lib/brand';
 
-// 업로드된 로고가 있으면 그 이미지를, 없으면 기본 알파(α) SVG를 렌더링
-export default function Logo({ size = 48 }: { size?: number }) {
+// 원본 로고는 정사각형 안에 α 마크 아래로 '알파학원' 글자가 붙어 있다.
+// 헤더 크기(30~36px)로 줄이면 그 글자가 뭉개져 오히려 지저분하므로 α 마크만 잘라 쓴다.
+// 아래 세 값은 원본 이미지에서 마크가 차지하는 영역의 비율.
+const MARK_SCALE = 0.455;
+const MARK_LEFT = 0.27;
+const MARK_TOP = 0.165;
+
+export default function Logo({ size = 32 }: { size?: number }) {
   if (logoUrl) {
+    const img = Math.round(size / MARK_SCALE);
     return (
-      <img
-        src={logoUrl}
-        width={size}
-        height={size}
-        alt="알파학원 로고"
-        style={{ objectFit: 'contain', display: 'block' }}
-      />
+      <span className="brand-mark" style={{ width: size, height: size }}>
+        <img
+          src={logoUrl}
+          alt="알파학원 로고"
+          style={{
+            width: img,
+            height: img,
+            left: -Math.round(img * MARK_LEFT),
+            top: -Math.round(img * MARK_TOP),
+          }}
+        />
+      </span>
     );
   }
   return (

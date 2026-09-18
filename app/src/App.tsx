@@ -3,17 +3,19 @@ import { exportAssessmentJson, loadAssessment, parseAssessmentJson, saveAssessme
 import { useCloudDoc } from './lib/cloud';
 import Logo from './components/Logo';
 import CloudBar from './components/CloudBar';
+import HomePage, { HomeTarget } from './components/HomePage';
 import StudentManager from './components/StudentManager';
 import ExamManager from './components/ExamManager';
 import GradingPanel from './components/GradingPanel';
 import TypeReport from './components/TypeReport';
 
-type Tab = 'students' | 'exams' | 'grading' | 'report';
+type View = 'home' | HomeTarget;
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'students', label: '학생 관리' },
-  { key: 'exams', label: '시험지 관리' },
-  { key: 'grading', label: '채점 입력' },
+const NAV: { key: View; label: string }[] = [
+  { key: 'home', label: '홈' },
+  { key: 'students', label: '학생' },
+  { key: 'exams', label: '시험지' },
+  { key: 'grading', label: '채점' },
   { key: 'report', label: '리포트' },
 ];
 
@@ -27,7 +29,7 @@ export default function App() {
     loadAssessment,
     saveAssessment
   );
-  const [tab, setTab] = useState<Tab>('students');
+  const [view, setView] = useState<View>('home');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const importJson = async (file: File) => {
@@ -41,46 +43,54 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="app-header">
+      <header className="app-header no-print">
         <div className="brand">
-          <div className="brand-title">
-            <Logo size={36} />
-            <h1>진단평가 분석</h1>
-          </div>
-          <div className="admin-toolbar" style={{ margin: 0 }}>
-            <CloudBar status={cloudStatus} />
-            <button onClick={() => exportAssessmentJson(data)}>JSON 내보내기</button>
-            <button onClick={() => fileRef.current?.click()}>JSON 가져오기</button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/json"
-              style={{ display: 'none' }}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) importJson(f);
-                e.target.value = '';
-              }}
-            />
-          </div>
+          <Logo size={32} />
+          <button className="brand-title" onClick={() => setView('home')}>
+            알파학원 진단평가 분석
+          </button>
         </div>
-        <p>진단평가를 학생별로 채점하고, 유형별 강점·약점 리포트를 확인합니다. (브라우저 자동 저장 · 로그인 시 기기 간 동기화)</p>
+
+        <nav className="assess-tabs">
+          {NAV.map((t) => (
+            <button key={t.key} className={view === t.key ? 'active' : ''} onClick={() => setView(t.key)}>
+              {t.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="admin-toolbar">
+          <CloudBar status={cloudStatus} />
+          <button className="mini ghost" onClick={() => exportAssessmentJson(data)}>
+            JSON 내보내기
+          </button>
+          <button className="mini ghost" onClick={() => fileRef.current?.click()}>
+            JSON 가져오기
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) importJson(f);
+              e.target.value = '';
+            }}
+          />
+        </div>
       </header>
 
-      <nav className="assess-tabs">
-        {TABS.map((t) => (
-          <button key={t.key} className={tab === t.key ? 'active' : ''} onClick={() => setTab(t.key)}>
-            {t.label}
-          </button>
-        ))}
-      </nav>
-
-      <section className="card">
-        {tab === 'students' && <StudentManager data={data} setData={setData} />}
-        {tab === 'exams' && <ExamManager data={data} setData={setData} />}
-        {tab === 'grading' && <GradingPanel data={data} setData={setData} />}
-        {tab === 'report' && <TypeReport data={data} />}
-      </section>
+      {view === 'home' ? (
+        <HomePage data={data} onGo={setView} />
+      ) : (
+        <section className="card">
+          {view === 'students' && <StudentManager data={data} setData={setData} />}
+          {view === 'exams' && <ExamManager data={data} setData={setData} />}
+          {view === 'grading' && <GradingPanel data={data} setData={setData} />}
+          {view === 'report' && <TypeReport data={data} />}
+        </section>
+      )}
     </div>
   );
 }

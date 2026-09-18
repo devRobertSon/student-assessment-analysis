@@ -386,6 +386,14 @@ export function typeStatsCumulative(exams: Exam[], results: Result[]): TypeStat[
     .sort((a, b) => a.rate - b.rate || b.total - a.total);
 }
 
+// 등록된 시험지들에 실제로 등장하는 문항 유형의 가짓수.
+// 홈 화면의 '분석 유형' 숫자 — 유형 분류를 바꿔도 이 값이 저절로 따라온다.
+export function countTypes(exams: Exam[]): number {
+  const seen = new Set<string>();
+  for (const e of exams) for (const q of e.questions) if (q.type) seen.add(q.type);
+  return seen.size;
+}
+
 export function scoreOf(marks: Mark[]): { correct: number; total: number; rate: number } {
   const total = marks.length;
   const correct = marks.filter((m) => m.correct).length;
