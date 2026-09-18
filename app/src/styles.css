@@ -456,7 +456,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .side-title { display: flex; align-items: baseline; justify-content: space-between; }
 .side-title b { font-size: 15px; font-weight: 600; }
 .side-head .assess-row { gap: 6px; }
-.side-head button.wide { flex-grow: 1; }
+.side-head button.wide { flex-grow: 1; flex-basis: 0; min-width: 0; }
 .side-list { padding: 7px; display: flex; flex-direction: column; gap: 2px; max-height: 58vh; overflow-y: auto; }
 .side-item {
   display: flex;
@@ -477,7 +477,6 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .side-item.on:hover { background: var(--navy-hover); }
 .side-item.on .nm, .side-item.on .rt { color: #fff; font-weight: 500; }
 .side-item.on .gr { color: var(--navy-pale); }
-.side-foot { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
 
 .main { display: flex; flex-direction: column; gap: 14px; }
 .main .assess-card + .assess-card { margin-top: 0; }

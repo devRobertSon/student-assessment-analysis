@@ -160,25 +160,35 @@ export default function StudentManager({
               </button>
             </div>
           ) : (
-            <div className="assess-row">
-              <button className="mini wide" onClick={() => setAdding(true)}>
+            <>
+              <button className="mini" onClick={() => setAdding(true)}>
                 ＋ 학생 추가
               </button>
-              <button className="mini ghost" onClick={() => fileRef.current?.click()}>
-                CSV
-              </button>
-              <input
-                ref={fileRef}
-                type="file"
-                accept=".csv,text/csv"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) importCsv(f);
-                  e.target.value = '';
-                }}
-              />
-            </div>
+              <div className="assess-row">
+                <button className="mini ghost wide" onClick={() => fileRef.current?.click()}>
+                  CSV 가져오기
+                </button>
+                {data.students.length > 0 && (
+                  <button
+                    className="mini ghost wide"
+                    onClick={() => downloadText(`학생목록_${todayStr()}.csv`, studentsToCsv(data.students))}
+                  >
+                    내려받기
+                  </button>
+                )}
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) importCsv(f);
+                    e.target.value = '';
+                  }}
+                />
+              </div>
+            </>
           )}
         </div>
 
@@ -409,15 +419,6 @@ export default function StudentManager({
         )}
       </div>
 
-      <div className="no-print side-foot">
-        <button
-          className="mini ghost"
-          onClick={() => downloadText(`학생목록_${todayStr()}.csv`, studentsToCsv(data.students))}
-          disabled={!data.students.length}
-        >
-          학생 목록 CSV 내려받기
-        </button>
-      </div>
     </div>
   );
 }
