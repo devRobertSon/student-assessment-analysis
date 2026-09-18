@@ -1,3 +1,15 @@
+const SHOT = import.meta.env.BASE_URL + 'manual/';
+
+/** 사용법 캡쳐. 화면을 그대로 담은 것이라 글로만 읽을 때보다 찾아가기 쉽다. */
+function Shot({ src, alt, cap, narrow }: { src: string; alt: string; cap: string; narrow?: number }) {
+  return (
+    <figure className="shot" style={narrow ? { maxWidth: narrow } : undefined}>
+      <img src={SHOT + src} alt={alt} loading="lazy" />
+      <figcaption>{cap}</figcaption>
+    </figure>
+  );
+}
+
 const EXAM_CSV = `시험지,과목,문항번호,단원,유형,난이도,형식,배점,정답,출처,원문항,문제지,해설,출제표
 중1-1 진단평가,수학,1,소인수분해,공식·절차 적용,상,객관식,3,④,심화,3,중1-1_진단평가_문제지.pdf,중1-1_진단평가_해설.pdf,중1-1_진단평가_출제표.csv
 중1-1 진단평가,수학,2,소인수분해,논증·정당화,상,객관식,3,④,심화,4,,,
@@ -25,6 +37,9 @@ export default function ManualPage() {
 
       <section className="assess-card">
         <h3>전체 흐름</h3>
+        <p className="muted">
+          홈 화면의 카드 네 장이 이 순서 그대로입니다. 카드를 누르면 그 화면으로 바로 갑니다.
+        </p>
         <ol className="flow">
           <li>
             <b>학생 등록</b>
@@ -48,6 +63,7 @@ export default function ManualPage() {
             <span>[학생]에서 학생을 고르고 [리포트 열기] → 의견을 적고 PDF로 저장합니다.</span>
           </li>
         </ol>
+        <Shot src="home.png" alt="홈 화면" cap="홈 화면. 카드를 누르면 그 화면으로 바로 갑니다." />
       </section>
 
       <section className="assess-card">
@@ -95,6 +111,11 @@ export default function ManualPage() {
           ⚠ 학생을 지우면 <b>그 학생의 채점 결과도 함께 지워집니다.</b> 응시 한 건만 지우려면 [응시 결과] 표의 ✕ 를
           쓰세요.
         </div>
+        <Shot
+          src="students.png"
+          alt="학생 화면"
+          cap="왼쪽 목록에서 학생을 고른 모습. 학생 정보 · 응시 결과 · 유형별 정답률이 차례로 나옵니다."
+        />
       </section>
 
       <section className="assess-card">
@@ -175,6 +196,7 @@ export default function ManualPage() {
           열 순서는 상관없고 헤더 이름으로 알아봅니다. 모르는 열은 무시합니다. 같은 이름의 시험지를 고쳐 push 하면
           문항이 그 내용으로 바뀌고, <b>이미 저장된 채점 결과는 그대로 이어집니다.</b>
         </p>
+        <Shot src="exams.png" alt="시험지 목록" cap="papers/ 에 넣은 시험지가 목록에 나타난 모습." />
       </section>
 
       <section className="assess-card">
@@ -202,6 +224,12 @@ export default function ManualPage() {
         <div className="assess-warn" style={{ marginTop: 12 }}>
           ⚠ <code>papers/</code> 는 공개 사이트로 그대로 나갑니다. 학생 이름이 든 파일을 두지 마세요.
         </div>
+        <Shot
+          src="picker.png"
+          alt="인쇄물 고르기 창"
+          cap="[＋문제지]를 누르면 나오는 창. 고르려는 종류와 그 시험지에 맞는 파일이 위로 옵니다."
+          narrow={420}
+        />
       </section>
 
       <section className="assess-card">
@@ -335,9 +363,15 @@ export default function ManualPage() {
             넘기고, 채운 파일을 올리면 한 번에 들어갑니다.
           </li>
         </ul>
+        <Shot
+          src="dialog.png"
+          alt="직접 입력 창"
+          cap="[직접 입력] 창. O나 X를 누르면 바로 다음 문항으로 넘어갑니다."
+          narrow={380}
+        />
         <p className="muted" style={{ marginTop: 12 }}>
           <b>서술형</b>은 O와 X 사이에 점수 칸이 생깁니다. O는 만점, X는 0점, 그 사이는 숫자로 적습니다. 배점은
-          시험지에서 옵니다.
+          시험지에서 옵니다. 위 그림이 서술형 문항입니다.
         </p>
         <pre className="manual-code">{GRADING_CSV}</pre>
         <p className="hint">
@@ -361,6 +395,11 @@ export default function ManualPage() {
             <b>응시 결과</b> 표에서도 한 건씩 지울 수 있습니다. 시험지와 학생은 그대로 남습니다.
           </li>
         </ul>
+        <Shot
+          src="grading.png"
+          alt="채점 화면"
+          cap="채점 화면. 왼쪽 표에서 바로 찍어도 되고, 오른쪽 집계는 입력하는 즉시 갱신됩니다."
+        />
       </section>
 
       <section className="assess-card">
@@ -393,6 +432,12 @@ export default function ManualPage() {
           ⚠ 상담일·상담 메모·서명란과 의견 칸은 <b>저장되지 않는 임시 입력</b>입니다. 학생을 바꾸거나 새로고침하면
           비워지니, 적었다면 그 자리에서 PDF로 저장하세요.
         </div>
+        <Shot
+          src="report.png"
+          alt="리포트 1쪽"
+          cap="리포트 1쪽. 레이더 꼭짓점마다 정답률과 강점/약점이 글자로 함께 적혀 흑백으로 인쇄해도 읽힙니다."
+          narrow={470}
+        />
         <p className="hint" style={{ marginTop: 12 }}>
           미리보기가 곧 인쇄물입니다. 창이 좁아도 지면은 A4 크기 그대로라 가로로 넘칠 수 있는데, 그래도 PDF는 같게
           나옵니다.
@@ -460,7 +505,11 @@ export default function ManualPage() {
             </tr>
             <tr>
               <td>홈 화면에 숫자가 안 보임</td>
-              <td>시험지 20개, 학생 50명을 넘어야 표시됩니다. 분석 유형은 1개 이상이면 나옵니다.</td>
+              <td>
+                일부러 숨긴 것입니다. 학부모 앞에서 여는 화면이라 &apos;시험지 3개&apos; 같은 숫자는 안 보이는 편이
+                낫습니다. <b>시험지 20개</b>, <b>학생 50명</b>을 넘으면 나오고, <b>분석 유형</b>은 1개 이상이면 바로
+                나옵니다.
+              </td>
             </tr>
           </tbody>
         </table>
