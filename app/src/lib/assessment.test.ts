@@ -185,24 +185,26 @@ describe('parseGradingCsv', () => {
   });
 });
 
-describe('문제지 · 해설지', () => {
-  it('CSV의 문제지/해설 열을 시험지 정보로 읽는다', () => {
+describe('문제지 · 해설 · 출제표', () => {
+  it('CSV의 인쇄물 열을 시험지 정보로 읽는다 (첫 줄에만 적어도 된다)', () => {
     const r = examQuestionsFromCsv(
       [
-        '시험지,문항번호,유형,문제지,해설',
-        '중1-1 진단평가,1,연산·식 정리,중1-1_문제지.pdf,중1-1_해설.pdf',
-        '중1-1 진단평가,2,개념 이해,,',
+        '시험지,문항번호,유형,문제지,해설,출제표',
+        '중1-1 진단평가,1,연산·식 정리,중1-1_문제지.pdf,중1-1_해설.pdf,중1-1_출제표.csv',
+        '중1-1 진단평가,2,개념 이해,,,',
       ].join('\n')
     );
     expect(r.errors).toEqual([]);
-    expect(r.paper).toBe('중1-1_문제지.pdf');
-    expect(r.solution).toBe('중1-1_해설.pdf');
+    expect(r.files).toEqual({
+      paper: { name: '중1-1_문제지.pdf', src: 'site' },
+      solution: { name: '중1-1_해설.pdf', src: 'site' },
+      blueprint: { name: '중1-1_출제표.csv', src: 'site' },
+    });
   });
 
   it('열이 없으면 비어 있다', () => {
     const r = examQuestionsFromCsv('문항번호,유형\n1,계산');
-    expect(r.paper).toBeUndefined();
-    expect(r.solution).toBeUndefined();
+    expect(r.files).toBeUndefined();
   });
 
   it('paperHref: 파일 이름은 papers/ 아래로, 주소는 그대로', () => {

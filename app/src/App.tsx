@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { exportAssessmentJson, loadAssessment, parseAssessmentJson, saveAssessment } from './lib/assessment';
 import { useCloudDoc } from './lib/cloud';
+import { buildSeedExams } from './lib/seed';
 import Logo from './components/Logo';
 import CloudBar from './components/CloudBar';
 import HomePage, { HomeTarget } from './components/HomePage';
@@ -35,6 +36,25 @@ export default function App() {
   // 학생 선택은 학생 화면·채점·리포트가 함께 쓰므로 여기에서 들고 있는다.
   const [studentId, setStudentId] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+  // 사이트에 같이 올려 둔 진단평가를 처음 한 번 시험지 목록에 넣는다.
+  // 넣고 나면 표시해 두어, 지운 시험지가 다시 살아나지 않게 한다.
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  const seedTried = useRef(false);
+  useEffect(() => {
+    if (seedTried.current || data.seeded) return;
+    seedTried.current = true;
+    buildSeedExams(data.exams).then(({ ok, exams }) => {
+      // 목록을 못 읽었으면(오프라인 등) 표시하지 않고 다음 실행에 다시 해 본다.
+      if (!ok) {
+        seedTried.current = false;
+        return;
+      }
+      // 받아 오는 사이에 사용자가 뭔가 했을 수 있으니 최신 값 위에 얹는다.
+      const cur = dataRef.current;
+      setData({ ...cur, exams: [...cur.exams, ...exams], seeded: true });
+    });
+  }, [data, setData]);
 
   const importJson = async (file: File) => {
     try {

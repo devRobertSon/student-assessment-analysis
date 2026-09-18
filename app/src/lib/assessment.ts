@@ -30,20 +30,38 @@ export function fmtPoints(v: number): string {
   return Number.isInteger(v) ? String(v) : String(Math.round(v * 10) / 10);
 }
 
+/** 시험지에 딸린 인쇄물 세 가지. */
+export type AttachKind = 'paper' | 'solution' | 'blueprint';
+export const ATTACH_KINDS: AttachKind[] = ['paper', 'solution', 'blueprint'];
+export const ATTACH_LABEL: Record<AttachKind, string> = {
+  paper: '문제지',
+  solution: '해설',
+  blueprint: '출제표',
+};
+
+export interface Attachment {
+  name: string; // 화면에 보이고 내려받을 때 쓰는 파일 이름
+  /**
+   * site — 사이트에 같이 올려 둔 papers/ 의 파일. 어느 기기에서나 열린다.
+   * local — 이 브라우저에 올려 둔 파일. 올린 기기에만 남는다.
+   */
+  src: 'site' | 'local';
+  size?: number;
+  type?: string;
+}
+
 export interface Exam {
   id: string;
   title: string;
   subject: string;
   date: string; // 등록일 YYYY-MM-DD (응시일은 채점 결과 Result.date에 학생별로 기록된다)
   questions: ExamQuestion[];
-  // 인쇄물. 파일 이름이면 사이트의 papers/ 아래를 보고, http로 시작하면 그 주소를 쓴다.
-  paper?: string; // 문제지 PDF
-  solution?: string; // 해설지 PDF
+  files?: Partial<Record<AttachKind, Attachment>>;
 }
 
 /**
- * 시험지에 적힌 문제지/해설 값을 실제로 열 수 있는 주소로 바꾼다.
- * 'http…'는 그대로 두고, 그 밖의 값은 사이트에 같이 올린 papers/ 아래 파일로 본다.
+ * 사이트에 같이 올려 둔 인쇄물의 주소를 만든다.
+ * 'http…'는 그대로 두고, 그 밖의 값은 papers/ 아래 파일로 본다.
  * 한글 파일 이름이 그대로 들어오므로 주소로 만들 때 인코딩한다.
  */
 export function paperHref(value: string, base = import.meta.env.BASE_URL): string {
@@ -111,6 +129,8 @@ export interface AssessmentData {
   students: Student[];
   exams: Exam[];
   results: Result[];
+  /** 기본 진단평가를 한 번 넣었는지. 지우고 나서 다시 살아나지 않게 한다. */
+  seeded?: boolean;
 }
 
 const KEY = 'sda.assess.v1';
@@ -128,6 +148,7 @@ export function loadAssessment(): AssessmentData {
       students: Array.isArray(p.students) ? p.students : [],
       exams: Array.isArray(p.exams) ? p.exams : [],
       results: Array.isArray(p.results) ? p.results : [],
+      seeded: p.seeded === true,
     };
   } catch {
     return emptyAssessment();
@@ -212,6 +233,7 @@ const HEADER_ALIASES: Record<string, string[]> = {
   title: ['시험지', '시험', '시험지명', '시험명', 'title', 'exam'],
   paper: ['문제지', '문제지파일', 'paper'],
   solution: ['해설', '해설지', '해설지파일', 'solution'],
+  blueprint: ['출제표', '출제표파일', 'blueprint'],
 };
 
 // 서술형/논술형/서답형만 부분점수 대상으로 보고 나머지(객관식·단답형)는 O/X로 채점한다.
@@ -234,8 +256,7 @@ export interface CsvParseResult {
   questions: ExamQuestion[];
   title?: string;
   subject?: string;
-  paper?: string;
-  solution?: string;
+  files?: Partial<Record<AttachKind, Attachment>>;
   errors: string[];
 }
 
@@ -257,17 +278,17 @@ export function examQuestionsFromCsv(text: string): CsvParseResult {
   const idxPoints = header.indexOf('points');
   const idxFormat = header.indexOf('format');
   const idxTitle = header.indexOf('title');
-  // 문제지·해설은 시험지 한 장에 하나뿐이라 문항이 아니라 시험지에 붙는다.
-  const idxPaper = header.indexOf('paper');
-  const idxSolution = header.indexOf('solution');
+  // 인쇄물은 시험지 한 장에 하나뿐이라 문항이 아니라 시험지에 붙는다.
+  const attachCols = ATTACH_KINDS.map((k) => [k, header.indexOf(k)] as [AttachKind, number]).filter(
+    ([, i]) => i !== -1
+  );
   const extra: [string, number][] = (['unit', 'level', 'source', 'sourceNo'] as const)
     .map((k) => [k, header.indexOf(k)] as [string, number])
     .filter(([, i]) => i !== -1);
 
   let title: string | undefined;
   let subject: string | undefined;
-  let paper: string | undefined;
-  let solution: string | undefined;
+  const files: Partial<Record<AttachKind, Attachment>> = {};
   const questions: ExamQuestion[] = [];
   const seen = new Set<number>();
 
@@ -304,15 +325,23 @@ export function examQuestionsFromCsv(text: string): CsvParseResult {
     }
     if (idxTitle !== -1 && !title && (cells[idxTitle] ?? '').trim()) title = cells[idxTitle].trim();
     if (idxSubject !== -1 && !subject && (cells[idxSubject] ?? '').trim()) subject = cells[idxSubject].trim();
-    if (idxPaper !== -1 && !paper && (cells[idxPaper] ?? '').trim()) paper = cells[idxPaper].trim();
-    if (idxSolution !== -1 && !solution && (cells[idxSolution] ?? '').trim()) solution = cells[idxSolution].trim();
+    for (const [kind, idx] of attachCols) {
+      const v = (cells[idx] ?? '').trim();
+      if (v && !files[kind]) files[kind] = { name: v, src: 'site' };
+    }
     const existing = questions.findIndex((x) => x.no === no);
     if (existing !== -1) questions[existing] = q;
     else questions.push(q);
   }
 
   questions.sort((a, b) => a.no - b.no);
-  return { questions, title, subject, paper, solution, errors };
+  return {
+    questions,
+    title,
+    subject,
+    files: Object.keys(files).length ? files : undefined,
+    errors,
+  };
 }
 
 // ── 파일 다운로드 ────────────────────────────────────────

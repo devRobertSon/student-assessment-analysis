@@ -5,7 +5,7 @@ import {
   ExamQuestion,
   downloadText,
   examQuestionsFromCsv,
-  paperHref,
+  ATTACH_KINDS,
   fmtPoints,
   isEssay,
   newId,
@@ -13,11 +13,12 @@ import {
   splitTypes,
   todayStr,
 } from '../lib/assessment';
-import PapersList from './PapersList';
+import ExamFiles from './ExamFiles';
+import { delExamFiles } from '../lib/filestore';
 
 // 업로드 예시(양식) — 받아서 내용만 바꿔 다시 올리면 됩니다.
-const SAMPLE_EXAM_CSV = `시험지,과목,문항번호,단원,유형,난이도,형식,배점,정답,출처,원문항,문제지,해설
-중2 1차 진단,수학,1,식의 계산,연산·식 정리,표준,객관식,3,③,심화,7,중2-1_문제지.pdf,중2-1_해설.pdf
+const SAMPLE_EXAM_CSV = `시험지,과목,문항번호,단원,유형,난이도,형식,배점,정답,출처,원문항
+중2 1차 진단,수학,1,식의 계산,연산·식 정리,표준,객관식,3,③,심화,7
 중2 1차 진단,수학,2,식의 계산,개념 이해,상,객관식,3,①,응용,12
 중2 1차 진단,수학,3,부등식,표현 해석,상,객관식,3,⑤,심화,5
 중2 1차 진단,수학,4,방정식,다단계 해결,최상,서술형,6,12,심화형,9
@@ -35,8 +36,7 @@ interface Draft {
   subject: string;
   date: string;
   questions: ExamQuestion[];
-  paper?: string;
-  solution?: string;
+  files?: Exam['files'];
   errors: string[];
 }
 
@@ -58,8 +58,7 @@ export default function ExamManager({ data, setData }: Props) {
       subject: res.subject || '과학',
       date: todayStr(),
       questions: res.questions,
-      paper: res.paper,
-      solution: res.solution,
+      files: res.files,
       errors: res.errors,
     };
   };
@@ -89,8 +88,7 @@ export default function ExamManager({ data, setData }: Props) {
       subject: d.subject.trim() || '과학',
       date: d.date,
       questions: d.questions,
-      paper: d.paper?.trim() || undefined,
-      solution: d.solution?.trim() || undefined,
+      files: d.files,
     }));
     setData({ ...data, exams: [...data.exams, ...newExams] });
     setDrafts([]);
@@ -100,6 +98,7 @@ export default function ExamManager({ data, setData }: Props) {
     const e = data.exams.find((x) => x.id === id);
     const cnt = data.results.filter((r) => r.examId === id).length;
     if (!confirm(`"${e?.title}" 시험지를 삭제할까요?${cnt ? ` (채점 결과 ${cnt}건도 함께 삭제)` : ''}`)) return;
+    delExamFiles(id, ATTACH_KINDS);
     setData({
       ...data,
       exams: data.exams.filter((x) => x.id !== id),
@@ -116,6 +115,7 @@ export default function ExamManager({ data, setData }: Props) {
     if (selected.size === 0) return;
     const cnt = data.results.filter((r) => selected.has(r.examId)).length;
     if (!confirm(`선택한 시험지 ${selected.size}개를 삭제할까요?${cnt ? ` (채점 결과 ${cnt}건도 함께 삭제)` : ''}`)) return;
+    selected.forEach((id) => delExamFiles(id, ATTACH_KINDS));
     setData({
       ...data,
       exams: data.exams.filter((x) => !selected.has(x.id)),
@@ -189,13 +189,11 @@ export default function ExamManager({ data, setData }: Props) {
         <div>
           <div className="dz-title">여기로 CSV 파일을 끌어다 놓거나 [＋ CSV 업로드]를 누르세요</div>
           <div className="hint">
-            필수 열 <b>문항번호</b>, <b>유형</b> · 선택 열 시험지, 과목, 단원, 난이도, 형식, 배점, 정답, 출처, 원문항, 문제지, 해설 ·
+            필수 열 <b>문항번호</b>, <b>유형</b> · 선택 열 시험지, 과목, 단원, 난이도, 형식, 배점, 정답, 출처, 원문항 ·
             여러 개 동시 업로드 가능
           </div>
         </div>
       </div>
-
-      <PapersList />
 
       <details className="csv-help">
         <summary>CSV 어떻게 만드나요?</summary>
@@ -234,7 +232,7 @@ export default function ExamManager({ data, setData }: Props) {
             찾아가는 용도입니다 (선택)
           </li>
           <li>
-            <b>문제지·해설</b> — 그 시험의 PDF 파일 이름. 적어 두면 목록에서 바로 내려받습니다.
+            <b>문제지·해설·출제표</b> — 사이트에 같이 올려 둔 파일 이름. 적어 두면 목록에서 바로 내려받습니다.
             파일은 <code>docs/papers/</code>에 올려 둔 것을 쓰고, 다른 곳에 있으면 <code>https://…</code>{' '}
             주소를 그대로 적어도 됩니다. 시험지마다 하나씩이므로 <b>첫 줄에만 적으면</b> 됩니다 (선택)
           </li>
@@ -286,27 +284,6 @@ export default function ExamManager({ data, setData }: Props) {
                     <input type="date" value={d.date} onChange={(e) => updateDraft(d.key, { date: e.target.value })} />
                   </label>
                 </div>
-                {/* 사이트의 papers/ 에 올려 둔 파일 이름을 적는다. 주소를 그대로 적어도 된다. */}
-                <div className="assess-row wrap">
-                  <label className="assess-field grow">
-                    문제지 PDF
-                    <input
-                      type="text"
-                      value={d.paper ?? ''}
-                      placeholder="예: 중1-1_진단평가_문제지.pdf (없으면 비워 둠)"
-                      onChange={(e) => updateDraft(d.key, { paper: e.target.value })}
-                    />
-                  </label>
-                  <label className="assess-field grow">
-                    해설지 PDF
-                    <input
-                      type="text"
-                      value={d.solution ?? ''}
-                      placeholder="예: 중1-1_진단평가_해설.pdf"
-                      onChange={(e) => updateDraft(d.key, { solution: e.target.value })}
-                    />
-                  </label>
-                </div>
                 {d.errors.length > 0 && (
                   <div className="assess-warn">
                     ⚠ {d.errors.slice(0, 5).join(' / ')}
@@ -339,12 +316,12 @@ export default function ExamManager({ data, setData }: Props) {
                   <input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="전체 선택" />
                 </th>
                 <th>시험지</th>
-                <th style={{ width: 84 }}>과목</th>
-                <th style={{ width: 118 }}>등록일</th>
-                <th style={{ width: 70, textAlign: 'center' }}>문항</th>
-                <th style={{ width: 62 }}>유형</th>
-                <th style={{ width: 62 }}>단원</th>
-                <th style={{ width: 124 }}>인쇄물</th>
+                <th style={{ width: 66 }}>과목</th>
+                <th style={{ width: 104 }}>등록일</th>
+                <th style={{ width: 56, textAlign: 'center' }}>문항</th>
+                <th style={{ width: 52 }}>유형</th>
+                <th style={{ width: 52 }}>단원</th>
+                <th style={{ width: 240 }}>인쇄물</th>
                 <th style={{ width: 92 }}></th>
                 <th style={{ width: 44 }}></th>
               </tr>
@@ -372,18 +349,16 @@ export default function ExamManager({ data, setData }: Props) {
                         return n ? `${n}개` : '—';
                       })()}
                     </td>
-                    <td className="ex-files">
-                      {ex.paper && (
-                        <a className="file-link" href={paperHref(ex.paper)} download target="_blank" rel="noopener">
-                          문제지
-                        </a>
-                      )}
-                      {ex.solution && (
-                        <a className="file-link" href={paperHref(ex.solution)} download target="_blank" rel="noopener">
-                          해설
-                        </a>
-                      )}
-                      {!ex.paper && !ex.solution && <span className="hint">—</span>}
+                    <td>
+                      <ExamFiles
+                        exam={ex}
+                        onChange={(files) =>
+                          setData({
+                            ...data,
+                            exams: data.exams.map((x) => (x.id === ex.id ? { ...x, files } : x)),
+                          })
+                        }
+                      />
                     </td>
                     <td>
                       <button className="mini ghost" onClick={() => setOpenId(openId === ex.id ? null : ex.id)}>
