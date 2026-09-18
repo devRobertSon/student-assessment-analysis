@@ -9,14 +9,14 @@ import ExamManager from './components/ExamManager';
 import GradingPanel from './components/GradingPanel';
 import TypeReport from './components/TypeReport';
 
-type View = 'home' | HomeTarget;
+type View = 'home' | 'students' | 'exams' | 'grading' | 'report';
 
+// 리포트는 학생 화면에서 열리므로 메뉴에 두지 않는다.
 const NAV: { key: View; label: string }[] = [
   { key: 'home', label: '홈' },
   { key: 'students', label: '학생' },
   { key: 'exams', label: '시험지' },
   { key: 'grading', label: '채점' },
-  { key: 'report', label: '리포트' },
 ];
 
 // 기존 시간표 앱과 같은 도메인(devrobertson.github.io)에 배포되므로
@@ -30,6 +30,8 @@ export default function App() {
     saveAssessment
   );
   const [view, setView] = useState<View>('home');
+  // 학생 선택은 학생 화면·채점·리포트가 함께 쓰므로 여기에서 들고 있는다.
+  const [studentId, setStudentId] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const importJson = async (file: File) => {
@@ -40,6 +42,9 @@ export default function App() {
       alert('JSON을 읽지 못했습니다: ' + (e as Error).message);
     }
   };
+
+  const goHome = (target: HomeTarget) => setView(target === 'report' ? 'students' : target);
+  const navActive = (key: View) => (view === 'report' ? key === 'students' : view === key);
 
   return (
     <div className="app">
@@ -53,7 +58,7 @@ export default function App() {
 
         <nav className="assess-tabs">
           {NAV.map((t) => (
-            <button key={t.key} className={view === t.key ? 'active' : ''} onClick={() => setView(t.key)}>
+            <button key={t.key} className={navActive(t.key) ? 'active' : ''} onClick={() => setView(t.key)}>
               {t.label}
             </button>
           ))}
@@ -81,15 +86,46 @@ export default function App() {
         </div>
       </header>
 
-      {view === 'home' ? (
-        <HomePage data={data} onGo={setView} />
-      ) : (
-        <section className="card">
-          {view === 'students' && <StudentManager data={data} setData={setData} />}
-          {view === 'exams' && <ExamManager data={data} setData={setData} />}
-          {view === 'grading' && <GradingPanel data={data} setData={setData} />}
-          {view === 'report' && <TypeReport data={data} />}
-        </section>
+      {view === 'home' && <HomePage data={data} onGo={goHome} />}
+
+      {view === 'students' && (
+        <main className="pane">
+          <StudentManager
+            data={data}
+            setData={setData}
+            selectedId={studentId}
+            setSelectedId={setStudentId}
+            onOpenReport={() => setView('report')}
+            onOpenGrading={() => setView('grading')}
+          />
+        </main>
+      )}
+
+      {view === 'exams' && (
+        <main className="pane">
+          <section className="assess-card">
+            <ExamManager data={data} setData={setData} />
+          </section>
+        </main>
+      )}
+
+      {view === 'grading' && (
+        <main className="pane">
+          <section className="assess-card">
+            <GradingPanel data={data} setData={setData} />
+          </section>
+        </main>
+      )}
+
+      {view === 'report' && (
+        <main className="pane">
+          <TypeReport
+            data={data}
+            studentId={studentId}
+            setStudentId={setStudentId}
+            onBack={() => setView('students')}
+          />
+        </main>
       )}
     </div>
   );

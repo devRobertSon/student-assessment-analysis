@@ -15,13 +15,27 @@ export interface Exam {
   questions: ExamQuestion[];
 }
 
+// 상담 카드의 '목표 고등학교' 선택지
+export const TARGET_SCHOOLS = ['영재학교', '과학고', '외고', '국제고', '전사고', '의대 준비'];
+
+export type Sibling = '' | '없음' | '있음';
+
 export interface Student {
   id: string;
   name: string;
   grade: string;
   school?: string; // 학교(동명이인 구분용, 선택)
-  contact?: string; // 연락처(동명이인 구분용, 선택)
+  contact?: string; // 학생 연락처(선택)
   memo?: string;
+  // 아래 셋은 인쇄용 상담 카드에 자동으로 채워진다. 비워두면 빈칸으로 인쇄돼 손으로 적는다.
+  parentContact?: string;
+  sibling?: Sibling;
+  targetSchools?: string[];
+  // 상담 카드의 '현재 진도 · 학습 내용' 표 (수학·과학 2행)
+  mathProgress?: string;
+  mathBooks?: string;
+  sciProgress?: string;
+  sciBooks?: string;
 }
 
 export interface Mark {

@@ -432,3 +432,101 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
   .home-hero h1 { font-size: 34px; }
   .home-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ── 본문 컨테이너 ───────────────────────────────── */
+.pane { flex-grow: 1; padding: 18px 32px 24px; display: flex; flex-direction: column; }
+.pane > .assess-card { flex-grow: 1; }
+
+/* ── 학생 화면: 좌측 목록 + 우측 상세 ─────────────── */
+.split { flex-grow: 1; display: grid; grid-template-columns: 264px minmax(0, 1fr); gap: 18px; align-items: start; }
+.side {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  position: sticky;
+  top: 18px;
+}
+.side-head { padding: 15px 16px 12px; border-bottom: 1px solid var(--line-2); display: flex; flex-direction: column; gap: 10px; }
+.side-title { display: flex; align-items: baseline; justify-content: space-between; }
+.side-title b { font-size: 15px; font-weight: 600; }
+.side-head .assess-row { gap: 6px; }
+.side-head button.wide { flex-grow: 1; }
+.side-list { padding: 7px; display: flex; flex-direction: column; gap: 2px; max-height: 58vh; overflow-y: auto; }
+.side-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  font-size: 15px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 11px;
+}
+.side-item .nm { flex-grow: 1; }
+.side-item .gr { font-size: 13px; color: var(--ink-3); }
+.side-item .rt { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.side-item.on { background: var(--navy); }
+.side-item.on:hover { background: var(--navy-hover); }
+.side-item.on .nm, .side-item.on .rt { color: #fff; font-weight: 500; }
+.side-item.on .gr { color: var(--navy-pale); }
+.side-foot { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+
+.main { display: flex; flex-direction: column; gap: 14px; }
+.main .assess-card + .assess-card { margin-top: 0; }
+.empty-state { display: flex; align-items: center; justify-content: center; min-height: 260px; }
+
+.stu-head { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.stu-id { display: flex; flex-direction: column; gap: 4px; }
+.stu-name { display: flex; align-items: baseline; gap: 11px; }
+.stu-name h1 { font-size: 27px; font-weight: 700; letter-spacing: -0.02em; }
+.stu-div { width: 1px; height: 38px; background: var(--line-2); }
+.stu-stats { display: flex; gap: 26px; }
+.stu-stats > div { display: flex; flex-direction: column; }
+.stu-stats b { font-size: 20px; font-weight: 700; line-height: 1.25; }
+.stu-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+.stu-info-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+.stu-info-head h3 { margin: 0; }
+.field-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px; }
+.fld { display: flex; flex-direction: column; gap: 5px; }
+.fld > span { font-size: 11px; font-weight: 600; color: var(--ink-3); }
+.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip { font-size: 13px; color: var(--ink-2); border-radius: 15px; padding: 6px 13px; }
+.chip.on { font-weight: 600; color: #fff; background: var(--navy); border-color: var(--navy); }
+.chip.on:hover { background: var(--navy-hover); }
+.grow { flex-grow: 1; }
+
+@media (max-width: 1180px) {
+  .pane { padding: 16px 20px 20px; }
+  .split { grid-template-columns: 220px minmax(0, 1fr); gap: 14px; }
+  .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .type-bars-wrap { flex-direction: column; align-items: stretch; }
+  .type-radar-wrap { align-self: center; max-width: 360px; }
+}
+
+@media (max-width: 860px) {
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .side { position: static; }
+  .side-list { max-height: 240px; }
+  .field-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── 학생 정보: 진도 표 ──────────────────────────── */
+.progress-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.progress-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  background: var(--fill);
+  border: 1px solid var(--line);
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+.progress-table tbody th { width: 72px; background: var(--card); color: var(--ink); }
+.progress-table td { border: 1px solid var(--line); padding: 0; }
+.progress-table input { width: 100%; border: none; border-radius: 0; background: transparent; padding: 7px 10px; }
+.progress-table input:focus { outline: 2px solid var(--navy); outline-offset: -2px; }

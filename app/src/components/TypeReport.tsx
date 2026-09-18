@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { toJpeg } from 'html-to-image';
 import { AssessmentData, TypeStat, scoreOf, todayStr, typeStatsCumulative } from '../lib/assessment';
 import { logoUrl, sealUrl } from '../lib/brand';
+import TypeRadar, { rateColor } from './TypeRadar';
+import TypeBars from './TypeBars';
 
 // 리포트 뒤 상담 카드에 넣을 목표 고등학교 선택지
 const TARGET_SCHOOLS = ['영재학교', '과학고', '외고', '국제고', '전사고', '의대 준비'];
@@ -45,17 +47,14 @@ function SealStamp() {
 
 interface Props {
   data: AssessmentData;
+  studentId: string;
+  setStudentId: (id: string) => void;
+  onBack: () => void;
 }
 
 // 이 문제 수 이상인 유형만 차트(막대·레이더)에 표시. 그 미만은 아래 비고 표로.
 // 1로 두면 문항이 1개인 유형도 모두 차트에 포함(비고 표는 사실상 생략).
 const MIN_CHART_TOTAL = 1;
-
-function rateColor(rate: number): string {
-  if (rate >= 0.8) return '#2C79D0';
-  if (rate >= 0.5) return '#E3A72E';
-  return '#D6443B';
-}
 
 function MinorNote({ stats }: { stats: TypeStat[] }) {
   if (stats.length === 0) return null;
@@ -82,128 +81,7 @@ function MinorNote({ stats }: { stats: TypeStat[] }) {
   );
 }
 
-function TypeBars({ stats }: { stats: TypeStat[] }) {
-  if (stats.length === 0) return <p className="muted">표시할 데이터가 없습니다.</p>;
-  return (
-    <div className="type-bars">
-      {stats.map((s) => (
-        <div key={s.type} className="type-bar-row">
-          <div className="type-bar-label" title={s.type}>{s.type}</div>
-          <div className="type-bar-track">
-            <div className="type-bar-fill" style={{ width: `${Math.round(s.rate * 100)}%`, background: rateColor(s.rate) }} />
-          </div>
-          <div className="type-bar-val">
-            {Math.round(s.rate * 100)}% <span className="muted">({s.correct}/{s.total})</span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-const RADAR_W = 480;
-const RADAR_H = 390;
-const RADAR_R = 128;
-
-function TypeRadar({ stats }: { stats: TypeStat[] }) {
-  if (stats.length < 3) {
-    return <p className="muted">레이더 차트는 유형이 3개 이상일 때 표시됩니다.</p>;
-  }
-  const cx = RADAR_W / 2;
-  const cy = RADAR_H / 2 + 8;
-  const n = stats.length;
-  // 각 유형이 차지하는 각도(부채꼴)를 문제 수에 비례하게 — 단, 균등 배치와
-  // 섞어(BLEND) 한 유형이 각을 독차지해 도형이 지나치게 찌그러지는 것을 방지.
-  const totalQ = stats.reduce((sum, s) => sum + s.total, 0) || 1;
-  const BLEND = 0.5; // 0=완전 균등, 1=문제 수 완전 비례
-  const share = stats.map((s) => (1 - BLEND) / n + BLEND * (s.total / totalQ));
-  // 각 유형의 스포크(축)를 자기 부채꼴의 중앙에 배치
-  let acc = 0;
-  const centerFrac = stats.map((_, i) => {
-    const c = acc + share[i] / 2;
-    acc += share[i];
-    return c;
-  });
-  const angleOf = (i: number) => -Math.PI / 2 + 2 * Math.PI * centerFrac[i];
-  const ptOf = (i: number, r: number): [number, number] => [
-    cx + r * Math.cos(angleOf(i)),
-    cy + r * Math.sin(angleOf(i)),
-  ];
-  const dataPoly = stats
-    .map((s, i) => ptOf(i, RADAR_R * s.rate).map((v) => v.toFixed(1)).join(','))
-    .join(' ');
-  const shorten = (t: string) => (t.length > 12 ? t.slice(0, 11) + '…' : t);
-
-  return (
-    <svg
-      className="type-radar"
-      viewBox={`0 0 ${RADAR_W} ${RADAR_H}`}
-      role="img"
-      aria-label="유형별 정답률 레이더 차트"
-    >
-      {/* 배경 격자는 중심(cx,cy) 고정 동심원 — 중앙이 움직이지 않고 25/50/75/100 눈금이 항상 원 위에 정확히 위치 */}
-      {[0.25, 0.5, 0.75, 1].map((ratio) => (
-        <circle
-          key={ratio}
-          cx={cx}
-          cy={cy}
-          r={RADAR_R * ratio}
-          fill={ratio === 1 ? '#F3F7FD' : 'none'}
-          stroke="#D5DFF0"
-          strokeWidth={ratio === 1 ? 1.2 : 0.8}
-        />
-      ))}
-      {stats.map((_, i) => {
-        const [x, y] = ptOf(i, RADAR_R);
-        return <line key={`axis-${i}`} x1={cx} y1={cy} x2={x} y2={y} stroke="#D5DFF0" strokeWidth={0.8} />;
-      })}
-      {[0.25, 0.5, 0.75, 1].map((ratio) => (
-        <text
-          key={`ring-label-${ratio}`}
-          x={cx + 4}
-          y={cy - RADAR_R * ratio - 2}
-          fontSize={8.5}
-          fill="#8894AB"
-        >
-          {Math.round(ratio * 100)}
-        </text>
-      ))}
-
-      <polygon points={dataPoly} fill="rgba(44,121,208,0.22)" stroke="#2C79D0" strokeWidth={2} strokeLinejoin="round" />
-      {stats.map((s, i) => {
-        const [x, y] = ptOf(i, RADAR_R * s.rate);
-        return (
-          <circle key={`dot-${i}`} cx={x} cy={y} r={3.5} fill={rateColor(s.rate)} stroke="#fff" strokeWidth={1.2}>
-            <title>{`${s.type} ${Math.round(s.rate * 100)}% (${s.correct}/${s.total})`}</title>
-          </circle>
-        );
-      })}
-
-      {stats.map((s, i) => {
-        const a = angleOf(i);
-        const cos = Math.cos(a);
-        const sin = Math.sin(a);
-        const [x, y] = ptOf(i, RADAR_R + 16);
-        const anchor = Math.abs(cos) < 0.35 ? 'middle' : cos > 0 ? 'start' : 'end';
-        const dy = sin < -0.35 ? -8 : sin > 0.35 ? 10 : 0;
-        return (
-          <g key={`label-${i}`} textAnchor={anchor}>
-            <text x={x} y={y + dy} fontSize={11} fontWeight={600} fill="#16224E">
-              {shorten(s.type)}
-              <title>{s.type}</title>
-            </text>
-            <text x={x} y={y + dy + 13} fontSize={10} fill={rateColor(s.rate)} fontWeight={700}>
-              {Math.round(s.rate * 100)}%
-            </text>
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
-
-export default function TypeReport({ data }: Props) {
-  const [studentId, setStudentId] = useState('');
+export default function TypeReport({ data, studentId, setStudentId, onBack }: Props) {
   // 선생님 종합 의견은 저장하지 않는 임시 입력 — 학생을 바꾸면 비워짐
   const [note, setNote] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -312,7 +190,8 @@ export default function TypeReport({ data }: Props) {
 
   return (
     <div className="assess-pane">
-      <div className="assess-row wrap">
+      <div className="assess-row wrap no-print">
+        <button className="mini ghost" onClick={onBack}>← 학생</button>
         <label className="assess-field">
           학생
           <select value={studentId} onChange={(e) => setStudentId(e.target.value)}>
