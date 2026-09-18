@@ -98,6 +98,15 @@ export default function StudentManager({
     update({ targetSchools: cur.includes(name) ? cur.filter((t) => t !== name) : [...cur, name] });
   };
 
+  /** 채점 한 건을 지운다. 시험지와 학생은 그대로 두고 그 응시만 없앤다. */
+  const removeResult = (resultId: string) => {
+    const r = data.results.find((x) => x.id === resultId);
+    if (!r) return;
+    const ex = data.exams.find((e) => e.id === r.examId);
+    if (!confirm(`${ex?.title ?? '시험'} · ${r.date} 채점 결과를 삭제할까요?`)) return;
+    setData({ ...data, results: data.results.filter((x) => x.id !== resultId) });
+  };
+
   const remove = () => {
     if (!student) return;
     const cnt = data.results.filter((r) => r.studentId === student.id).length;
@@ -391,6 +400,45 @@ export default function StudentManager({
                 </table>
               </div>
             </div>
+
+            {studentResults.length > 0 && (
+              <div className="assess-card">
+                <h3>응시 결과</h3>
+                <table className="assess-table">
+                  <thead>
+                    <tr>
+                      <th>시험지</th>
+                      <th style={{ width: 116 }}>응시일</th>
+                      <th style={{ width: 150 }}>점수</th>
+                      <th style={{ width: 44 }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {studentResults.map((r) => {
+                      const ex = data.exams.find((e) => e.id === r.examId);
+                      const sc = scoreOf(r.marks);
+                      return (
+                        <tr key={r.id}>
+                          <td>{ex?.title ?? '—'}</td>
+                          <td>{r.date}</td>
+                          <td>
+                            {sc.correct}/{sc.total} · {Math.round(sc.rate * 100)}%
+                          </td>
+                          <td>
+                            <button className="del" onClick={() => removeResult(r.id)} title="이 채점 결과 삭제">
+                              ✕
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                <p className="hint" style={{ marginTop: 8 }}>
+                  지우면 위의 정답률과 리포트에서 바로 빠집니다. 시험지와 학생은 그대로 남습니다.
+                </p>
+              </div>
+            )}
 
             <div className="assess-card grow">
               {studentResults.length === 0 ? (

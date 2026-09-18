@@ -117,6 +117,17 @@ export default function GradingPanel({ data, setData }: Props) {
     alert('채점을 저장했습니다.');
   };
 
+  /** 불러온 채점 결과를 지운다. 화면의 입력칸도 같이 비워 되살아나지 않게 한다. */
+  const removeSaved = () => {
+    if (!existing || !exam) return;
+    if (!confirm(`${exam.title} · ${existing.date} 채점 결과를 삭제할까요?`)) return;
+    setData({ ...data, results: data.results.filter((r) => r.id !== existing.id) });
+    const map: Record<number, Cell> = {};
+    exam.questions.forEach((q) => (map[q.no] = null));
+    setCells(map);
+    setDate(todayStr());
+  };
+
   const exportGradingCsv = () => {
     if (!exam || !student) {
       alert('학생과 시험지를 선택하세요.');
@@ -200,7 +211,14 @@ export default function GradingPanel({ data, setData }: Props) {
                 응시일
                 <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
               </label>
-              {existing && <span className="assess-badge" style={{ alignSelf: 'flex-end' }}>저장된 채점 불러옴</span>}
+              {existing && (
+                <span className="assess-row" style={{ alignSelf: 'flex-end', gap: 8 }}>
+                  <span className="assess-badge">저장된 채점 불러옴</span>
+                  <button className="del-btn mini" onClick={removeSaved}>
+                    채점 결과 삭제
+                  </button>
+                </span>
+              )}
             </div>
 
             {!studentId && <p className="muted" style={{ marginTop: 12 }}>먼저 학생을 선택하세요.</p>}
