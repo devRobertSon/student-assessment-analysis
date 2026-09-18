@@ -161,16 +161,16 @@ export default function StudentManager({
             </div>
           ) : (
             <>
-              <button className="mini" onClick={() => setAdding(true)}>
-                ＋ 학생 추가
-              </button>
               <div className="assess-row">
-                <button className="mini ghost wide" onClick={() => fileRef.current?.click()}>
+                <button className="mini wide" onClick={() => setAdding(true)}>
+                  ＋ 학생 추가
+                </button>
+                <button className="mini wide" onClick={() => fileRef.current?.click()}>
                   CSV 가져오기
                 </button>
                 {data.students.length > 0 && (
                   <button
-                    className="mini ghost wide"
+                    className="mini wide"
                     onClick={() => downloadText(`학생목록_${todayStr()}.csv`, studentsToCsv(data.students))}
                   >
                     내려받기

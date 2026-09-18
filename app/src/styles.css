@@ -455,8 +455,9 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .side-head { padding: 15px 16px 12px; border-bottom: 1px solid var(--line-2); display: flex; flex-direction: column; gap: 10px; }
 .side-title { display: flex; align-items: baseline; justify-content: space-between; }
 .side-title b { font-size: 15px; font-weight: 600; }
-.side-head .assess-row { gap: 6px; }
-.side-head button.wide { flex-grow: 1; flex-basis: 0; min-width: 0; }
+.side-head .assess-row { gap: 6px; flex-wrap: wrap; }
+/* 좁은 사이드바에서 버튼 두 개가 한 줄을 나눠 갖고, 세 번째는 아래로 내려간다 */
+.side-head button.wide { flex: 1 1 96px; min-width: 0; padding-left: 9px; padding-right: 9px; }
 .side-list { padding: 7px; display: flex; flex-direction: column; gap: 2px; max-height: 58vh; overflow-y: auto; }
 .side-item {
   display: flex;
@@ -505,7 +506,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 
 @media (max-width: 1180px) {
   .pane { padding: 16px 20px 20px; }
-  .split { grid-template-columns: 220px minmax(0, 1fr); gap: 14px; }
+  .split { grid-template-columns: 240px minmax(0, 1fr); gap: 14px; }
   .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .type-bars-wrap { flex-direction: column; align-items: stretch; }
   .type-radar-wrap { align-self: center; max-width: 360px; }
@@ -630,3 +631,57 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .report-capture .type-bar-label { width: 84px; }
 .report-capture .report-sec { padding: 11px 18px; }
 .report-capture .report-note-body { line-height: 1.7; }
+
+/* ── 사용법 ──────────────────────────────────────── */
+.manual { max-width: 880px; margin: 0 auto; width: 100%; }
+.manual .assess-card h3 { font-size: 17px; margin-bottom: 12px; }
+.manual p { margin: 0 0 4px; }
+.manual code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.92em;
+  background: var(--fill);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.manual .manual-code { margin: 10px 0; white-space: pre; }
+
+.flow { margin: 0; padding: 0; list-style: none; counter-reset: flow; display: flex; flex-direction: column; gap: 10px; }
+.flow li {
+  counter-increment: flow;
+  display: grid;
+  grid-template-columns: 30px 132px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line-2);
+}
+.flow li:last-child { border-bottom: none; padding-bottom: 0; }
+.flow li::before {
+  content: counter(flow);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--navy);
+  background: #eff1f5;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.flow b { font-size: 15px; font-weight: 600; }
+.flow span { font-size: 14px; color: var(--ink-2); word-break: keep-all; }
+
+.bullets { margin: 0; padding-left: 19px; display: flex; flex-direction: column; gap: 7px; }
+.bullets li { font-size: 14px; line-height: 1.7; color: var(--ink-2); word-break: keep-all; }
+.bullets b { color: var(--ink); }
+
+.manual-table { margin-top: 10px; }
+.manual-table td { vertical-align: top; font-size: 13px; line-height: 1.65; color: var(--ink-2); word-break: keep-all; }
+.manual-table td b { color: var(--ink); }
+
+@media (max-width: 860px) {
+  .flow li { grid-template-columns: 24px minmax(0, 1fr); }
+  .flow li span { grid-column: 2; }
+}

@@ -8,8 +8,9 @@ import StudentManager from './components/StudentManager';
 import ExamManager from './components/ExamManager';
 import GradingPanel from './components/GradingPanel';
 import TypeReport from './components/TypeReport';
+import ManualPage from './components/ManualPage';
 
-type View = 'home' | 'students' | 'exams' | 'grading' | 'report';
+type View = 'home' | 'students' | 'exams' | 'grading' | 'report' | 'manual';
 
 // 리포트는 학생 화면에서 열리므로 메뉴에 두지 않는다.
 const NAV: { key: View; label: string }[] = [
@@ -17,6 +18,7 @@ const NAV: { key: View; label: string }[] = [
   { key: 'students', label: '학생' },
   { key: 'exams', label: '시험지' },
   { key: 'grading', label: '채점' },
+  { key: 'manual', label: '사용법' },
 ];
 
 // 기존 시간표 앱과 같은 도메인(devrobertson.github.io)에 배포되므로
@@ -114,6 +116,12 @@ export default function App() {
           <section className="assess-card">
             <GradingPanel data={data} setData={setData} />
           </section>
+        </main>
+      )}
+
+      {view === 'manual' && (
+        <main className="pane">
+          <ManualPage />
         </main>
       )}
 
