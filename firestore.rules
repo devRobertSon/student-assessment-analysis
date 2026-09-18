@@ -15,8 +15,11 @@ service cloud.firestore {
       return request.auth != null
         && request.auth.token.email_verified == true
         && request.auth.token.email in [
-          // ↓ 이 앱을 쓸 구글 계정을 여기에 나열하세요.
-          'CHANGE_ME@gmail.com'
+          // 이 앱을 쓸 구글 계정 목록. 마지막 항목 뒤에는 쉼표를 붙이지 않는다.
+          // 사람이 빠지면 여기서 지우고 콘솔에 다시 게시한다.
+          'quddnr7201@gmail.com',
+          'alphamns6693@gmail.com',
+          'jiany670@gmail.com'
         ];
     }
 

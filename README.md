@@ -49,19 +49,27 @@ localStorage 키도 분리돼 있습니다. GitHub Pages 프로젝트 페이지�
 
 기존 앱의 평가 데이터를 옮기려면 기존 앱에서 **JSON 내보내기** → 이 앱에서 **JSON 가져오기** 하세요.
 
-### Firebase 설정
+### Firebase
 
-1. [Firebase 콘솔](https://console.firebase.google.com/)에서 새 프로젝트 생성
-2. **Authentication → Sign-in method → Google** 사용 설정
-3. **Authentication → Settings → 승인된 도메인**에 `devrobertson.github.io` 추가
-4. **Firestore Database** 생성 (프로덕션 모드)
-5. **규칙** 탭에 [`firestore.rules`](firestore.rules) 내용을 붙여넣고, `CHANGE_ME@gmail.com`을 실제 계정으로 교체 후 게시
-6. **프로젝트 설정 → 내 앱 → 웹 앱 추가** 후 `firebaseConfig` 값을
-   [`app/src/lib/firebase.ts`](app/src/lib/firebase.ts)에 붙여넣기
+프로젝트 `student-assessment-analysis` (Spark 무료 요금제)를 씁니다. 설정은 완료되어 있습니다.
 
-6번을 하기 전까지는 `firebaseEnabled`가 `false`가 되어 로그인 없이 로컬 저장만으로 동작합니다.
+| 항목 | 값 |
+| --- | --- |
+| 로그인 | 구글 계정만 |
+| 승인된 도메인 | `devrobertson.github.io`, `localhost` |
+| Firestore 위치 | `asia-northeast3` (서울) |
+| 접근 허용 | [`firestore.rules`](firestore.rules)의 이메일 목록 |
 
-`firebaseConfig`는 공개 식별자라 저장소에 그대로 두어도 됩니다. 접근 통제는 보안 규칙이 담당합니다.
+[`app/src/lib/firebase.ts`](app/src/lib/firebase.ts)의 `firebaseConfig`는 공개 식별자라 저장소에
+그대로 두어도 됩니다. **실질적인 접근 통제는 전적으로 보안 규칙이 담당합니다.**
+
+#### 쓰는 사람이 바뀌면
+
+1. [`firestore.rules`](firestore.rules)의 이메일 목록을 고친다
+2. Firebase 콘솔 → Firestore Database → 규칙 에 같은 내용을 붙여넣고 **게시**
+3. 두 곳이 어긋나면 콘솔 쪽이 실제로 적용되는 값이다
+
+목록에 없는 계정은 로그인에 성공해도 앱에 `⚠ 접근 권한 없음`이 표시되고 데이터를 읽지 못합니다.
 
 ## CSV 형식
 
