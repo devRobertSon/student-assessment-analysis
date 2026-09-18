@@ -7,6 +7,7 @@ import {
   hasAxis,
   isFullMark,
   makeMark,
+  paperHref,
   parseGradingCsv,
   pointsOf,
   scoreOf,
@@ -181,6 +182,36 @@ describe('parseGradingCsv', () => {
     expect(earned[1]).toBe('full');
     const v = earned[1] === 'full' ? pointsOf(q) : earned[1];
     expect(makeMark(q, v)).toEqual({ no: 1, earned: 3, points: 3 });
+  });
+});
+
+describe('문제지 · 해설지', () => {
+  it('CSV의 문제지/해설 열을 시험지 정보로 읽는다', () => {
+    const r = examQuestionsFromCsv(
+      [
+        '시험지,문항번호,유형,문제지,해설',
+        '중1-1 진단평가,1,연산·식 정리,중1-1_문제지.pdf,중1-1_해설.pdf',
+        '중1-1 진단평가,2,개념 이해,,',
+      ].join('\n')
+    );
+    expect(r.errors).toEqual([]);
+    expect(r.paper).toBe('중1-1_문제지.pdf');
+    expect(r.solution).toBe('중1-1_해설.pdf');
+  });
+
+  it('열이 없으면 비어 있다', () => {
+    const r = examQuestionsFromCsv('문항번호,유형\n1,계산');
+    expect(r.paper).toBeUndefined();
+    expect(r.solution).toBeUndefined();
+  });
+
+  it('paperHref: 파일 이름은 papers/ 아래로, 주소는 그대로', () => {
+    expect(paperHref('중1-1 문제지.pdf', '/app/')).toBe('/app/papers/%EC%A4%911-1%20%EB%AC%B8%EC%A0%9C%EC%A7%80.pdf');
+    // papers/ 를 같이 적었거나 앞에 슬래시를 붙였어도 한 번만 붙는다
+    expect(paperHref('papers/a.pdf', '/app/')).toBe('/app/papers/a.pdf');
+    expect(paperHref('/papers/a.pdf', '/app/')).toBe('/app/papers/a.pdf');
+    // 외부 주소는 손대지 않는다
+    expect(paperHref('https://drive.example/x.pdf', '/app/')).toBe('https://drive.example/x.pdf');
   });
 });
 

@@ -5,6 +5,7 @@ import {
   ExamQuestion,
   downloadText,
   examQuestionsFromCsv,
+  paperHref,
   fmtPoints,
   isEssay,
   newId,
@@ -14,8 +15,8 @@ import {
 } from '../lib/assessment';
 
 // 업로드 예시(양식) — 받아서 내용만 바꿔 다시 올리면 됩니다.
-const SAMPLE_EXAM_CSV = `시험지,과목,문항번호,단원,유형,난이도,형식,배점,정답,출처,원문항
-중2 1차 진단,수학,1,식의 계산,연산·식 정리,표준,객관식,3,③,심화,7
+const SAMPLE_EXAM_CSV = `시험지,과목,문항번호,단원,유형,난이도,형식,배점,정답,출처,원문항,문제지,해설
+중2 1차 진단,수학,1,식의 계산,연산·식 정리,표준,객관식,3,③,심화,7,중2-1_문제지.pdf,중2-1_해설.pdf
 중2 1차 진단,수학,2,식의 계산,개념 이해,상,객관식,3,①,응용,12
 중2 1차 진단,수학,3,부등식,표현 해석,상,객관식,3,⑤,심화,5
 중2 1차 진단,수학,4,방정식,다단계 해결,최상,서술형,6,12,심화형,9
@@ -33,6 +34,8 @@ interface Draft {
   subject: string;
   date: string;
   questions: ExamQuestion[];
+  paper?: string;
+  solution?: string;
   errors: string[];
 }
 
@@ -54,6 +57,8 @@ export default function ExamManager({ data, setData }: Props) {
       subject: res.subject || '과학',
       date: todayStr(),
       questions: res.questions,
+      paper: res.paper,
+      solution: res.solution,
       errors: res.errors,
     };
   };
@@ -83,6 +88,8 @@ export default function ExamManager({ data, setData }: Props) {
       subject: d.subject.trim() || '과학',
       date: d.date,
       questions: d.questions,
+      paper: d.paper?.trim() || undefined,
+      solution: d.solution?.trim() || undefined,
     }));
     setData({ ...data, exams: [...data.exams, ...newExams] });
     setDrafts([]);
@@ -181,7 +188,7 @@ export default function ExamManager({ data, setData }: Props) {
         <div>
           <div className="dz-title">여기로 CSV 파일을 끌어다 놓거나 [＋ CSV 업로드]를 누르세요</div>
           <div className="hint">
-            필수 열 <b>문항번호</b>, <b>유형</b> · 선택 열 시험지, 과목, 단원, 난이도, 형식, 배점, 정답, 출처, 원문항 ·
+            필수 열 <b>문항번호</b>, <b>유형</b> · 선택 열 시험지, 과목, 단원, 난이도, 형식, 배점, 정답, 출처, 원문항, 문제지, 해설 ·
             여러 개 동시 업로드 가능
           </div>
         </div>
@@ -222,6 +229,11 @@ export default function ExamManager({ data, setData }: Props) {
           <li>
             <b>출처·원문항</b> — 교재 이름과 그 교재에서의 번호. 약점 문항과 비슷한 문제를 다시 낼 때
             찾아가는 용도입니다 (선택)
+          </li>
+          <li>
+            <b>문제지·해설</b> — 그 시험의 PDF 파일 이름. 적어 두면 목록에서 바로 내려받습니다.
+            파일은 <code>docs/papers/</code>에 올려 둔 것을 쓰고, 다른 곳에 있으면 <code>https://…</code>{' '}
+            주소를 그대로 적어도 됩니다. 시험지마다 하나씩이므로 <b>첫 줄에만 적으면</b> 됩니다 (선택)
           </li>
         </ul>
         <pre className="manual-code">{SAMPLE_EXAM_CSV}</pre>
@@ -271,6 +283,27 @@ export default function ExamManager({ data, setData }: Props) {
                     <input type="date" value={d.date} onChange={(e) => updateDraft(d.key, { date: e.target.value })} />
                   </label>
                 </div>
+                {/* 사이트의 papers/ 에 올려 둔 파일 이름을 적는다. 주소를 그대로 적어도 된다. */}
+                <div className="assess-row wrap">
+                  <label className="assess-field grow">
+                    문제지 PDF
+                    <input
+                      type="text"
+                      value={d.paper ?? ''}
+                      placeholder="예: 중1-1_진단평가_문제지.pdf (없으면 비워 둠)"
+                      onChange={(e) => updateDraft(d.key, { paper: e.target.value })}
+                    />
+                  </label>
+                  <label className="assess-field grow">
+                    해설지 PDF
+                    <input
+                      type="text"
+                      value={d.solution ?? ''}
+                      placeholder="예: 중1-1_진단평가_해설.pdf"
+                      onChange={(e) => updateDraft(d.key, { solution: e.target.value })}
+                    />
+                  </label>
+                </div>
                 {d.errors.length > 0 && (
                   <div className="assess-warn">
                     ⚠ {d.errors.slice(0, 5).join(' / ')}
@@ -308,6 +341,7 @@ export default function ExamManager({ data, setData }: Props) {
                 <th style={{ width: 70, textAlign: 'center' }}>문항</th>
                 <th style={{ width: 62 }}>유형</th>
                 <th style={{ width: 62 }}>단원</th>
+                <th style={{ width: 124 }}>인쇄물</th>
                 <th style={{ width: 92 }}></th>
                 <th style={{ width: 44 }}></th>
               </tr>
@@ -335,6 +369,19 @@ export default function ExamManager({ data, setData }: Props) {
                         return n ? `${n}개` : '—';
                       })()}
                     </td>
+                    <td className="ex-files">
+                      {ex.paper && (
+                        <a className="file-link" href={paperHref(ex.paper)} download target="_blank" rel="noopener">
+                          문제지
+                        </a>
+                      )}
+                      {ex.solution && (
+                        <a className="file-link" href={paperHref(ex.solution)} download target="_blank" rel="noopener">
+                          해설
+                        </a>
+                      )}
+                      {!ex.paper && !ex.solution && <span className="hint">—</span>}
+                    </td>
                     <td>
                       <button className="mini ghost" onClick={() => setOpenId(openId === ex.id ? null : ex.id)}>
                         {openId === ex.id ? '접기' : '유형 보기'}
@@ -348,7 +395,7 @@ export default function ExamManager({ data, setData }: Props) {
                   </tr>
                   {openId === ex.id && (
                     <tr>
-                      <td colSpan={9}>
+                      <td colSpan={10}>
                         <div className="hint" style={{ marginBottom: 7 }}>
                           {ex.title} · 문항별 유형 · 만점{' '}
                           {fmtPoints(ex.questions.reduce((a, q) => a + pointsOf(q), 0))}점

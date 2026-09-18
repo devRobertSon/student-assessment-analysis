@@ -36,6 +36,21 @@ export interface Exam {
   subject: string;
   date: string; // 등록일 YYYY-MM-DD (응시일은 채점 결과 Result.date에 학생별로 기록된다)
   questions: ExamQuestion[];
+  // 인쇄물. 파일 이름이면 사이트의 papers/ 아래를 보고, http로 시작하면 그 주소를 쓴다.
+  paper?: string; // 문제지 PDF
+  solution?: string; // 해설지 PDF
+}
+
+/**
+ * 시험지에 적힌 문제지/해설 값을 실제로 열 수 있는 주소로 바꾼다.
+ * 'http…'는 그대로 두고, 그 밖의 값은 사이트에 같이 올린 papers/ 아래 파일로 본다.
+ * 한글 파일 이름이 그대로 들어오므로 주소로 만들 때 인코딩한다.
+ */
+export function paperHref(value: string, base = import.meta.env.BASE_URL): string {
+  const v = value.trim();
+  if (/^https?:\/\//i.test(v)) return v;
+  const name = v.replace(/^\/*(papers\/)?/i, '');
+  return `${base}papers/${encodeURIComponent(name)}`;
 }
 
 // 상담 카드의 '목표 고등학교' 선택지
@@ -195,6 +210,8 @@ const HEADER_ALIASES: Record<string, string[]> = {
   source: ['출처', '교재', '원교재', 'source'],
   sourceNo: ['원문항', '원문항번호', '교재문항', 'sourceno'],
   title: ['시험지', '시험', '시험지명', '시험명', 'title', 'exam'],
+  paper: ['문제지', '문제지파일', 'paper'],
+  solution: ['해설', '해설지', '해설지파일', 'solution'],
 };
 
 // 서술형/논술형/서답형만 부분점수 대상으로 보고 나머지(객관식·단답형)는 O/X로 채점한다.
@@ -217,6 +234,8 @@ export interface CsvParseResult {
   questions: ExamQuestion[];
   title?: string;
   subject?: string;
+  paper?: string;
+  solution?: string;
   errors: string[];
 }
 
@@ -238,12 +257,17 @@ export function examQuestionsFromCsv(text: string): CsvParseResult {
   const idxPoints = header.indexOf('points');
   const idxFormat = header.indexOf('format');
   const idxTitle = header.indexOf('title');
+  // 문제지·해설은 시험지 한 장에 하나뿐이라 문항이 아니라 시험지에 붙는다.
+  const idxPaper = header.indexOf('paper');
+  const idxSolution = header.indexOf('solution');
   const extra: [string, number][] = (['unit', 'level', 'source', 'sourceNo'] as const)
     .map((k) => [k, header.indexOf(k)] as [string, number])
     .filter(([, i]) => i !== -1);
 
   let title: string | undefined;
   let subject: string | undefined;
+  let paper: string | undefined;
+  let solution: string | undefined;
   const questions: ExamQuestion[] = [];
   const seen = new Set<number>();
 
@@ -280,13 +304,15 @@ export function examQuestionsFromCsv(text: string): CsvParseResult {
     }
     if (idxTitle !== -1 && !title && (cells[idxTitle] ?? '').trim()) title = cells[idxTitle].trim();
     if (idxSubject !== -1 && !subject && (cells[idxSubject] ?? '').trim()) subject = cells[idxSubject].trim();
+    if (idxPaper !== -1 && !paper && (cells[idxPaper] ?? '').trim()) paper = cells[idxPaper].trim();
+    if (idxSolution !== -1 && !solution && (cells[idxSolution] ?? '').trim()) solution = cells[idxSolution].trim();
     const existing = questions.findIndex((x) => x.no === no);
     if (existing !== -1) questions[existing] = q;
     else questions.push(q);
   }
 
   questions.sort((a, b) => a.no - b.no);
-  return { questions, title, subject, errors };
+  return { questions, title, subject, paper, solution, errors };
 }
 
 // ── 파일 다운로드 ────────────────────────────────────────
