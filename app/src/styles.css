@@ -215,11 +215,6 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .file-link { color: var(--navy); border: 1px solid var(--line); border-right: 0; border-radius: 6px 0 0 6px; }
 .file-link::before { content: '⤓'; margin-right: 3px; }
 .file-link:hover { background: var(--fill); }
-/* 이 브라우저에만 있는 파일이라는 표시 */
-.file-local {
-  display: inline-block; width: 5px; height: 5px; margin-left: 5px; border-radius: 50%;
-  background: #c08a12; vertical-align: middle;
-}
 .file-del {
   font-size: 10px; color: var(--ink-3); border: 1px solid var(--line);
   border-radius: 0 6px 6px 0; padding: 3px 5px;
@@ -227,6 +222,34 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .file-del:hover { color: var(--bad-ink); background: var(--fill); }
 .file-add { color: var(--ink-3); border: 1px dashed var(--line); }
 .file-add:hover { color: var(--navy); border-color: var(--navy); background: var(--fill); }
+.file-link { display: inline-flex; align-items: center; text-decoration: none; }
+
+/* 인쇄물 고르는 창 */
+.pick-back {
+  position: fixed; inset: 0; z-index: 50; background: rgba(20, 22, 30, 0.34);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.pick-box {
+  width: min(520px, 100%); max-height: min(560px, 90vh); background: #fff;
+  border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22); cursor: default; text-align: left;
+}
+.pick-head { display: flex; align-items: baseline; gap: 10px; }
+.pick-head b { font-size: 16px; }
+.pick-search {
+  width: 100%; font-size: 14px; padding: 8px 10px;
+  border: 1px solid var(--line); border-radius: 6px;
+}
+.pick-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.pick-list button {
+  width: 100%; display: flex; align-items: baseline; gap: 10px; text-align: left;
+  border: 1px solid transparent; border-radius: 6px; padding: 7px 10px; font-size: 13px; background: none;
+}
+.pick-list button:hover { border-color: var(--line); background: var(--fill); }
+.pick-name { flex-grow: 1; }
+.pick-meta { display: flex; gap: 8px; font-size: 11.5px; color: var(--ink-3); white-space: nowrap; }
+.pick-meta em { font-style: normal; color: var(--navy); }
+.pick-foot { margin: 0; border-top: 1px solid var(--line); padding-top: 9px; }
 
 /* ── 표 ──────────────────────────────────────────── */
 .assess-table { width: 100%; border-collapse: collapse; font-size: 14px; }

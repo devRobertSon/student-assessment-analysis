@@ -5,7 +5,6 @@ import {
   ExamQuestion,
   downloadText,
   examQuestionsFromCsv,
-  ATTACH_KINDS,
   fmtPoints,
   isEssay,
   newId,
@@ -14,7 +13,6 @@ import {
   todayStr,
 } from '../lib/assessment';
 import ExamFiles from './ExamFiles';
-import { delExamFiles } from '../lib/filestore';
 
 // 업로드 예시(양식) — 받아서 내용만 바꿔 다시 올리면 됩니다.
 const SAMPLE_EXAM_CSV = `시험지,과목,문항번호,단원,유형,난이도,형식,배점,정답,출처,원문항
@@ -98,7 +96,6 @@ export default function ExamManager({ data, setData }: Props) {
     const e = data.exams.find((x) => x.id === id);
     const cnt = data.results.filter((r) => r.examId === id).length;
     if (!confirm(`"${e?.title}" 시험지를 삭제할까요?${cnt ? ` (채점 결과 ${cnt}건도 함께 삭제)` : ''}`)) return;
-    delExamFiles(id, ATTACH_KINDS);
     setData({
       ...data,
       exams: data.exams.filter((x) => x.id !== id),
@@ -115,7 +112,6 @@ export default function ExamManager({ data, setData }: Props) {
     if (selected.size === 0) return;
     const cnt = data.results.filter((r) => selected.has(r.examId)).length;
     if (!confirm(`선택한 시험지 ${selected.size}개를 삭제할까요?${cnt ? ` (채점 결과 ${cnt}건도 함께 삭제)` : ''}`)) return;
-    selected.forEach((id) => delExamFiles(id, ATTACH_KINDS));
     setData({
       ...data,
       exams: data.exams.filter((x) => !selected.has(x.id)),

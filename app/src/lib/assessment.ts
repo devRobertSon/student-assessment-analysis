@@ -39,29 +39,17 @@ export const ATTACH_LABEL: Record<AttachKind, string> = {
   blueprint: '출제표',
 };
 
-export interface Attachment {
-  name: string; // 화면에 보이고 내려받을 때 쓰는 파일 이름
-  /**
-   * site — 사이트에 같이 올려 둔 papers/ 의 파일. 어느 기기에서나 열린다.
-   * local — 이 브라우저에 올려 둔 파일. 올린 기기에만 남는다.
-   */
-  src: 'site' | 'local';
-  size?: number;
-  type?: string;
-  /**
-   * 클라우드(Storage)에 올려 둔 경로. 있으면 다른 기기에서도 받아 쓸 수 있다.
-   * 파일 자체는 Firestore 문서(1MB 한도)에 못 넣으므로 경로만 동기화한다.
-   */
-  remote?: string;
-}
-
 export interface Exam {
   id: string;
   title: string;
   subject: string;
   date: string; // 등록일 YYYY-MM-DD (응시일은 채점 결과 Result.date에 학생별로 기록된다)
   questions: ExamQuestion[];
-  files?: Partial<Record<AttachKind, Attachment>>;
+  /**
+   * 딸린 인쇄물. 값은 사이트의 papers/ 에 올려 둔 파일 이름이거나 'http…' 주소다.
+   * 짧은 문자열이라 기존 동기화에 그대로 얹힌다.
+   */
+  files?: Partial<Record<AttachKind, string>>;
 }
 
 /**
@@ -261,7 +249,7 @@ export interface CsvParseResult {
   questions: ExamQuestion[];
   title?: string;
   subject?: string;
-  files?: Partial<Record<AttachKind, Attachment>>;
+  files?: Partial<Record<AttachKind, string>>;
   errors: string[];
 }
 
@@ -293,7 +281,7 @@ export function examQuestionsFromCsv(text: string): CsvParseResult {
 
   let title: string | undefined;
   let subject: string | undefined;
-  const files: Partial<Record<AttachKind, Attachment>> = {};
+  const files: Partial<Record<AttachKind, string>> = {};
   const questions: ExamQuestion[] = [];
   const seen = new Set<number>();
 
@@ -332,7 +320,7 @@ export function examQuestionsFromCsv(text: string): CsvParseResult {
     if (idxSubject !== -1 && !subject && (cells[idxSubject] ?? '').trim()) subject = cells[idxSubject].trim();
     for (const [kind, idx] of attachCols) {
       const v = (cells[idx] ?? '').trim();
-      if (v && !files[kind]) files[kind] = { name: v, src: 'site' };
+      if (v && !files[kind]) files[kind] = v;
     }
     const existing = questions.findIndex((x) => x.no === no);
     if (existing !== -1) questions[existing] = q;

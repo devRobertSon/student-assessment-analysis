@@ -59,31 +59,33 @@ localStorage 키도 분리돼 있습니다. GitHub Pages 프로젝트 페이지�
 | 승인된 도메인 | `devrobertson.github.io`, `localhost` |
 | Firestore 위치 | `asia-northeast3` (서울) |
 | 접근 허용 | [`firestore.rules`](firestore.rules)의 이메일 목록 |
-| 파일 보관 | Storage — [`storage.rules`](storage.rules)의 이메일 목록 (같은 목록으로 맞출 것) |
 
 [`app/src/lib/firebase.ts`](app/src/lib/firebase.ts)의 `firebaseConfig`는 공개 식별자라 저장소에
 그대로 두어도 됩니다. **실질적인 접근 통제는 전적으로 보안 규칙이 담당합니다.**
 
-#### 시험지에 올린 문제지·해설·출제표
+#### 시험지에 딸린 문제지·해설·출제표
 
-데이터는 Firestore 문서 하나로 동기화되는데, 그 문서는 **1MB가 한도**라 PDF가
-들어가지 않습니다. 그래서 파일만 **Storage**에 두고 시험지에는 경로(짧은 문자열)만
-적습니다. 경로는 데이터와 같이 동기화되므로 다른 기기는 그 경로로 받아 갑니다.
+파일은 **저장소에 두고** 사이트가 그대로 서빙합니다. 시험지에는 파일 이름만
+적히므로 다른 데이터와 같이 동기화되고, 어느 기기에서나 그대로 열립니다.
+클라우드에 따로 켤 것은 없습니다.
 
-처음 한 번 콘솔에서 켜 주어야 합니다:
+새 인쇄물을 넣으려면:
 
-1. Firebase 콘솔 → **Storage** → 시작하기 (위치는 Firestore와 같은 `asia-northeast3`)
-2. **규칙** 탭에 [`storage.rules`](storage.rules) 내용을 붙여넣고 **게시**
+1. `app/public/papers/` 에 파일을 넣는다 — 이름은 `<시험지이름>_<종류>.<확장자>`
+   (종류: `문제지` `해설` `출제표` `시험지` `채점표`)
+2. `npm run build` 후 커밋 · push (약 1분 뒤 배포)
+3. 앱의 [시험지] 탭에서 **[＋문제지]** → 목록에서 고른다
 
-켜지 않으면 파일은 그 기기에만 남고, 올릴 때 그 사실을 알리는 안내가 뜹니다.
-목록에서 아직 그 기기에만 있는 파일은 작은 주황 점으로 표시됩니다.
+목록은 빌드할 때 폴더를 훑어 만듭니다([`app/scripts/papers-manifest.mjs`](app/scripts/papers-manifest.mjs)).
+이름 규칙에 안 맞는 파일도 `기타`로 묶여 목록에는 나옵니다.
+
+`papers/` 는 공개 사이트로 그대로 나갑니다. 학생 이름이 든 파일을 두지 마세요.
 
 #### 쓰는 사람이 바뀌면
 
-1. [`firestore.rules`](firestore.rules)와 [`storage.rules`](storage.rules)의 이메일 목록을 고친다 — **두 파일을 같게**
-2. Firebase 콘솔 → Firestore Database → 규칙, Storage → 규칙 에 각각 붙여넣고 **게시**
+1. [`firestore.rules`](firestore.rules)의 이메일 목록을 고친다
+2. Firebase 콘솔 → Firestore Database → 규칙 에 같은 내용을 붙여넣고 **게시**
 3. 두 곳이 어긋나면 콘솔 쪽이 실제로 적용되는 값이다
-4. 한쪽만 고치면 데이터는 동기화되는데 파일만 안 보이는 상태가 된다
 
 목록에 없는 계정은 로그인에 성공해도 앱에 `⚠ 접근 권한 없음`이 표시되고 데이터를 읽지 못합니다.
 

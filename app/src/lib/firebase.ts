@@ -12,7 +12,6 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
 } from 'firebase/firestore';
-import { FirebaseStorage, getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyClA70Wj98DefrVbCI83lMCAa_wcTJH-M4',
@@ -27,8 +26,6 @@ export const firebaseEnabled = !!firebaseConfig.apiKey && !firebaseConfig.apiKey
 
 let _auth: Auth | null = null;
 let _db: Firestore | null = null;
-// 문제지·해설 같은 파일은 Firestore 문서(1MB 한도)에 못 넣으므로 Storage에 둔다.
-let _storage: FirebaseStorage | null = null;
 
 if (firebaseEnabled) {
   try {
@@ -37,16 +34,13 @@ if (firebaseEnabled) {
     _db = initializeFirestore(app, {
       localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
     });
-    _storage = getStorage(app);
   } catch (e) {
     // 초기화 실패 시 클라우드 없이 로컬 저장만 사용
     console.error('Firebase init failed', e);
     _auth = null;
     _db = null;
-    _storage = null;
   }
 }
 
 export const auth = _auth;
 export const db = _db;
-export const storage = _storage;

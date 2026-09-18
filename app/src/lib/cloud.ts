@@ -38,7 +38,7 @@ export function useAuthUser(): { user: User | null; ready: boolean; enabled: boo
 export type CloudStatus = 'off' | 'signedout' | 'syncing' | 'synced' | 'denied' | 'error';
 
 // 기존 시간표 앱과 같은 도메인에 배포되므로 문서 이름을 분리해 데이터가 섞이지 않게 한다.
-// Storage의 파일 경로도 이 이름 아래에 둔다(cloudfiles.ts).
+// 인쇄물은 저장소의 papers/ 에 두므로 여기로 오지 않는다.
 export const CLOUD_DOC = 'diagnostic-assessment';
 
 // 로컬(localStorage)을 즉시 쓰되, 로그인하면 Firestore의 sync/<name> 문서와 실시간 동기화.

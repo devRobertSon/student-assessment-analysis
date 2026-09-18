@@ -196,9 +196,9 @@ describe('문제지 · 해설 · 출제표', () => {
     );
     expect(r.errors).toEqual([]);
     expect(r.files).toEqual({
-      paper: { name: '중1-1_문제지.pdf', src: 'site' },
-      solution: { name: '중1-1_해설.pdf', src: 'site' },
-      blueprint: { name: '중1-1_출제표.csv', src: 'site' },
+      paper: '중1-1_문제지.pdf',
+      solution: '중1-1_해설.pdf',
+      blueprint: '중1-1_출제표.csv',
     });
   });
 

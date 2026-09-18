@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { exportAssessmentJson, loadAssessment, parseAssessmentJson, saveAssessment } from './lib/assessment';
 import { CLOUD_DOC, useCloudDoc } from './lib/cloud';
 import { buildSeedExams } from './lib/seed';
-import { pushPendingFiles } from './lib/cloudfiles';
-import { useAuthUser } from './lib/cloud';
 import Logo from './components/Logo';
 import CloudBar from './components/CloudBar';
 import HomePage, { HomeTarget } from './components/HomePage';
@@ -53,21 +51,6 @@ export default function App() {
       setData({ ...cur, exams: [...cur.exams, ...exams], seeded: true });
     });
   }, [data, setData]);
-
-  // 로그아웃 상태에서 올려 둔 인쇄물을 로그인한 뒤 클라우드로 올린다.
-  // 그래야 다른 기기에서도 같은 파일을 받을 수 있다.
-  const { user } = useAuthUser();
-  useEffect(() => {
-    if (!user) return;
-    let alive = true;
-    pushPendingFiles(dataRef.current.exams).then((exams) => {
-      if (!alive || !exams) return;
-      setData({ ...dataRef.current, exams });
-    });
-    return () => {
-      alive = false;
-    };
-  }, [user, data.exams, setData]);
 
   const importJson = async (file: File) => {
     try {
