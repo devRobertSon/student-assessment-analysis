@@ -13,6 +13,7 @@ import {
   splitTypes,
   todayStr,
 } from '../lib/assessment';
+import PapersList from './PapersList';
 
 // 업로드 예시(양식) — 받아서 내용만 바꿔 다시 올리면 됩니다.
 const SAMPLE_EXAM_CSV = `시험지,과목,문항번호,단원,유형,난이도,형식,배점,정답,출처,원문항,문제지,해설
@@ -193,6 +194,8 @@ export default function ExamManager({ data, setData }: Props) {
           </div>
         </div>
       </div>
+
+      <PapersList />
 
       <details className="csv-help">
         <summary>CSV 어떻게 만드나요?</summary>

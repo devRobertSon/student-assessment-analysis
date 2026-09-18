@@ -212,6 +212,14 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 }
 .file-link:hover { background: var(--fill); }
 .file-link::before { content: '⤓'; margin-right: 4px; }
+.file-link em { font-style: normal; color: var(--ink-3); font-size: 11.5px; margin-left: 3px; }
+
+/* 사이트에 같이 올려 둔 인쇄물 목록 */
+.papers > summary { font-weight: 600; cursor: pointer; }
+.papers-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.papers-list li { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.papers-list li > b { min-width: 132px; font-size: 14px; }
+.papers-files { display: flex; gap: 6px; flex-wrap: wrap; }
 
 /* ── 표 ──────────────────────────────────────────── */
 .assess-table { width: 100%; border-collapse: collapse; font-size: 14px; }

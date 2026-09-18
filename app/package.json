@@ -4,7 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "papers": "node scripts/papers-manifest.mjs",
+    "predev": "npm run papers",
     "dev": "vite",
+    "prebuild": "npm run papers",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run"

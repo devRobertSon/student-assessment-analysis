@@ -1,0 +1,136 @@
+{
+  "groups": [
+    {
+      "name": "중1-1 진단평가",
+      "files": [
+        {
+          "kind": "문제지",
+          "label": "문제지 PDF",
+          "file": "중1-1_진단평가_문제지.pdf",
+          "ext": "pdf",
+          "size": 991346
+        },
+        {
+          "kind": "해설",
+          "label": "해설 PDF",
+          "file": "중1-1_진단평가_해설.pdf",
+          "ext": "pdf",
+          "size": 145574
+        },
+        {
+          "kind": "시험지",
+          "label": "시험지 CSV",
+          "file": "중1-1_진단평가_시험지.csv",
+          "ext": "csv",
+          "size": 3386
+        },
+        {
+          "kind": "채점표",
+          "label": "채점표 CSV",
+          "file": "중1-1_진단평가_채점표.csv",
+          "ext": "csv",
+          "size": 1290
+        }
+      ]
+    },
+    {
+      "name": "중1-2 진단평가",
+      "files": [
+        {
+          "kind": "문제지",
+          "label": "문제지 PDF",
+          "file": "중1-2_진단평가_문제지.pdf",
+          "ext": "pdf",
+          "size": 1940619
+        },
+        {
+          "kind": "해설",
+          "label": "해설 PDF",
+          "file": "중1-2_진단평가_해설.pdf",
+          "ext": "pdf",
+          "size": 144910
+        },
+        {
+          "kind": "시험지",
+          "label": "시험지 CSV",
+          "file": "중1-2_진단평가_시험지.csv",
+          "ext": "csv",
+          "size": 3607
+        },
+        {
+          "kind": "채점표",
+          "label": "채점표 CSV",
+          "file": "중1-2_진단평가_채점표.csv",
+          "ext": "csv",
+          "size": 1290
+        }
+      ]
+    },
+    {
+      "name": "중2-1 진단평가",
+      "files": [
+        {
+          "kind": "문제지",
+          "label": "문제지 PDF",
+          "file": "중2-1_진단평가_문제지.pdf",
+          "ext": "pdf",
+          "size": 789300
+        },
+        {
+          "kind": "해설",
+          "label": "해설 PDF",
+          "file": "중2-1_진단평가_해설.pdf",
+          "ext": "pdf",
+          "size": 138363
+        },
+        {
+          "kind": "시험지",
+          "label": "시험지 CSV",
+          "file": "중2-1_진단평가_시험지.csv",
+          "ext": "csv",
+          "size": 3176
+        },
+        {
+          "kind": "채점표",
+          "label": "채점표 CSV",
+          "file": "중2-1_진단평가_채점표.csv",
+          "ext": "csv",
+          "size": 1290
+        }
+      ]
+    },
+    {
+      "name": "중2-2 진단평가",
+      "files": [
+        {
+          "kind": "문제지",
+          "label": "문제지 PDF",
+          "file": "중2-2_진단평가_문제지.pdf",
+          "ext": "pdf",
+          "size": 1511649
+        },
+        {
+          "kind": "해설",
+          "label": "해설 PDF",
+          "file": "중2-2_진단평가_해설.pdf",
+          "ext": "pdf",
+          "size": 141844
+        },
+        {
+          "kind": "시험지",
+          "label": "시험지 CSV",
+          "file": "중2-2_진단평가_시험지.csv",
+          "ext": "csv",
+          "size": 3412
+        },
+        {
+          "kind": "채점표",
+          "label": "채점표 CSV",
+          "file": "중2-2_진단평가_채점표.csv",
+          "ext": "csv",
+          "size": 1290
+        }
+      ]
+    }
+  ]
+}
