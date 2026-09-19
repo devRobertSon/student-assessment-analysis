@@ -15,12 +15,12 @@ import TypesPage from './components/TypesPage';
 
 type View = 'home' | 'students' | 'exams' | 'grading' | 'report' | 'types' | 'manual';
 
-// 리포트는 학생 화면에서 열리므로 메뉴에 두지 않는다.
 const NAV: { key: View; label: string }[] = [
   { key: 'home', label: '홈' },
   { key: 'students', label: '학생' },
   { key: 'exams', label: '시험지' },
   { key: 'grading', label: '채점' },
+  { key: 'report', label: '리포트' },
   { key: 'types', label: '유형 분석' },
   { key: 'manual', label: '사용법' },
 ];
@@ -57,8 +57,8 @@ export default function App() {
     }
   };
 
-  const goHome = (target: HomeTarget) => setView(target === 'report' ? 'students' : target);
-  const navActive = (key: View) => (view === 'report' ? key === 'students' : view === key);
+  const goHome = (target: HomeTarget) => setView(target);
+  const navActive = (key: View) => view === key;
 
   return (
     <div className="app">

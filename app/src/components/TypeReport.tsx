@@ -393,7 +393,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
       </div>
 
       {!studentId ? (
-        <p className="muted">학생을 선택하면 리포트가 표시됩니다.</p>
+        <p className="muted">위에서 학생을 고르면 리포트가 나옵니다.</p>
       ) : studentResults.length === 0 ? (
         <p className="muted">이 학생의 채점 결과가 없습니다. [채점]에서 먼저 채점하세요.</p>
       ) : (

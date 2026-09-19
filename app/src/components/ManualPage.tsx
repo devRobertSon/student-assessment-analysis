@@ -42,7 +42,7 @@ export default function ManualPage() {
           </li>
           <li>
             <b>리포트</b>
-            <span>[학생]에서 학생을 고르고 [리포트 열기] → 의견을 적고 PDF로 저장합니다.</span>
+            <span>[리포트]에서 학생을 고르고 의견을 적어 PDF로 저장합니다.</span>
           </li>
         </ol>
         <Shot src="home.png" alt="홈 화면" />
@@ -217,7 +217,10 @@ export default function ManualPage() {
       <section className="assess-card">
         <h3>리포트와 인쇄</h3>
         <ul className="bullets">
-          <li>[학생]에서 학생을 고르고 [리포트 열기]를 누릅니다.</li>
+          <li>
+            위 메뉴의 <b>[리포트]</b>를 누르고 학생을 고릅니다. [학생] 화면에서 학생을 고른 뒤{' '}
+            <b>[리포트 열기]</b>로 바로 가도 됩니다.
+          </li>
           <li>
             응시가 여러 번이면 리포트에 넣을 시험을 목록에서 하나씩 고르거나, 위의{' '}
             <b>[전체] [최근 3개월] [최근 6개월] [올해]</b> 단추로 한 번에 고를 수 있습니다. 날짜를 짚어야
