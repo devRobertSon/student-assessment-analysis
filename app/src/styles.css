@@ -1030,9 +1030,11 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 }
 /* 손으로 적는 선생님 의견. 쪽에 남는 자리를 이 칸이 다 가져간다. 그래서
    카드 사이를 고르게 벌리던 몫(.rp-movable)이 전부 이 칸 높이로 간다.
-   min-height 는 자리가 남지 않을 때도 적을 수 있게 지키는 최소한이다. */
+   min-height 는 낮게 잡는다. 이 값이 크면 쪽 나눔을 재는 코드가 '1쪽에 안
+   들어간다'고 보아 쪽이 하나 늘어난다. 낮게 두면 남는 만큼만 차지해
+   1쪽 안에서 끝난다. */
 .rp-note-hand { flex-grow: 1; }
-.rp-note-hand .rp-memo-box { flex-grow: 1; height: auto; min-height: 78px; }
+.rp-note-hand .rp-memo-box { flex-grow: 1; height: auto; min-height: 28px; }
 .rp-sign > div { display: flex; flex-direction: column; }
 .rp-sign > div:first-child { width: 168px; }
 .rp-sign span { font-size: 11px; color: var(--ink-3); margin-bottom: 3px; }
@@ -1065,7 +1067,6 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .rp-radar-only { display: flex; justify-content: center; }
 .rp-radar-only .type-radar { width: var(--radar-w); max-width: 100%; height: auto; display: block; }
 .rp-wide .rp-radar-only .type-radar { width: var(--radar-w-wide); }
-.rp-wide .type-bars { margin-top: 8px; }
 .report-capture .report-sec { padding: 8px 18px; gap: 6px; }
 .report-capture .report-note-body { font-size: 14px; line-height: 1.62; }
 

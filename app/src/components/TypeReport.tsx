@@ -13,7 +13,6 @@ import {
 import { logoUrl, sealUrl } from '../lib/brand';
 import { notify } from '../lib/notice';
 import TypeRadar, { FAIR, STEADY } from './TypeRadar';
-import TypeBars from './TypeBars';
 import DatePicker from './DatePicker';
 import Select from './Select';
 
@@ -238,7 +237,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
   /*
    * 1쪽이 A4를 넘으면 응시 이력과 의견을 통째로 다음 쪽으로 보낸다.
    *
-   * 나뉘고 나면 1쪽은 분석 전용이 되어 레이더가 커지고 막대가 붙는다.
+   * 나뉘고 나면 1쪽은 분석 전용이 되어 레이더가 커진다.
    * 그 상태를 그대로 재면 합쳤을 때 들어가는지 알 수 없으므로,
    * 유형 섹션을 좁은 배치였을 때의 높이로 되돌려 놓고 잰다.
    * 그래서 이 값은 지금 나뉘어 있는지와 무관하고, 나눔과 합침을 오가지 않는다.
@@ -256,9 +255,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
 
     const box = svg.viewBox.baseVal;
     const narrowRadarH = (parseFloat(cs.getPropertyValue('--radar-w')) * box.height) / box.width;
-    const bars = sec.querySelector('.type-bars');
-    const secGap = parseFloat(getComputedStyle(sec).rowGap) || 0;
-    const narrowSecH = H(sec) - H(svg) + narrowRadarH - (bars ? H(bars) + secGap : 0);
+    const narrowSecH = H(sec) - H(svg) + narrowRadarH;
 
     const stable = [...page.children]
       .filter((el) => el !== sec && el !== moved)
@@ -686,12 +683,11 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
                   {/* 난이도별 정답률은 여기 적지 않는다. 예상 고교 등급이 이미
                       난이도로 매긴 값이라 같은 것을 두 번 보여주게 된다. */}
                 </div>
-                {/* 막대를 옆에 세우면 레이더가 작아져 여덟 유형의 균형이 안 보인다.
-                    쪽이 나뉘어 1쪽이 분석 전용이 될 때만 레이더를 키우고 막대를 아래에 붙인다. */}
+                {/* 막대는 두지 않는다. 레이더 꼭짓점에 이미 정답률이 적혀 있어
+                    같은 값을 두 번 보여주게 된다. 문항 수는 [학생] 화면에 있다. */}
                 <div className="rp-radar-only">
                   <TypeRadar stats={stats} />
                 </div>
-                {splitNotes && <TypeBars stats={stats} />}
               </section>
 
 
