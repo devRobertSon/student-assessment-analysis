@@ -185,8 +185,6 @@ export interface RetakeCheck {
   correct: number; // 그중 만점
   rate: number; // 0~1
   pass: boolean;
-  /** 문항이 적으면 한 문제에 판정이 흔들린다. 그 사실을 같이 넘긴다. */
-  perQuestion: number; // 한 문제가 차지하는 비율(%)
 }
 
 /** 시험지에 입학 심화형 문항이 없으면 null. 판정을 지어내지 않는다. */
@@ -207,7 +205,6 @@ export function retakeCheck(
     correct,
     rate,
     pass: rate * 100 >= cut,
-    perQuestion: Math.round((100 / mine.length) * 10) / 10,
   };
 }
 

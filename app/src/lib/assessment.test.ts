@@ -260,10 +260,6 @@ describe('학원 기준 재수강 판정', () => {
     expect(retakeCheck(exam, marks([1]), 80)!.pass).toBe(false);
   });
 
-  it('한 문제가 몇 퍼센트인지 알려 준다', () => {
-    expect(retakeCheck(exam, marks([]))!.perQuestion).toBe(25);
-  });
-
   it('입학 심화형 문항이 없으면 판정하지 않는다', () => {
     const plain: Exam = { ...exam, questions: [mk(1, '응용'), mk(2, '심화')] };
     expect(retakeCheck(plain, [makeMark(plain.questions[0], 1)])).toBeNull();

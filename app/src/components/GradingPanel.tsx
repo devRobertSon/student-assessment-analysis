@@ -370,9 +370,7 @@ export default function GradingPanel({ data, setData }: Props) {
                       {retake.correct}/{retake.total} · {Math.round(retake.rate * 100)}%
                     </b>
                     <span className="rt-verdict">{retake.pass ? '통과' : '재수강 권장'}</span>
-                    <span className="hint">
-                      기준 {retakeCut}% · 한 문제 {retake.perQuestion}%
-                    </span>
+                    <span className="hint">기준 {retakeCut}%</span>
                   </div>
                 )}
                 <p className="hint" style={{ marginTop: 12 }}>
