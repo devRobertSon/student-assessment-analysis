@@ -744,7 +744,6 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .grade-side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 18px; }
 .grade-side .assess-card { margin-top: 0; }
 .grade-tools { margin: 14px 0; padding-bottom: 14px; border-bottom: 1px solid var(--line-2); }
-.grade-save { padding: 13px 0; font-size: 15px; }
 /* 집계 축 전환: 유형 / 단원 / 난이도 */
 .tally-head { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; }
 .tally-head h3 { margin: 0; }
@@ -801,7 +800,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .retake.ok .rt-verdict { color: var(--good-ink); }
 .retake.no .rt-verdict { color: var(--bad-ink); }
 
-/* 기초·심화 미달 — 재수강 판정과 달리 '어디가 비었나'를 가리킨다 */
+/* 심화 미달. 재수강 판정과 달리 최상 난이도만 따로 센다 */
 .gaps { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
 .gap {
   display: grid; grid-template-columns: 32px 1fr auto; align-items: baseline;

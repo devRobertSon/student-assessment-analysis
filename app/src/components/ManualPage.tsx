@@ -10,11 +10,6 @@ function Shot({ src, alt, cap, narrow }: { src: string; alt: string; cap: string
   );
 }
 
-const GRADING_CSV = `학생,시험지,응시일,문항번호,형식,배점,OX
-,중1-1 진단평가,2026-09-18,1,객관식,3,O
-,중1-1 진단평가,2026-09-18,2,객관식,3,X
-,중1-1 진단평가,2026-09-18,6,서술형,5,O`;
-
 export default function ManualPage() {
   return (
     <div className="assess-pane manual">
@@ -122,39 +117,19 @@ export default function ManualPage() {
 
       <section className="assess-card">
         <h3>채점</h3>
-        <p className="muted">학생 → 시험지 순으로 고르면 문항 목록이 나옵니다. 넣는 방법은 세 가지입니다.</p>
+        <p className="muted">
+          학생 → 시험지 순으로 고르면 문항 목록이 나옵니다. 문항마다 <b>O</b> 나 <b>X</b> 를 누르면 됩니다.
+        </p>
         <ul className="bullets">
           <li>
-            <b>[직접 입력]</b>은 한 문항을 크게 띄웁니다. O나 X를 누르면 바로 다음 문항으로 넘어가므로 화면을
-            내리지 않아도 됩니다. 키보드로도 같습니다. <code>O</code> <code>X</code>(한글 자판{' '}
-            <code>ㅐ</code> <code>ㅌ</code>도) 또는 <code>1</code> <code>0</code>, <code>←</code> <code>→</code>{' '}
-            이동, <code>Backspace</code> 지우기, <code>Esc</code> 닫기. 처음 열면 아직 안 매긴 첫 문항부터 시작합니다.
-          </li>
-          <li>
-            <b>아래 표</b>에서는 문항마다 O/X를 직접 누릅니다. 몇 개만 고칠 때 빠릅니다. 같은 버튼을 한 번 더 누르면
+            <b>전체 O</b> 로 다 맞음으로 깔아 두고 틀린 것만 X 로 바꾸면 빠릅니다. 같은 버튼을 한 번 더 누르면
             미입력으로 되돌아갑니다.
           </li>
           <li>
-            <b>[채점 CSV 올리기]</b>는 다른 분이 채점해 왔을 때 씁니다. <b>[채점 CSV 내려받기]</b>로 빈 표를 받아
-            넘기고, 채운 파일을 올리면 한 번에 들어갑니다.
+            <b>서술형도 O/X만 구분합니다.</b> 배점을 다 받으면 O, 답이 틀렸으면 X입니다. 부분점수는 없습니다.
+            배점은 시험지에서 옵니다.
           </li>
         </ul>
-        <Shot
-          src="dialog.png"
-          alt="직접 입력 창"
-          cap="[직접 입력] 창. O나 X를 누르면 바로 다음 문항으로 넘어갑니다."
-          narrow={380}
-        />
-        <p className="muted" style={{ marginTop: 12 }}>
-          <b>서술형도 O/X만 구분합니다.</b> 배점을 다 받으면 O, 답이 틀렸으면 X입니다. 부분점수는 없습니다. 배점은
-          시험지에서 옵니다.
-        </p>
-        <pre className="manual-code">{GRADING_CSV}</pre>
-        <p className="hint">
-          필수는 <b>문항번호</b>와 <b>OX</b> 둘뿐입니다. OX 열에는 O/X 외에 1/0, 맞음/틀림, ○/× 도 인식합니다.
-          빈칸은 미입력으로 둡니다. 예전에 쓰던 <b>득점</b> 열이 있는 표도 읽지만, 배점을 다 받았을 때만 O로 보고
-          그 아래는 X로 처리합니다.
-        </p>
         <ul className="bullets" style={{ marginTop: 12 }}>
           <li>
             이미 채점한 조합을 다시 고르면 <b>저장된 채점을 불러옵니다.</b> 고쳐서 다시 저장하면 덮어씁니다.
@@ -181,11 +156,11 @@ export default function ManualPage() {
           <li>
             그 아래 <b>심화</b>를 따로 보여 줍니다. 최상을 <b>5개 이상</b> 틀리면 <b>심화 미달</b>이고, 더 어려운
             문제를 줘야 한다는 뜻입니다. <b>재수강이 아니어도 뜹니다.</b> 최상 5개는 25점이라 통과선 안이지만,
-            심화가 비어 있는 것은 알아야 합니다.
+            최상 난이도를 절반 넘게 놓친 것은 알아야 합니다.
           </li>
           <li>
             기초는 따로 두지 않았습니다. 표준을 틀리면 한 문항이 8점이라 재수강 판정이 먼저 걸립니다.{' '}
-            <b>재수강 권장이 곧 기초가 비었다는 뜻</b>이라 같은 말을 두 줄로 적지 않습니다.
+            <b>재수강 권장이 곧 기초가 부족하다는 뜻</b>이라 같은 말을 두 줄로 적지 않습니다.
           </li>
           <li>
             <b>이 판정들은 리포트에 나가지 않습니다.</b> 등급은 전국에서의 위치를 보는 값이고, 이 판정은 다음 학기로 보낼지를

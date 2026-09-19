@@ -1,18 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AssessmentData,
   Axis,
   Mark,
   Result,
-  downloadText,
   fmtPoints,
   hasAxis,
   isEssay,
   makeMark,
   newId,
-  parseGradingCsv,
   pointsOf,
-  resultToCsv,
   DEFAULT_RETAKE_SCALE,
   advancedGap,
   retakeCheck,
@@ -21,7 +18,6 @@ import {
   todayStr,
 } from '../lib/assessment';
 import { rateTag } from './TypeRadar';
-import GradeDialog from './GradeDialog';
 import ConfirmDialog from './ConfirmDialog';
 
 interface Props {
@@ -47,12 +43,9 @@ export default function GradingPanel({ data, setData }: Props) {
   const [cells, setCells] = useState<Record<number, Cell>>({});
   const [date, setDate] = useState(todayStr());
   const [axis, setAxis] = useState<Axis>('type');
-  const csvRef = useRef<HTMLInputElement>(null);
-  const [dialog, setDialog] = useState(false);
   const [askDelete, setAskDelete] = useState(false);
 
   const exam = data.exams.find((e) => e.id === examId);
-  const student = data.students.find((s) => s.id === studentId);
 
   const existing = useMemo(
     () => data.results.find((r) => r.studentId === studentId && r.examId === examId),
@@ -78,9 +71,6 @@ export default function GradingPanel({ data, setData }: Props) {
 
   // 같은 값을 다시 누르면 미입력으로 되돌린다(O를 잘못 눌렀을 때 지우는 길).
   const setCell = (no: number, v: number) => setCells((c) => ({ ...c, [no]: c[no] === v ? null : v }));
-  // 팝업에서 쓰는 setter. 표의 setCell은 같은 값을 다시 누르면 지우는 토글이지만
-  // 여기서는 누른 값을 그대로 넣는다(넘어간 뒤 되돌아와도 값이 바뀌지 않게).
-  const putCell = (no: number, v: Cell) => setCells((c) => ({ ...c, [no]: v }));
 
   const setAll = (v: 'full' | 'zero' | 'clear') => {
     if (!exam) return;
@@ -104,7 +94,7 @@ export default function GradingPanel({ data, setData }: Props) {
   const retake = exam ? retakeCheck(exam, marks, retakeScale) : null;
   // 다 채점하기 전에는 '통과'라고 단정하지 않는다. 이미 기준을 넘긴 경우만 확정이다.
   const graded = !!exam && answered === exam.questions.length;
-  // 재수강 판정과 별개로, 심화가 비었는지는 따로 알아야 한다.
+  // 재수강 판정과 별개로, 최상 난이도를 얼마나 놓쳤는지는 따로 알아야 한다.
   const gap = exam ? advancedGap(exam, marks) : null;
   const fullPoints = exam ? exam.questions.reduce((a, q) => a + pointsOf(q), 0) : 0;
   const essayCount = exam ? exam.questions.filter(isEssay).length : 0;
@@ -131,33 +121,6 @@ export default function GradingPanel({ data, setData }: Props) {
     setCells(map);
     setDate(todayStr());
     setAskDelete(false);
-  };
-
-  const exportGradingCsv = () => {
-    if (!exam || !student) {
-      alert('학생과 시험지를 선택하세요.');
-      return;
-    }
-    downloadText(
-      `채점_${student.name}_${exam.title}_${date}.csv`,
-      resultToCsv(student.name, exam.title, date, exam.questions, marks)
-    );
-  };
-
-  const importGradingCsv = async (file: File) => {
-    if (!exam) {
-      alert('먼저 학생과 시험지를 선택하세요.');
-      return;
-    }
-    const { date: d, earned, errors } = parseGradingCsv(await file.text());
-    const map: Record<number, Cell> = {};
-    exam.questions.forEach((q) => {
-      const v = earned[q.no];
-      map[q.no] = v === undefined ? null : makeMark(q, v === 'full' ? pointsOf(q) : v).earned;
-    });
-    setCells(map);
-    if (d) setDate(d);
-    alert('채점표를 불러왔습니다. 확인 후 [채점 저장]을 누르세요.' + (errors.length ? '\n\n주의:\n' + errors.join('\n') : ''));
   };
 
   const canGrade = data.students.length > 0 && data.exams.length > 0;
@@ -249,31 +212,10 @@ export default function GradingPanel({ data, setData }: Props) {
                     초기화
                   </button>
                   <span style={{ marginLeft: 'auto' }} />
-                  <button className="mini" onClick={() => setDialog(true)}>
-                    직접 입력
+                  <button className="primary mini" onClick={save} disabled={answered === 0}>
+                    채점 저장
                   </button>
-                  <button className="mini ghost" onClick={exportGradingCsv}>
-                    채점 CSV 내려받기
-                  </button>
-                  <button className="mini ghost" onClick={() => csvRef.current?.click()}>
-                    채점 CSV 올리기
-                  </button>
-                  <input
-                    ref={csvRef}
-                    type="file"
-                    accept=".csv,text/csv"
-                    style={{ display: 'none' }}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) importGradingCsv(f);
-                      e.target.value = '';
-                    }}
-                  />
                 </div>
-
-                {dialog && (
-                  <GradeDialog exam={exam} cells={cells} onSet={putCell} onClose={() => setDialog(false)} />
-                )}
 
                 <div className="ox-grid">
                   {exam.questions.map((q) => {
@@ -400,9 +342,6 @@ export default function GradingPanel({ data, setData }: Props) {
                 </p>
               </div>
 
-              <button className="primary grade-save" onClick={save} disabled={answered === 0}>
-                채점 저장
-              </button>
             </aside>
           )}
         </div>
