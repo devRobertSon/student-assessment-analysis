@@ -244,9 +244,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
-      // 가정용 프린터는 가장자리 5~10mm 를 못 찍는다. 15mm 를 두면 그 안에서
-      // 잘려도 글자가 날아가지 않는다.
-      const MARGIN = 15;
+      const MARGIN = 12;
       const contentW = pageW - MARGIN * 2;
       const contentH = pageH - MARGIN * 2;
 
@@ -255,14 +253,11 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
         const props = pdf.getImageProperties(url);
         const imgH = (props.height * contentW) / props.width;
         const nPages = Math.max(1, Math.ceil((imgH - 0.5) / contentH));
-        // 한 쪽에 들어가면 남는 세로를 위아래로 똑같이 나눈다. 위만 15mm 로 두면
-        // 아래에만 여백이 몰려 인쇄물이 위로 치우쳐 보인다.
-        const top = nPages === 1 ? Math.max(MARGIN, (pageH - imgH) / 2) : MARGIN;
         for (let k = 0; k < nPages; k++) {
           if (startNewPage || k > 0) pdf.addPage();
-          pdf.addImage(url, 'JPEG', MARGIN, top - k * contentH, contentW, imgH);
+          pdf.addImage(url, 'JPEG', MARGIN, MARGIN - k * contentH, contentW, imgH);
           pdf.setFillColor(255, 255, 255);
-          pdf.rect(0, 0, pageW, top, 'F');
+          pdf.rect(0, 0, pageW, MARGIN, 'F');
           pdf.rect(0, pageH - MARGIN, pageW, MARGIN, 'F');
         }
       };
@@ -311,7 +306,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
             <tr>
               <th>시험지</th>
               <th style={{ width: 120 }}>응시일</th>
-              <th style={{ width: 150 }}>정답률</th>
+              <th style={{ width: 150 }}>점수</th>
             </tr>
           </thead>
           <tbody>
@@ -323,7 +318,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
                   <td>{ex?.title ?? '—'}</td>
                   <td>{r.date}</td>
                   <td>
-                    {sc.correct}/{sc.total} · {Math.round(sc.rate * 100)}%
+                    {Math.round(sc.rate * 100)}점 · {sc.correct}/{sc.total}문항
                   </td>
                 </tr>
               );
@@ -410,7 +405,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
                     <input type="checkbox" checked={selectedIds.has(r.id)} onChange={() => toggle(r.id)} />
                     <span className="report-exam-name">{ex?.title ?? '시험'}</span>
                     <span className="hint">
-                      {r.date} · {sc.correct}/{sc.total} ({Math.round(sc.rate * 100)}%)
+                      {r.date} · {Math.round(sc.rate * 100)}점 ({sc.correct}/{sc.total}문항)
                     </span>
                   </label>
                 );
@@ -527,12 +522,14 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
                   <em className="rp-sub">{student?.school || ''}</em>
                 </div>
                 <div className="rp-score">
-                  <span className="rp-cap">전체 정답률</span>
+                  <span className="rp-cap">{selectedResults.length > 1 ? '평균 점수' : '점수'}</span>
                   <div className="rp-val">
                     <b>{Math.round(total.rate * 100)}</b>
-                    <em>%</em>
+                    <em>/ 100점</em>
                   </div>
+                  {/* 여러 번 응시했으면 몇 회를 합친 평균인지 밝힌다. */}
                   <em className="rp-sub">
+                    {selectedResults.length > 1 ? `${selectedResults.length}회 평균 · ` : ''}
                     {total.correct} / {total.total}문항
                   </em>
                 </div>

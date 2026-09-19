@@ -52,9 +52,10 @@ const SCIENCE_ORDER = [
 // 리포트 한가운데에 크게 놓는 도형이다. 글자를 키운 만큼 라벨이 길어지므로
 // 가로를 넉넉히 잡고(560), 세로는 라벨이 실제로 차지하는 만큼만 남긴다.
 const W = 560;
-// 라벨이 두 줄(이름 + 정답률)일 때의 높이다. plain 은 한 줄이라 아래가 남는다.
-const H = 380;
-const H_PLAIN = 364;
+// 라벨이 실제로 차지하는 만큼만 남긴 높이다. 바깥 원 아래로 두 줄(이름 +
+// 정답률)이 들어가는 만큼이 380 이 아니라 370 이다. plain 은 한 줄이라 더 짧다.
+const H = 370;
+const H_PLAIN = 352;
 const R = 140;
 const LABEL_R = R + 18;
 
@@ -72,7 +73,7 @@ export default function TypeRadar({ stats, plain }: { stats: TypeStat[]; plain?:
   const cx = W / 2;
   const h = plain ? H_PLAIN : H;
   // 위아래 라벨이 두 줄이라 아래가 더 길다. 그만큼 중심을 위로 올려 둔다.
-  const cy = plain ? 182 : 186;
+  const cy = plain ? 176 : 182;
 
   // 나온 유형이 모두 아는 8유형 안에 있으면 자리를 고정한다. 여덟 자리를 늘
   // 다 그리고, 그 시험지에 없는 유형은 이름만 흐리게 두고 점을 찍지 않는다.

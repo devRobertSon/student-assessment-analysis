@@ -559,13 +559,12 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
   box-sizing: border-box;
   background: #fff;
   color: var(--ink);
-  /* 쪽 안쪽 여백. PDF 의 15mm 바깥 여백과 합쳐 인쇄에서 잘리지 않을 만큼 둔다. */
-  padding: 40px 52px 34px;
+  padding: 38px 52px 26px;
   display: flex;
   flex-direction: column;
   /* 레이더를 키운 만큼 블록 사이를 좁혀 A4 한 쪽을 지킨다. */
   gap: 9px;
-  --radar-w: 420px;
+  --radar-w: 560px;
   --radar-w-wide: 600px;
 }
 .report-letterhead {
