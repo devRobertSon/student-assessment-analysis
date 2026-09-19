@@ -635,7 +635,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
                 )}
               </div>
 
-              <section ref={analysisRef} className="report-sec">
+              <section ref={analysisRef} className="report-sec rp-analysis">
                 <div className="rp-sec-row">
                   <span className="report-sec-h">유형별 성취</span>
                   {/* 난이도별 정답률은 여기 적지 않는다. 예상 고교 등급이 이미

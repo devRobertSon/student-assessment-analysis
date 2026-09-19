@@ -1029,7 +1029,15 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
    A4 한 쪽이 정해진 높이라 420px가 뒤 블록을 밀지 않는 상한이다. */
 /* 응시 이력과 의견은 함께 움직인다. 1쪽 안에 있을 때와 따로 한 쪽을
    차지할 때의 생김새가 같도록 지면과 같은 간격을 준다. */
-.rp-movable { display: flex; flex-direction: column; gap: 9px; }
+/* 아래에 자리가 남으면 카드 사이로 나눠 준다. footer 의 margin-top: auto 만
+   두면 남는 자리가 전부 맨 아래로 몰려 쪽 아래만 허전해 보인다. */
+.rp-movable { display: flex; flex-direction: column; flex-grow: 1; justify-content: space-evenly; gap: 9px; }
+
+/* 도형 맨 위는 라벨 윗머리까지 빈 띠다. 그 띠만큼 끌어올려 '유형별 성취' 가
+   맨 위 라벨과 같은 줄에 온다. 도형 크기와 자리는 그대로고 칸의 위아래만 준다.
+   여기서 준 만큼이 아래 카드 사이로 간다(.rp-movable). */
+.rp-analysis { padding-top: 9px; padding-bottom: 8px; }
+.rp-analysis .rp-radar-only { margin-top: -40px; }
 
 /* 레이더 두 크기. 쪽이 나뉘어 1쪽이 분석 전용이 되면 넓은 쪽을 쓴다.
    쪽 나눔을 판정하는 코드가 --radar-w를 그대로 읽으므로, 폭은 여기서만 정한다. */
