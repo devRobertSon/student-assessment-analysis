@@ -12,6 +12,7 @@ import {
   statsCumulative,
 } from '../lib/assessment';
 import { logoUrl, sealUrl } from '../lib/brand';
+import { notify } from '../lib/notice';
 import TypeRadar, { FAIR, STEADY } from './TypeRadar';
 import TypeBars from './TypeBars';
 
@@ -269,7 +270,7 @@ export default function TypeReport({ data, setData, studentId, setStudentId, onB
       pdf.save(`리포트_${student.name}_${today}.pdf`);
     } catch (e) {
       console.error(e);
-      alert('PDF 저장에 실패했습니다. 다시 시도해 주세요.');
+      notify('PDF 저장', 'PDF 저장에 실패했습니다. 다시 시도해 주세요.');
     } finally {
       setBusy(false);
     }

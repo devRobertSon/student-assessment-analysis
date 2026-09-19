@@ -1,4 +1,5 @@
 import { CloudStatus, signInWithGoogle, signOutCloud, useAuthUser } from '../lib/cloud';
+import { notify } from '../lib/notice';
 
 const STATUS_TEXT: Record<CloudStatus, string> = {
   off: '',
@@ -17,7 +18,7 @@ export default function CloudBar({ status }: { status?: CloudStatus }) {
   if (!user) {
     return (
       <div className="cloud-bar">
-        <button className="cloud-login" onClick={() => signInWithGoogle().catch(() => alert('로그인에 실패했습니다.'))}>
+        <button className="cloud-login" onClick={() => signInWithGoogle().catch(() => notify('구글 로그인', '로그인에 실패했습니다.'))}>
           ☁ 구글 로그인
         </button>
         <span className="hint">로그인하면 기기 간 자동 공유됩니다.</span>

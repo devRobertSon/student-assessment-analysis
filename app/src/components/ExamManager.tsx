@@ -7,53 +7,20 @@ import {
   splitTypes,
 } from '../lib/assessment';
 import ExamFiles from './ExamFiles';
-import ConfirmDialog from './ConfirmDialog';
 
 interface Props {
   data: AssessmentData;
   setData: (d: AssessmentData) => void;
 }
 
+/**
+ * 시험지 관리. 보기 전용이다.
+ *
+ * 시험지 등록과 삭제는 관리자가 papers/ 에서 한다. 선생님 화면에 지우는 버튼을
+ * 두면 실수로 누른 한 번에 그 시험지의 채점 결과까지 사라진다.
+ */
 export default function ExamManager({ data, setData }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  // 지우기 전에 한 번 묻는다. 무엇을 지울지만 담아 두고 실제 삭제는 [예]에서 한다.
-  const [pending, setPending] = useState<{ ids: string[]; title: string } | null>(null);
-
-  const askRemove = (ids: string[], title: string) => {
-    if (ids.length > 0) setPending({ ids, title });
-  };
-
-  const doRemove = () => {
-    if (!pending) return;
-    const gone = new Set(pending.ids);
-    const titles = data.exams.filter((x) => gone.has(x.id)).map((x) => x.title);
-    setData({
-      ...data,
-      exams: data.exams.filter((x) => !gone.has(x.id)),
-      results: data.results.filter((r) => !gone.has(r.examId)),
-      // 저장소에 CSV가 남아 있어도 다시 들어오지 않게 이름을 적어 둔다.
-      dismissed: [...(data.dismissed ?? []), ...titles].filter(Boolean),
-    });
-    setSelected((prev) => {
-      const n = new Set(prev);
-      gone.forEach((id) => n.delete(id));
-      return n;
-    });
-    setPending(null);
-  };
-
-  const removeSelected = () => askRemove([...selected], `선택한 시험지 ${selected.size}개`);
-
-  const toggle = (id: string) =>
-    setSelected((prev) => {
-      const n = new Set(prev);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
-    });
-  const allSelected = data.exams.length > 0 && selected.size === data.exams.length;
-  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(data.exams.map((e) => e.id)));
 
   return (
     <div className="assess-pane">
@@ -63,43 +30,18 @@ export default function ExamManager({ data, setData }: Props) {
         </div>
       </div>
 
-      {pending && (
-        <ConfirmDialog
-          title="시험지 삭제"
-          message={`${pending.title} 시험지를 삭제할까요?`}
-          detail={(() => {
-            const gone = new Set(pending.ids);
-            const cnt = data.results.filter((r) => gone.has(r.examId)).length;
-            return cnt
-              ? `채점 결과 ${cnt}건도 함께 지워집니다. 되돌릴 수 없습니다.`
-              : '되돌릴 수 없습니다. 다시 보려면 관리자에게 등록을 요청해야 합니다.';
-          })()}
-          onYes={doRemove}
-          onNo={() => setPending(null)}
-        />
-      )}
-
       {data.exams.length === 0 ? (
         <p className="muted">등록된 시험지가 없습니다.</p>
       ) : (
         <>
           <div className="assess-row">
-            <span className="hint">
-              {data.exams.length}개 시험지 · {selected.size}개 선택됨
-            </span>
-            <span style={{ marginLeft: 'auto' }} />
-            <button className="del-btn mini" disabled={selected.size === 0} onClick={removeSelected}>
-              선택 삭제{selected.size > 0 ? ` (${selected.size})` : ''}
-            </button>
+            <span className="hint">{data.exams.length}개 시험지</span>
           </div>
           {/* 표가 화면보다 넓다. 휴대폰에서 칸이 카드 밖으로 삐져나오지 않게 감싼다. */}
           <div className="table-scroll">
           <table className="assess-table exam-table">
             <thead>
               <tr>
-                <th style={{ width: 34, textAlign: 'center' }}>
-                  <input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="전체 선택" />
-                </th>
                 {/* 이름이 짜부라지지 않을 만큼은 잡아 둔다. 이보다 좁아지면
                     표가 가로로 넘어간다(.table-scroll). */}
                 <th style={{ minWidth: 150 }}>시험지</th>
@@ -112,21 +54,12 @@ export default function ExamManager({ data, setData }: Props) {
                     폭을 이 칸이 아니라 시험지 이름 칸이 가져가게 한다. */}
                 <th style={{ width: 1 }}>인쇄물</th>
                 <th style={{ width: 92 }}></th>
-                <th style={{ width: 44 }}></th>
               </tr>
             </thead>
             <tbody>
               {data.exams.map((ex) => (
                 <Fragment key={ex.id}>
-                  <tr className={selected.has(ex.id) ? 'row-selected' : ''}>
-                    <td style={{ textAlign: 'center' }}>
-                      <input
-                        type="checkbox"
-                        checked={selected.has(ex.id)}
-                        onChange={() => toggle(ex.id)}
-                        aria-label={`${ex.title} 선택`}
-                      />
-                    </td>
+                  <tr>
                     <td>{ex.title}</td>
                     <td>{ex.subject}</td>
                     <td>{ex.date}</td>
@@ -154,15 +87,10 @@ export default function ExamManager({ data, setData }: Props) {
                         {openId === ex.id ? '접기' : '유형 보기'}
                       </button>
                     </td>
-                    <td>
-                      <button className="del" onClick={() => askRemove([ex.id], `"${ex.title}"`)} title="삭제">
-                        ✕
-                      </button>
-                    </td>
                   </tr>
                   {openId === ex.id && (
                     <tr>
-                      <td colSpan={10}>
+                      <td colSpan={8}>
                         <div className="hint" style={{ marginBottom: 7 }}>
                           {ex.title} · 문항별 유형 · 만점{' '}
                           {fmtPoints(ex.questions.reduce((a, q) => a + pointsOf(q), 0))}점

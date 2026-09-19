@@ -12,6 +12,7 @@ import { STEADY } from './TypeRadar';
 import TypeRadar from './TypeRadar';
 import TypeBars from './TypeBars';
 import ConfirmDialog from './ConfirmDialog';
+import { ask } from '../lib/notice';
 
 const GRADES = ['초3', '초4', '초5', '초6', '중1', '중2', '중3', '고1', '고2', '고3'];
 const DEFAULT_GRADE = '중1';
@@ -77,10 +78,15 @@ export default function StudentManager({
     : undefined;
   const lastDate = studentResults.length ? studentResults[studentResults.length - 1].date : '';
 
-  const add = () => {
+  const add = async () => {
     const nm = newName.trim();
     if (!nm) return;
-    if (data.students.some((s) => s.name === nm) && !confirm(`"${nm}" 학생이 이미 있습니다. 그래도 추가할까요?`)) return;
+    if (
+      data.students.some((s) => s.name === nm) &&
+      !(await ask('학생 추가', `"${nm}" 학생이 이미 있습니다. 그래도 추가할까요?`, { yesLabel: '예, 추가합니다' }))
+    ) {
+      return;
+    }
     const id = newId('stu');
     setData({ ...data, students: [...data.students, { id, name: nm, grade: newGrade }] });
     setSelectedId(id);

@@ -48,7 +48,6 @@ const shape = (e: Exam) => JSON.stringify([e.title, e.subject, e.questions, e.fi
  * - 없던 시험지는 넣는다
  * - 있던 시험지는 문항·인쇄물을 저장소 내용으로 맞춘다 (id는 그대로 두어
  *   이미 저장된 채점 결과가 끊기지 않게 한다)
- * - 손으로 지운 시험지(dismissed)는 다시 넣지 않는다
  * - 저장소에서 빠진 시험지는 지우지 않는다. 채점 결과가 딸려 있을 수 있다
  *
  * 바뀐 게 없으면 null. 그래야 열 때마다 쓸데없이 저장·동기화되지 않는다.
@@ -58,14 +57,13 @@ export async function syncExamsFromPapers(data: AssessmentData): Promise<Exam[] 
   const sheets = papers.filter((p) => p.kind === '시험지');
   if (sheets.length === 0) return null;
 
-  const dismissed = new Set(data.dismissed ?? []);
   const byTitle = new Map(data.exams.map((e) => [e.title.trim(), e]));
   const next = [...data.exams];
   let changed = false;
 
   for (const sheet of sheets) {
     const made = await examFromSheet(sheet.file);
-    if (!made || dismissed.has(made.title)) continue;
+    if (!made) continue;
 
     const have = byTitle.get(made.title);
     if (!have) {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { notify } from '../lib/notice';
 import {
   AssessmentData,
   Axis,
@@ -103,13 +104,13 @@ export default function GradingPanel({ data, setData }: Props) {
 
   const save = () => {
     if (!studentId || !exam) {
-      alert('학생과 시험지를 모두 선택하세요.');
+      notify('채점 저장', '학생과 시험지를 모두 고르세요.');
       return;
     }
     const res: Result = { id: existing?.id ?? newId('res'), studentId, examId, date, marks };
     const others = data.results.filter((r) => !(r.studentId === studentId && r.examId === examId));
     setData({ ...data, results: [...others, res] });
-    alert('채점을 저장했습니다.');
+    notify('채점 저장', '채점을 저장했습니다.');
   };
 
   /** 불러온 채점 결과를 지운다. 화면의 입력칸도 같이 비워 다시 저장되지 않게 한다. */
@@ -263,7 +264,7 @@ export default function GradingPanel({ data, setData }: Props) {
                   </span>
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--navy-soft)', marginTop: 5 }}>
-                  O {score.correct}/{exam.questions.length}문항 · 전체 {fmtPoints(fullPoints)}점
+                  맞은 문제 수 {score.correct}/{exam.questions.length} · 전체 {fmtPoints(fullPoints)}점
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--navy-soft)', marginTop: 3 }}>
                   {answered === exam.questions.length

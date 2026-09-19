@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { exportAssessmentJson, loadAssessment, parseAssessmentJson, saveAssessment } from './lib/assessment';
 import { CLOUD_DOC, useCloudDoc } from './lib/cloud';
 import { syncExamsFromPapers } from './lib/papersync';
+import { NoticeHost, notify } from './lib/notice';
 import Logo from './components/Logo';
 import CloudBar from './components/CloudBar';
 import HomePage, { HomeTarget } from './components/HomePage';
@@ -50,9 +51,9 @@ export default function App() {
   const importJson = async (file: File) => {
     try {
       setData(parseAssessmentJson(await file.text()));
-      alert('불러왔습니다.');
+      notify('가져오기', '불러왔습니다.');
     } catch (e) {
-      alert('JSON을 읽지 못했습니다: ' + (e as Error).message);
+      notify('가져오기', 'JSON을 읽지 못했습니다.', (e as Error).message);
     }
   };
 
@@ -153,6 +154,7 @@ export default function App() {
           />
         </main>
       )}
+      <NoticeHost />
     </div>
   );
 }

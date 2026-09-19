@@ -273,8 +273,6 @@ export interface AssessmentData {
   students: Student[];
   exams: Exam[];
   results: Result[];
-  /** 손으로 지운 시험지 이름. papers/ 에 남아 있어도 다시 넣지 않는다. */
-  dismissed?: string[];
   /** 예상 등급 사다리. 안 적었으면 DEFAULT_GRADE_LADDER 를 쓴다. */
   gradeLadder?: GradeRung[];
   /** 재수강 판정에서 봐 주는 개수. 안 적었으면 DEFAULT_RETAKE_BUDGET. */
@@ -296,7 +294,6 @@ export function loadAssessment(): AssessmentData {
       students: Array.isArray(p.students) ? p.students : [],
       exams: Array.isArray(p.exams) ? p.exams : [],
       results: Array.isArray(p.results) ? p.results : [],
-      dismissed: Array.isArray(p.dismissed) ? p.dismissed : [],
       // 판정 기준이 정답률 % → 오답 개수 → 난이도별 허용 개수로 두 번 바뀌었다.
       // 예전에 저장된 값을 그대로 읽으면 엉뚱한 기준이 되므로 모양이 맞을 때만 쓴다.
       retakeScale:
