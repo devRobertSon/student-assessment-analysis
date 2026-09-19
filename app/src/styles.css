@@ -428,7 +428,9 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 
 /* ── 리포트: 유형별 막대·레이더 ─────────────────────── */
 .type-bars-wrap { display: flex; gap: 22px; align-items: center; }
-.type-radar-wrap { flex: none; width: 320px; }
+/* 레이더 라벨은 viewBox(560) 안에서 15 라, 화면 폭이 480 은 되어야 막대 차트
+   라벨(13px)만큼 읽힌다. 좁히면 유형 이름이 막대보다 작아져 안 읽힌다. */
+.type-radar-wrap { flex: none; width: 500px; }
 .type-radar { display: block; }
 .type-bars { flex-grow: 1; display: flex; flex-direction: column; gap: 9px; }
 .type-bar-row { display: flex; align-items: center; gap: 10px; }
@@ -684,7 +686,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
   .split { grid-template-columns: 240px minmax(0, 1fr); gap: 14px; }
   .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .type-bars-wrap { flex-direction: column; align-items: stretch; }
-  .type-radar-wrap { align-self: center; max-width: 360px; }
+  .type-radar-wrap { align-self: center; width: 100%; max-width: 520px; }
 }
 
 @media (max-width: 860px) {
