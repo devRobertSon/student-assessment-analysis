@@ -1037,7 +1037,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
    맨 위 라벨과 같은 줄에 온다. 도형 크기와 자리는 그대로고 칸의 위아래만 준다.
    여기서 준 만큼이 아래 카드 사이로 간다(.rp-movable). */
 .rp-analysis { padding-top: 9px; padding-bottom: 8px; }
-.rp-analysis .rp-radar-only { margin-top: -40px; }
+.rp-analysis .rp-radar-only { margin-top: -28px; }
 
 /* 레이더 두 크기. 쪽이 나뉘어 1쪽이 분석 전용이 되면 넓은 쪽을 쓴다.
    쪽 나눔을 판정하는 코드가 --radar-w를 그대로 읽으므로, 폭은 여기서만 정한다. */
