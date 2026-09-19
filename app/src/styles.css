@@ -854,6 +854,10 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .fld-head em { font-style: normal; font-size: 11.5px; font-weight: 400; color: var(--ink-3); }
 .fld-head i { margin-left: auto; font-style: normal; font-size: 11.5px; font-weight: 400; color: var(--ink-3); }
 .edit-grid .fld textarea { flex-grow: 1; }
+/* 손으로 적기 스위치. 글자 수 세는 줄 아래에 붙는다. */
+.fld-check { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 500; color: var(--ink-2); cursor: pointer; }
+.fld-check input { width: 15px; height: 15px; margin: 0; accent-color: var(--navy); cursor: pointer; }
+.fld textarea:disabled { background: var(--fill); color: var(--ink-3); }
 .fld-row { display: flex; flex-wrap: wrap; gap: 12px 18px; }
 .fld-row .assess-field { min-width: 160px; }
 /* 지면은 794px 고정이다. 창이 좁다고 지면까지 줄어들면 줄바꿈이 달라져
@@ -1024,6 +1028,11 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
   padding: 9px 12px; font-size: 14px; line-height: 1.9; color: #2e3136;
   white-space: pre-wrap; overflow: hidden;
 }
+/* 손으로 적는 선생님 의견. 쪽에 남는 자리를 이 칸이 다 가져간다. 그래서
+   카드 사이를 고르게 벌리던 몫(.rp-movable)이 전부 이 칸 높이로 간다.
+   min-height 는 자리가 남지 않을 때도 적을 수 있게 지키는 최소한이다. */
+.rp-note-hand { flex-grow: 1; }
+.rp-note-hand .rp-memo-box { flex-grow: 1; height: auto; min-height: 78px; }
 .rp-sign > div { display: flex; flex-direction: column; }
 .rp-sign > div:first-child { width: 168px; }
 .rp-sign span { font-size: 11px; color: var(--ink-3); margin-bottom: 3px; }
@@ -1071,14 +1080,14 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .report-capture .rp-history th,
 .report-capture .rp-history td { padding: 4px 9px; }
 
-/* 선생님 의견은 인쇄에서 3줄까지만 내보낸다. 더 쓰면 화면 미리보기에서
-   잘린 채로 보이므로, 무엇이 인쇄될지는 쓰는 동안 그대로 드러난다. */
-.rp-note-3 {
+/* 선생님 의견은 100자까지만 받으므로 두 줄을 넘지 않는다. 글자가 더 넓게
+   재어지는 경우에도 세 줄로 흘러 아래 카드를 밀지 않게 두 줄에서 잠근다. */
+.rp-note-2 {
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  /* line-clamp를 못 쓰는 경우에도 3줄에서 끊기도록 줄높이와 같은 값으로 잠근다. */
-  max-height: calc(1.62em * 3);
+  -webkit-line-clamp: 2;
+  /* line-clamp를 못 쓰는 경우에도 두 줄에서 끊기도록 줄높이와 같은 값으로 잠근다. */
+  max-height: calc(1.62em * 2);
   overflow: hidden;
 }
 

@@ -21,6 +21,7 @@ import {
 import { rateTag } from './TypeRadar';
 import ConfirmDialog from './ConfirmDialog';
 import Select from './Select';
+import DatePicker from './DatePicker';
 
 interface Props {
   data: AssessmentData;
@@ -224,7 +225,7 @@ ${listNos(left)}`
               </label>
               <label className="assess-field">
                 응시일
-                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                <DatePicker label="응시일" value={date} onChange={setDate} />
               </label>
               {existing && (
                 <span className="assess-row" style={{ alignSelf: 'flex-end', gap: 8 }}>

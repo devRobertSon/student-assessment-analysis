@@ -21,7 +21,9 @@ import Select from './Select';
 const PAGE_H = 1123;
 
 const SUMMARY_MAX = 130;
-const NOTE_MAX = 170;
+// 인쇄에 두 줄로 들어가는 길이다. 더 받아 두면 화면에는 보이고 인쇄에서만
+// 잘려 무엇이 나갔는지 알 수 없다.
+const NOTE_MAX = 100;
 const MEMO_MAX = 200;
 
 /**
@@ -117,11 +119,20 @@ type RangeMode = 'all' | 'm3' | 'm6' | 'year' | 'custom';
 interface SessionFields {
   summary: string;
   note: string;
+  /** 켜면 선생님 의견을 빈 칸으로 인쇄한다. 그 자리에 손으로 적는다. */
+  noteBlank: boolean;
   consultDate: string;
   memo: string;
   signName: string;
 }
-const EMPTY_SESSION: SessionFields = { summary: '', note: '', consultDate: '', memo: '', signName: '' };
+const EMPTY_SESSION: SessionFields = {
+  summary: '',
+  note: '',
+  noteBlank: false,
+  consultDate: '',
+  memo: '',
+  signName: '',
+};
 
 export default function TypeReport({ data, studentId, setStudentId, onBack }: Props) {
   const [session, setSession] = useState<SessionFields>(EMPTY_SESSION);
@@ -253,11 +264,23 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
       .filter((el) => el !== sec && el !== moved)
       .reduce((a, el) => a + H(el), 0);
 
+    /*
+     * 이동 그룹은 flex-grow 로 남는 자리를 채워 늘어난다. 늘어난 높이로 재면
+     * '넘쳤는가'가 아니라 '쪽을 다 썼는가'를 재게 되어, 한 번 나뉘면 글을
+     * 지워도 다시 합쳐지지 않는다. 잴 때만 늘어남을 꺼 내용 높이를 읽는다.
+     * 손으로 적는 빈 칸도 같이 꺼야 최소 높이로 줄어든다.
+     */
+    const grows = [moved, ...moved.querySelectorAll<HTMLElement>('.rp-note-hand')];
+    const before = grows.map((el) => el.style.flexGrow);
+    grows.forEach((el) => (el.style.flexGrow = '0'));
+    const movedH = H(moved);
+    grows.forEach((el, i) => (el.style.flexGrow = before[i]));
+
     // 좁은 배치의 1쪽은 여섯 칸이다. 레터헤드·제목·학생·유형·이동그룹·푸터. 사이는 다섯 칸.
     const whole =
-      stable + narrowSecH + H(moved) + gap * 5 + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      stable + narrowSecH + movedH + gap * 5 + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
     setSplitNotes(whole > PAGE_H);
-  }, [splitNotes, summary, session.note, selectedResults, stats, levels, student]);
+  }, [splitNotes, summary, session.note, session.noteBlank, selectedResults, stats, levels, student]);
 
   const downloadPdf = async () => {
     if (!page1Ref.current || !student) return;
@@ -359,11 +382,20 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
           <p className="report-note-body">{summary}</p>
         </section>
       )}
-      {session.note.trim() && (
-        <section className="report-sec">
+      {/* 손으로 적기를 켜면 글 대신 빈 칸이 나가고, 그 칸이 쪽에 남는 자리를
+          다 가져가 제일 크게 벌어진다. */}
+      {session.noteBlank ? (
+        <section className="report-sec rp-note-hand">
           <span className="report-sec-h">선생님 의견</span>
-          <p className="report-note-body rp-note-3">{session.note}</p>
+          <div className="rp-memo-box" />
         </section>
+      ) : (
+        session.note.trim() && (
+          <section className="report-sec">
+            <span className="report-sec-h">선생님 의견</span>
+            <p className="report-note-body rp-note-2">{session.note}</p>
+          </section>
+        )
       )}
     </div>
   );
@@ -505,23 +537,36 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
                 )}
               </label>
 
-              <label className="fld">
+              {/* 안에 체크박스가 하나 더 있어 label 로 감싸지 않는다.
+                  label 안에 label 을 넣으면 누른 자리가 어디로 가는지 흐려진다. */}
+              <div className="fld">
                 <span className="fld-head">
                   선생님 의견
-                  <em>비워두면 인쇄에서 빠집니다 · 3줄까지 인쇄</em>
+                  <em>비워두면 인쇄에서 빠집니다 · 2줄까지 인쇄</em>
                   <i>
                     {session.note.length}/{NOTE_MAX}자
                   </i>
                 </span>
+                <label className="fld-check">
+                  <input
+                    type="checkbox"
+                    checked={session.noteBlank}
+                    onChange={(e) => set({ noteBlank: e.target.checked })}
+                  />
+                  손으로 적기 (빈 칸을 제일 크게 인쇄)
+                </label>
                 <textarea
                   className="report-note-input"
                   rows={4}
                   maxLength={NOTE_MAX}
-                  placeholder="상담 내용이나 추천 수업을 적으세요."
-                  value={session.note}
+                  disabled={session.noteBlank}
+                  placeholder={
+                    session.noteBlank ? '빈 칸으로 인쇄합니다.' : '상담 내용이나 추천 수업을 적으세요.'
+                  }
+                  value={session.noteBlank ? '' : session.note}
                   onChange={(e) => set({ note: e.target.value })}
                 />
-              </label>
+              </div>
 
               <label className="fld">
                 <span className="fld-head">
