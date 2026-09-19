@@ -559,7 +559,9 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
   resize: none;
   display: block;
 }
-.report-note-body { font-size: 15px; line-height: 1.85; color: #2e3136; white-space: pre-line; }
+/* p 의 기본 바깥 여백(1em)을 지운다. 그냥 두면 제목과 글 사이가 칸의
+   gap 에 14px 이 더해져, 표를 담은 옆 카드보다 유독 벌어져 보인다. */
+.report-note-body { margin: 0; font-size: 15px; line-height: 1.85; color: #2e3136; white-space: pre-line; }
 
 /* ── 리포트: 인쇄면 ──────────────────────────────── */
 .report-capture {
