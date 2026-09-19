@@ -37,7 +37,7 @@ export default function ManualPage() {
           <li>
             <b>채점</b>
             <span>
-              [채점]에서 학생과 시험지를 고르고 <b>[직접 입력]</b>으로 O/X를 찍거나, 채점 CSV를 올립니다.
+              [채점]에서 학생과 시험지를 고르고 문항마다 O나 X를 누릅니다.
             </span>
           </li>
           <li>

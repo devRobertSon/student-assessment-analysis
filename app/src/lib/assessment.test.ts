@@ -12,8 +12,6 @@ import {
   gradeFromLevels,
   advancedGap,
   retakeCheck,
-  parseGradingCsv,
-  pointsOf,
   scoreOf,
   statsForResult,
 } from './assessment';
@@ -174,32 +172,6 @@ describe('서술형', () => {
     expect(makeMark(q, -3)).toEqual({ no: 2, earned: 0, points: 5 });
     expect(isFullMark(makeMark(q, 5))).toBe(true);
     expect(isFullMark(makeMark(q, 4.5))).toBe(false);
-  });
-});
-
-describe('parseGradingCsv', () => {
-  it('OX 열을 읽는다. O는 맞음, X는 틀림, 빈칸은 미입력', () => {
-    const { earned, date } = parseGradingCsv(
-      '응시일,문항번호,배점,OX\n2026-09-19,1,3,O\n2026-09-19,2,5,X\n2026-09-19,3,3,'
-    );
-    expect(date).toBe('2026-09-19');
-    // O가 몇 점인지는 시험지의 배점이 정한다. 3번은 미입력이라 빠진다.
-    expect(earned).toEqual({ 1: 'full', 2: 0 });
-  });
-
-  it("'O'는 그 문항의 배점을 다 받는다", () => {
-    const q = { no: 1, type: '계산', points: 3 };
-    const { earned } = parseGradingCsv('문항번호,OX\n1,O');
-    expect(earned[1]).toBe('full');
-    const v = earned[1] === 'full' ? pointsOf(q) : earned[1];
-    expect(makeMark(q, v)).toEqual({ no: 1, earned: 3, points: 3 });
-  });
-
-  it('득점 열이 있는 예전 표는 배점을 다 받았을 때만 O로 접는다', () => {
-    const { earned } = parseGradingCsv(
-      '문항번호,배점,득점,OX\n1,5,5,\n2,5,3,\n3,5,0,'
-    );
-    expect(earned).toEqual({ 1: 'full', 2: 0, 3: 0 });
   });
 });
 

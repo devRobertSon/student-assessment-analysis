@@ -403,8 +403,17 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 /* ── 채점 ────────────────────────────────────────── */
 /* 번호와 O/X만 두어 한 줄에 여러 문항이 들어가게 한다. 답안지를 보며
    번호만 따라 내려가면 되므로 유형 이름은 여기서 읽을 일이 없다. */
-.ox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 6px 10px; }
+/* 한 줄에 다섯 문항으로 고정한다. auto-fill 로 두면 채점하는 동안 오른쪽 집계가
+   길어지면서 이 칸이 좁아져 한 줄에 일곱 개이던 것이 여섯 개로 바뀐다. */
+.ox-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px 10px; }
 .ox-item { display: flex; align-items: center; gap: 7px; padding: 5px 7px; border-radius: 8px; background: var(--fill); }
+/* 11~20, 31~40 … 열 문항 단위로 바탕을 바꿔 세는 자리를 잃지 않게 한다. */
+.ox-item.band { background: #e4e8f0; }
+/* 휴대폰에서는 한 칸이 100px 은 되어야 번호와 O·X 가 들어간다. 다섯 칸은
+   들어가지 않으므로 두 칸으로 내린다. 열 문항이 다섯 줄이라 띠는 그대로 맞는다. */
+@media (max-width: 640px) {
+  .ox-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .ox-no { width: 22px; font-size: 13px; font-weight: 700; color: var(--ink-3); text-align: right; }
 .ox-btns { display: flex; gap: 5px; }
 .ox-btns button { width: 34px; height: 30px; padding: 0; font-size: 14px; font-weight: 600; color: var(--ink-3); border-radius: 6px; }

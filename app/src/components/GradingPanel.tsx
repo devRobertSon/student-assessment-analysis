@@ -218,11 +218,16 @@ export default function GradingPanel({ data, setData }: Props) {
                 </div>
 
                 <div className="ox-grid">
-                  {exam.questions.map((q) => {
+                  {exam.questions.map((q, i) => {
                     const v = cells[q.no];
                     const pts = pointsOf(q);
+                    // 열 줄마다 바탕을 번갈아 깔아 1~10, 11~20 을 눈으로 끊는다.
+                    const band = Math.floor(i / 10) % 2 === 1;
                     return (
-                      <div key={q.no} className={`ox-item ${isEssay(q) ? 'essay' : ''}`}>
+                      <div
+                        key={q.no}
+                        className={`ox-item${isEssay(q) ? ' essay' : ''}${band ? ' band' : ''}`}
+                      >
                         <span className="ox-no">{q.no}</span>
                         <span className="ox-btns">
                           <button
