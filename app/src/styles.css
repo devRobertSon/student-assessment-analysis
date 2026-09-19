@@ -434,34 +434,38 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .ox-o.on { color: #fff; background: var(--navy); border-color: var(--navy); }
 .ox-x.on { color: #fff; background: var(--bad-ink); border-color: var(--bad-ink); }
 /* 서술형: 색만으로 구분하지 않도록 '서술형' 글자 배지를 함께 단다 */
-/* 시험지 구성 보기: 영역·단원·난이도 세 축을 띠와 막대로 그린다.
-   색은 구분용일 뿐이라 개수와 %를 항상 글자로 함께 적는다. */
+/* 시험지 구성 보기: 교차표와 문항 지도 두 가지.
+   색은 거들 뿐이라 숫자와 이름을 항상 글자로 함께 적는다. */
 .xc { text-align: left; white-space: normal; }
 .xc-top { margin-bottom: 12px; }
-.xc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 18px 26px; }
+.xc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(376px, 1fr)); gap: 20px 30px; }
 .xc-block { min-width: 0; }
-.xc-head { display: flex; align-items: baseline; gap: 7px; margin-bottom: 7px; }
+.xc-head { display: flex; align-items: baseline; gap: 7px; margin-bottom: 9px; }
 .xc-head b { font-size: 13px; color: var(--navy); }
-.xc-stack { display: flex; height: 11px; border-radius: 4px; overflow: hidden; background: var(--line-2); margin-bottom: 9px; }
-.xc-stack span { display: block; height: 100%; }
-.xc-rows { display: flex; flex-direction: column; gap: 5px; }
-.xc-row { display: flex; align-items: center; gap: 7px; font-size: 12px; }
-.xc-dot { flex: none; width: 8px; height: 8px; border-radius: 2px; }
-/* '중1-1 복습 · 정수와 유리수' 같은 긴 단원 이름까지 들어가는 폭이다.
-   그보다 길면 잘리고 전체는 title 로 뜬다. */
-.xc-name { flex: none; width: 146px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.xc-track { flex: 1 1 auto; min-width: 34px; height: 9px; border-radius: 3px; background: var(--line-2); }
-.xc-fill { display: block; height: 100%; border-radius: 3px; }
-.xc-n { flex: none; width: 44px; text-align: right; font-weight: 700; color: var(--ink); }
-.xc-pct { flex: none; width: 32px; text-align: right; color: var(--ink-2); }
-.xc-pt { flex: none; width: 34px; text-align: right; color: var(--ink-3); }
-/* 좁아지면 배점을 먼저 접는다. 구성을 볼 때 먼저 읽는 것은 문항 수다. */
-@media (max-width: 1000px) {
-  .xc-pt { display: none; }
-}
+.xc-note { margin-top: 9px; font-size: 12px; color: var(--ink-2); }
+
+/* 교차표: 단원이 행, 난이도가 열. 한 축만으로는 안 보이는 쏠림을 본다. */
+.xc-cross { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+.xc-cross th { padding: 4px 6px; font-size: 11.5px; font-weight: 600; color: var(--ink-2); text-align: center; background: none; border: 0; }
+.xc-cross td { padding: 6px; text-align: center; border-top: 1px solid var(--line); }
+.xc-cross th.xc-cross-unit, .xc-cross td.xc-cross-unit { width: 40%; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.xc-cross td.xc-sum { font-weight: 700; }
+.xc-zero { color: var(--ink-3); }
+.xc-cross tfoot td { border-top: 2px solid var(--navy); font-weight: 700; }
+
+/* 문항 지도: 한 줄 열 칸으로 고정한다. 화면 폭에 따라 줄이 바뀌면
+   '몇 번이 어디인지'를 눈으로 좇을 수 없다. */
+.xc-map { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; }
+.xc-cellq { border-radius: 5px; overflow: hidden; }
+.xc-cellq.essay { outline: 2px solid var(--navy); outline-offset: -2px; }
+.xc-ubar { display: block; height: 5px; }
+.xc-no { display: block; padding: 5px 0; font-size: 12px; font-weight: 600; text-align: center; }
+.xc-legend { display: flex; flex-wrap: wrap; gap: 5px 12px; margin-top: 10px; font-size: 11.5px; color: var(--ink-2); }
+.xc-legend i { display: inline-block; width: 11px; height: 11px; margin-right: 4px; border-radius: 3px; vertical-align: -1px; }
+.xc-legend i.essay { background: var(--fill); border: 2px solid var(--navy); }
+
 @media (max-width: 560px) {
-  .xc-name { width: 96px; }
-  .xc-pct { display: none; }
+  .xc-map { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
 
 .q-lv { flex-shrink: 0; margin-left: 4px; padding: 1px 5px; font-size: 10px; font-weight: 700; color: #5F5E5A; background: #f1efe8; border-radius: 4px; }
