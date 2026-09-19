@@ -5,7 +5,6 @@ import {
   TARGET_SCHOOLS,
   TypeStat,
   DEFAULT_GRADE_LADDER,
-  GradeRung,
   gradeFromLevels,
   scoreOf,
   todayStr,
@@ -104,7 +103,6 @@ function autoSummary(stats: TypeStat[], correct: number, total: number): string 
 
 interface Props {
   data: AssessmentData;
-  setData: (d: AssessmentData) => void;
   studentId: string;
   setStudentId: (id: string) => void;
   onBack: () => void;
@@ -116,12 +114,11 @@ interface SessionFields {
   note: string;
   consultDate: string;
   memo: string;
-  signDate: string;
   signName: string;
 }
-const EMPTY_SESSION: SessionFields = { summary: '', note: '', consultDate: '', memo: '', signDate: '', signName: '' };
+const EMPTY_SESSION: SessionFields = { summary: '', note: '', consultDate: '', memo: '', signName: '' };
 
-export default function TypeReport({ data, setData, studentId, setStudentId, onBack }: Props) {
+export default function TypeReport({ data, studentId, setStudentId, onBack }: Props) {
   const [session, setSession] = useState<SessionFields>(EMPTY_SESSION);
   const [summaryTouched, setSummaryTouched] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -179,8 +176,8 @@ export default function TypeReport({ data, setData, studentId, setStudentId, onB
   );
 
   // 선생님이 손대기 전까지는 자동 문안을 따라간다.
-  const ladder = data.gradeLadder ?? DEFAULT_GRADE_LADDER;
-  const grade = gradeFromLevels(levels, ladder);
+  // 예상 등급 기준은 학원이 정한 고정값이다. 화면에서 고치지 않는다.
+  const grade = gradeFromLevels(levels, DEFAULT_GRADE_LADDER);
   // 리포트 머리에는 '몇 개가 모자라는가'가 아니라 '몇 개가 자리 잡았는가'를 적는다.
   // 같은 사실이라도 학부모가 먼저 읽는 숫자는 딛고 설 곳이어야 한다.
   const steady = stats.filter((s) => s.rate >= STEADY).length;
@@ -246,7 +243,9 @@ export default function TypeReport({ data, setData, studentId, setStudentId, onB
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
-      const MARGIN = 12;
+      // 가정용 프린터는 가장자리 5~10mm 를 못 찍는다. 15mm 를 두면 그 안에서
+      // 잘려도 글자가 날아가지 않는다.
+      const MARGIN = 15;
       const contentW = pageW - MARGIN * 2;
       const contentH = pageH - MARGIN * 2;
 
@@ -255,11 +254,14 @@ export default function TypeReport({ data, setData, studentId, setStudentId, onB
         const props = pdf.getImageProperties(url);
         const imgH = (props.height * contentW) / props.width;
         const nPages = Math.max(1, Math.ceil((imgH - 0.5) / contentH));
+        // 한 쪽에 들어가면 남는 세로를 위아래로 똑같이 나눈다. 위만 15mm 로 두면
+        // 아래에만 여백이 몰려 인쇄물이 위로 치우쳐 보인다.
+        const top = nPages === 1 ? Math.max(MARGIN, (pageH - imgH) / 2) : MARGIN;
         for (let k = 0; k < nPages; k++) {
           if (startNewPage || k > 0) pdf.addPage();
-          pdf.addImage(url, 'JPEG', MARGIN, MARGIN - k * contentH, contentW, imgH);
+          pdf.addImage(url, 'JPEG', MARGIN, top - k * contentH, contentW, imgH);
           pdf.setFillColor(255, 255, 255);
-          pdf.rect(0, 0, pageW, MARGIN, 'F');
+          pdf.rect(0, 0, pageW, top, 'F');
           pdf.rect(0, pageH - MARGIN, pageW, MARGIN, 'F');
         }
       };
@@ -379,6 +381,10 @@ export default function TypeReport({ data, setData, studentId, setStudentId, onB
           <div className="assess-card no-print">
             <div className="report-pick-head">
               <h3 style={{ margin: 0 }}>리포트에 포함할 시험</h3>
+              {/* 개수는 제목 옆에 둔다. 버튼 옆에 붙이면 버튼 이름처럼 읽힌다. */}
+              <span className="hint">
+                {selectedResults.length}/{studentResults.length}개 선택
+              </span>
               <span className="report-pick-actions">
                 <button className="mini ghost" onClick={() => applyRange('', '')}>
                   전체 선택
@@ -386,9 +392,6 @@ export default function TypeReport({ data, setData, studentId, setStudentId, onB
                 <button className="mini ghost" onClick={() => setSelectedIds(new Set())}>
                   전체 해제
                 </button>
-                <span className="hint">
-                  {selectedResults.length}/{studentResults.length}개 선택
-                </span>
               </span>
             </div>
             <div className="report-range">
@@ -414,59 +417,12 @@ export default function TypeReport({ data, setData, studentId, setStudentId, onB
             </div>
           </div>
 
-          <details className="assess-card no-print cut-edit">
-            <summary>
-              예상 등급 기준{' '}
-              <span className="hint">
-                {ladder.map((r) => `${r.level} ${r.min}%→${r.grade}등급`).join(' · ')}
-              </span>
-            </summary>
-            <p className="hint" style={{ margin: '10px 0 12px' }}>
-              학생들 점수를 모아 줄 세우는 상대평가가 아닙니다. <b>문항 난이도를 기준으로 어느 수준까지
-              풀어내는가</b>를 봅니다. 위에서부터 내려오며 처음 걸리는 칸이 그 학생의 등급입니다. 난이도를 안 적은
-              시험지에서는 등급이 나오지 않습니다. 이 값은 예측이 아니라 <b>학원이 정한 도달 기준</b>이니, 시험지
-              난이도가 바뀌면 같이 손보세요. 값은 저장되고 기기 간에 같이 갑니다.
-            </p>
-            <div className="cut-grid">
-              {ladder.map((r, i) => (
-                <label key={i}>
-                  <span>
-                    {r.level} → {r.grade}등급
-                  </span>
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={r.min}
-                    onChange={(e) => {
-                      const n = Number(e.target.value);
-                      if (!Number.isFinite(n)) return;
-                      const next: GradeRung[] = ladder.map((x, k) =>
-                        k === i ? { ...x, min: Math.max(0, Math.min(100, n)) } : x
-                      );
-                      setData({ ...data, gradeLadder: next });
-                    }}
-                  />
-                </label>
-              ))}
-            </div>
-            <div className="assess-row" style={{ marginTop: 10 }}>
-              <button className="mini ghost" onClick={() => setData({ ...data, gradeLadder: undefined })}>
-                기본값으로
-              </button>
-              <span className="hint">
-                지금 이 학생:{' '}
-                {levels.length === 0
-                  ? '난이도를 적은 시험지가 없습니다'
-                  : levels.map((l) => `${l.type} ${Math.round(l.rate * 100)}%`).join(' · ')}
-              </span>
-            </div>
-          </details>
 
           <div className="assess-card no-print report-note-edit">
             <h3>인쇄 전 입력</h3>
             <p className="hint" style={{ marginBottom: 12 }}>
-              여기에 적은 내용이 아래 미리보기와 PDF에 그대로 들어갑니다. (저장되지 않는 임시 입력입니다. 학생을 바꾸면 비워집니다)
+              여기에 적은 내용이 아래 미리보기와 PDF에 그대로 들어갑니다. 학생 정보·목표 고등학교·진도는 [학생]
+              화면에 적어둔 값이 그대로 들어갑니다. 이 칸들은 저장되지 않는 임시 입력이라 학생을 바꾸면 비워집니다.
             </p>
 
             <div className="edit-grid">
@@ -531,18 +487,14 @@ export default function TypeReport({ data, setData, studentId, setStudentId, onB
                 <div className="assess-row wrap">
                   <label className="assess-field">
                     상담일
-                    <input type="text" placeholder={today} value={session.consultDate} onChange={(e) => set({ consultDate: e.target.value })} />
-                  </label>
-                  <label className="assess-field">
-                    동의서 작성일
-                    <input type="text" placeholder={today} value={session.signDate} onChange={(e) => set({ signDate: e.target.value })} />
+                    {/* 상담일과 동의서 작성일은 같은 날이라 한 칸만 받아 두 곳에 쓴다. */}
+                    <input type="date" value={session.consultDate} onChange={(e) => set({ consultDate: e.target.value })} />
                   </label>
                   <label className="assess-field">
                     성명
                     <input type="text" placeholder="비워두면 빈칸" value={session.signName} onChange={(e) => set({ signName: e.target.value })} />
                   </label>
                 </div>
-                <p className="hint">학생 정보·목표 고등학교·진도는 [학생] 화면에 적어둔 값이 그대로 들어갑니다.</p>
               </div>
             </div>
           </div>
@@ -563,43 +515,42 @@ export default function TypeReport({ data, setData, studentId, setStudentId, onB
               </div>
 
               <div className="rp-id-row">
+                {/* 네 칸 모두 [라벨 · 큰 값 · 작은 값] 세 줄이다. 줄 높이를 못 박고
+                    큰 값을 가운데 줄의 바닥에 붙여, 글자 크기가 달라도 한 선에 서게 한다. */}
                 <div className="rp-id">
-                  <div>
-                    <span>학생</span>
+                  <span className="rp-cap">학생 · 학년</span>
+                  <div className="rp-val">
                     <b>{student?.name}</b>
+                    <b className="rp-val-sub">{student?.grade}</b>
                   </div>
-                  <div>
-                    <span>학년</span>
-                    <b>{student?.grade}</b>
-                  </div>
-                  {student?.school && (
-                    <div>
-                      <span>학교</span>
-                      <b>{student.school}</b>
-                    </div>
-                  )}
+                  <em className="rp-sub">{student?.school || ''}</em>
                 </div>
                 <div className="rp-score">
-                  <span>전체 정답률</span>
-                  <div>
+                  <span className="rp-cap">전체 정답률</span>
+                  <div className="rp-val">
                     <b>{Math.round(total.rate * 100)}</b>
-                    <em>
-                      % · {total.correct}/{total.total}
-                    </em>
+                    <em>%</em>
                   </div>
+                  <em className="rp-sub">
+                    {total.correct} / {total.total}문항
+                  </em>
                 </div>
                 {stats.length > 0 && (
                   <div className="rp-grade">
-                    <span>강점 유형</span>
-                    <b>{steady}</b>
-                    <em>/ {stats.length}개</em>
+                    <span className="rp-cap">강점 유형</span>
+                    <div className="rp-val">
+                      <b>{steady}</b>
+                    </div>
+                    <em className="rp-sub">/ {stats.length}개</em>
                   </div>
                 )}
                 {grade !== null && (
                   <div className="rp-grade">
-                    <span>예상 고교 등급</span>
-                    <b>{grade}</b>
-                    <em>등급</em>
+                    <span className="rp-cap">예상 고교 등급</span>
+                    <div className="rp-val">
+                      <b>{grade}</b>
+                    </div>
+                    <em className="rp-sub">등급</em>
                   </div>
                 )}
               </div>
@@ -748,7 +699,7 @@ export default function TypeReport({ data, setData, studentId, setStudentId, onB
                 <div className="rp-sign">
                   <div>
                     <span>작성일</span>
-                    <div className="rp-line">{session.signDate || <DateBlank />}</div>
+                    <div className="rp-line">{session.consultDate || <DateBlank />}</div>
                   </div>
                   <div style={{ flexGrow: 1 }}>
                     <span>성명 (서명/인)</span>

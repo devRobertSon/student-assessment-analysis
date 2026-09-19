@@ -137,6 +137,38 @@ export default function TypesPage() {
       </section>
 
       <section className="assess-card">
+        <h3>예상 고교 등급 기준</h3>
+        <p className="muted">
+          리포트에 나오는 <b>예상 고교 등급</b>입니다. 학생들 점수를 모아 줄 세우는 상대평가가 아니라,{' '}
+          <b>문항 난이도를 기준으로 어느 수준까지 풀어내는지</b>를 봅니다. 위에서부터 내려오며 처음 걸리는 줄이
+          그 학생의 등급입니다. 학원이 정한 고정값이라 화면에서 고치지 않습니다.
+        </p>
+        <table className="assess-table manual-table">
+          <thead>
+            <tr>
+              <th style={{ width: 96 }}>난이도</th>
+              <th style={{ width: 132 }}>정답률</th>
+              <th>등급</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td className="nowrap"><b>최상</b></td><td>70% 이상</td><td>1등급</td></tr>
+            <tr><td className="nowrap"><b>최상</b></td><td>40% 이상</td><td>2등급</td></tr>
+            <tr><td className="nowrap"><b>상</b></td><td>80% 이상</td><td>3등급</td></tr>
+            <tr><td className="nowrap"><b>상</b></td><td>60% 이상</td><td>4등급</td></tr>
+            <tr><td className="nowrap"><b>표준</b></td><td>80% 이상</td><td>5등급</td></tr>
+            <tr><td className="nowrap"><b>표준</b></td><td>60% 이상</td><td>6등급</td></tr>
+            <tr><td className="nowrap"><b>표준</b></td><td>40% 이상</td><td>7등급</td></tr>
+            <tr><td className="nowrap"><b>표준</b></td><td>20% 이상</td><td>8등급</td></tr>
+          </tbody>
+        </table>
+        <p className="hint">
+          최상을 70% 넘게 풀어내면 1등급이고, 표준도 20%에 못 미치면 9등급입니다. 난이도를 적지 않은 시험지에서는
+          등급이 나오지 않습니다.
+        </p>
+      </section>
+
+      <section className="assess-card">
         <h3>과학 유형 8가지</h3>
         <p className="muted">
           2022 개정 교육과정 통합과학 기준 <b>평가 목표의 행동 영역</b>이 그대로 8개입니다.

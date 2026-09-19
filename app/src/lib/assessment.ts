@@ -273,8 +273,6 @@ export interface AssessmentData {
   students: Student[];
   exams: Exam[];
   results: Result[];
-  /** 예상 등급 사다리. 안 적었으면 DEFAULT_GRADE_LADDER 를 쓴다. */
-  gradeLadder?: GradeRung[];
   /** 재수강 판정에서 봐 주는 개수. 안 적었으면 DEFAULT_RETAKE_BUDGET. */
   retakeScale?: RetakeScale;
 }
@@ -302,10 +300,6 @@ export function loadAssessment(): AssessmentData {
         typeof p.retakeScale.top === 'number' &&
         typeof p.retakeScale.cut === 'number'
           ? p.retakeScale
-          : undefined,
-      gradeLadder:
-        Array.isArray(p.gradeLadder) && p.gradeLadder.length === DEFAULT_GRADE_LADDER.length
-          ? p.gradeLadder
           : undefined,
     };
   } catch {

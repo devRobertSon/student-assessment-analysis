@@ -514,7 +514,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 
 /* ── 리포트: 시험 선택·의견 입력 ─────────────────────── */
 .report-pick-head { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
-.report-pick-actions { display: flex; gap: 8px; margin-left: auto; }
+.report-pick-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .report-range { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .report-range-label { font-size: 13px; color: var(--ink-2); }
 .report-exam-list { display: flex; flex-direction: column; gap: 5px; }
@@ -532,6 +532,13 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .report-exam-name { font-weight: 500; }
 
 .report-note-edit { border-left: 3px solid var(--navy); }
+/* 이 칸의 설명은 회색이면 읽히지 않는다. 칸 이름도 안내도 검은색으로 둔다.
+   회색으로 남기는 것은 메모·의견 칸 안의 안내 글(placeholder) 뿐이다. */
+.report-note-edit .fld > span,
+.report-note-edit .assess-field,
+.report-note-edit .hint,
+.report-note-edit > p.hint { color: var(--ink); }
+.report-note-edit ::placeholder { color: var(--ink-3); }
 .report-note-input {
   width: 100%;
   font-size: 15px;
@@ -552,7 +559,8 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
   box-sizing: border-box;
   background: #fff;
   color: var(--ink);
-  padding: 38px 52px 26px;
+  /* 쪽 안쪽 여백. PDF 의 15mm 바깥 여백과 합쳐 인쇄에서 잘리지 않을 만큼 둔다. */
+  padding: 40px 52px 34px;
   display: flex;
   flex-direction: column;
   /* 레이더를 키운 만큼 블록 사이를 좁혀 A4 한 쪽을 지킨다. */
@@ -832,27 +840,33 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .rp-title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
 .rp-title { font-family: 'Gowun Batang', serif; font-size: 36px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
 .rp-title-meta { text-align: right; font-size: 13px; color: var(--ink-2); }
-.rp-id-row { display: flex; gap: 14px; }
-/* 이름·학년·학교는 한 줄로 둔다. 한글은 아무 글자에서나 줄이 바뀌므로
-   칸이 좁아지면 '홍길 / 동' 처럼 이름이 두 동강 난다.
-   min-width: 0 을 함께 둬야 아주 긴 학교 이름이 쪽 밖으로 삐져나가지 않고
-   말줄임으로 잘린다. 이름과 학년은 줄지 않게 막아 학교만 줄어들게 한다. */
-.rp-id { flex-grow: 1; min-width: 0; border: 1px solid #e0e0dc; border-radius: 6px; padding: 15px 16px; display: flex; gap: 20px; }
-.rp-id > div { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.rp-id > div:not(:last-child) { flex-shrink: 0; }
-.rp-id span, .rp-id b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rp-id span { font-size: 12px; letter-spacing: 0.06em; color: var(--ink-3); }
-.rp-id b { font-size: 19px; font-weight: 600; }
-.rp-score {
-  width: 194px; background: var(--navy); border-radius: 6px; padding: 14px 20px;
-  display: flex; flex-direction: column; justify-content: center; gap: 2px;
+.rp-id-row { display: flex; gap: 14px; align-items: stretch; }
+
+/* 머리의 네 칸은 모두 [라벨 · 큰 값 · 작은 값] 세 줄이다. 줄 높이를 못 박고
+   큰 값을 가운데 줄의 바닥에 붙이면, 이름 22px 과 숫자 34px 처럼 크기가
+   달라도 바닥이 한 선에 선다. 칸마다 여백이 다르면 라벨부터 어긋나므로
+   안쪽 여백도 넷을 같게 둔다. */
+.rp-id-row > * {
+  box-sizing: border-box; padding: 14px 16px;
+  display: grid; grid-template-rows: 15px 42px 14px; row-gap: 2px; align-content: start;
 }
-.rp-score > span { font-size: 12px; letter-spacing: 0.06em; color: var(--navy-pale); }
+.rp-cap { font-size: 11.5px; letter-spacing: 0.05em; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rp-val { display: flex; align-items: flex-end; gap: 7px; min-width: 0; white-space: nowrap; }
+.rp-val b { line-height: 1; letter-spacing: -0.02em; }
+.rp-sub { font-style: normal; font-size: 11.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 학생 칸만 가로로 늘어난다. 이름이 길면 학년이 밀리지 않게 이름만 줄인다. */
+.rp-id { flex-grow: 1; min-width: 0; border: 1px solid #e0e0dc; border-radius: 6px; }
+.rp-id .rp-val b { font-size: 22px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.rp-id .rp-val-sub { flex: none; font-size: 19px; color: var(--ink-2); }
+
+.rp-score { width: 194px; background: var(--navy); border-radius: 6px; }
+.rp-score .rp-cap { color: var(--navy-pale); }
 /* PDF는 이 DOM을 복제해 그리는데, 그때 웹폰트가 아직 안 붙어 글자가 더 넓게
-   재어지면 '% · 18/30'이 한 줄을 넘겨 상자 밖으로 밀려난다. 줄바꿈을 막는다. */
-.rp-score > div { display: flex; align-items: baseline; gap: 7px; white-space: nowrap; }
-.rp-score b { font-size: 38px; font-weight: 700; color: #fff; line-height: 1.1; letter-spacing: -0.03em; }
-.rp-score em { font-style: normal; font-size: 16px; font-weight: 500; color: var(--navy-pale); }
+   재어지면 숫자와 단위가 한 줄을 넘겨 상자 밖으로 밀려난다. 줄바꿈을 막는다. */
+.rp-score .rp-val b { font-size: 38px; font-weight: 700; color: #fff; }
+.rp-score .rp-val em { font-style: normal; font-size: 16px; font-weight: 500; color: var(--navy-pale); line-height: 1.4; }
+.rp-score .rp-sub { color: var(--navy-pale); }
 .rp-sec-row { display: flex; align-items: baseline; justify-content: space-between; }
 
 /* 점수 상자 안에서 아직 안 누른 문항 번호를 적는다. 몇 개인지만 알면
@@ -874,22 +888,8 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .verdict.on { border-color: var(--bad); background: #fdf5f5; color: var(--bad-ink); }
 
 /* 예상 등급 — 정답률 상자 옆에 붙는다 */
-.rp-grade {
-  width: 104px; background: var(--fill); border: 1px solid var(--line); border-radius: 6px;
-  padding: 14px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-}
-.rp-grade > span { font-size: 11px; letter-spacing: 0.04em; color: var(--ink-3); white-space: nowrap; }
-.rp-grade b { font-size: 34px; font-weight: 700; line-height: 1.1; letter-spacing: -0.03em; color: var(--navy); }
-.rp-grade em { font-style: normal; font-size: 11px; color: var(--ink-3); }
-
-/* 등급 컷 편집 */
-.cut-edit > summary { font-weight: 600; cursor: pointer; }
-.cut-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
-.cut-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--ink-3); }
-.cut-grid input {
-  width: 100%; text-align: center; font-size: 14px; font-weight: 600;
-  border: 1px solid var(--line); border-radius: 6px; padding: 6px 2px;
-}
+.rp-grade { width: 104px; background: var(--fill); border: 1px solid var(--line); border-radius: 6px; justify-items: center; }
+.rp-grade .rp-val b { font-size: 34px; font-weight: 700; color: var(--navy); }
 
 /* ── 리포트: 2쪽 ─────────────────────────────────── */
 .rp-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 20px; }
