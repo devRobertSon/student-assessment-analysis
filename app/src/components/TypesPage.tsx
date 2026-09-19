@@ -141,31 +141,37 @@ export default function TypesPage() {
         <h3>예상 고교 등급 기준</h3>
         <p className="muted">
           리포트에 나오는 <b>예상 고교 등급</b>입니다. 학생들 점수를 모아 줄 세우는 상대평가가 아니라,{' '}
-          <b>문항 난이도를 기준으로 어느 수준까지 풀어내는지</b>를 봅니다. 위에서부터 내려오며 처음 걸리는 줄이
-          그 학생의 등급입니다. 학원이 정한 고정값이라 화면에서 고치지 않습니다.
+          <b>문항 난이도를 기준으로 어느 수준까지 풀어내는지</b>를 봅니다. 한 등급은 자기 난이도만이 아니라{' '}
+          <b>그 아래 난이도까지 함께 넘어야</b> 받습니다. 위에서부터 내려오며 세 칸을 다 채운 첫 줄이 그 학생의
+          등급입니다. 학원이 정한 고정값이라 화면에서 고치지 않습니다.
         </p>
         <table className="assess-table manual-table">
           <thead>
             <tr>
-              <th style={{ width: 96 }}>난이도</th>
-              <th style={{ width: 132 }}>정답률</th>
-              <th>등급</th>
+              <th style={{ width: 72 }}>등급</th>
+              <th style={{ width: 96 }}>표준</th>
+              <th style={{ width: 96 }}>상</th>
+              <th style={{ width: 96 }}>최상</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td className="nowrap"><b>최상</b></td><td>70% 이상</td><td>1등급</td></tr>
-            <tr><td className="nowrap"><b>최상</b></td><td>40% 이상</td><td>2등급</td></tr>
-            <tr><td className="nowrap"><b>상</b></td><td>80% 이상</td><td>3등급</td></tr>
-            <tr><td className="nowrap"><b>상</b></td><td>60% 이상</td><td>4등급</td></tr>
-            <tr><td className="nowrap"><b>표준</b></td><td>80% 이상</td><td>5등급</td></tr>
-            <tr><td className="nowrap"><b>표준</b></td><td>60% 이상</td><td>6등급</td></tr>
-            <tr><td className="nowrap"><b>표준</b></td><td>40% 이상</td><td>7등급</td></tr>
-            <tr><td className="nowrap"><b>표준</b></td><td>20% 이상</td><td>8등급</td></tr>
+            <tr><td className="nowrap"><b>1등급</b></td><td>90% 이상</td><td>85% 이상</td><td>70% 이상</td></tr>
+            <tr><td className="nowrap"><b>2등급</b></td><td>80% 이상</td><td>70% 이상</td><td>40% 이상</td></tr>
+            <tr><td className="nowrap"><b>3등급</b></td><td>70% 이상</td><td>55% 이상</td><td>20% 이상</td></tr>
+            <tr><td className="nowrap"><b>4등급</b></td><td>60% 이상</td><td>40% 이상</td><td>—</td></tr>
+            <tr><td className="nowrap"><b>5등급</b></td><td>50% 이상</td><td>25% 이상</td><td>—</td></tr>
+            <tr><td className="nowrap"><b>6등급</b></td><td>40% 이상</td><td>—</td><td>—</td></tr>
+            <tr><td className="nowrap"><b>7등급</b></td><td>25% 이상</td><td>—</td><td>—</td></tr>
+            <tr><td className="nowrap"><b>8등급</b></td><td>10% 이상</td><td>—</td><td>—</td></tr>
+            <tr><td className="nowrap"><b>9등급</b></td><td colSpan={3}>위 어느 줄도 채우지 못한 경우</td></tr>
           </tbody>
         </table>
         <p className="hint">
-          최상을 70% 넘게 풀어내면 1등급이고, 표준도 20%에 못 미치면 9등급입니다. 난이도를 적지 않은 시험지에서는
-          등급이 나오지 않습니다.
+          기준선은 <b>재수강 판정과 같은 방향</b>을 가리키도록 맞췄습니다. 학원 학생이 재수강 경계(40점)에 서면
+          전국에서는 2등급쯤으로 봅니다. 학원 기준이 전국 기준보다 높기 때문입니다. 경계를 넘어 더 틀리면
+          3등급 아래로 내려갑니다. 표준을 못 넘기면 상·최상을 잘 풀어도 위로 올라가지 않습니다. 기초가 서지
+          않은 채 어려운 문제만 맞히는 것을 위로 쳐 주지 않겠다는 뜻입니다. 난이도를 적지 않은 시험지에서는
+          등급이 나오지 않고, 최상 문항이 하나도 없는 시험지에서는 4등급이 가장 높습니다.
         </p>
       </section>
 

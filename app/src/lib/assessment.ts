@@ -125,27 +125,33 @@ export interface Result {
  * '어느 수준까지 풀어내는가'를 본다. 난이도(표준·상·최상)는 시험지를 만들 때
  * 교재 위계(기본·응용·심화·입학 심화형)를 보고 붙인 값이라 근거가 있다.
  *
- * 위에서부터 내려오며 처음 걸리는 칸이 그 학생의 등급이다. 최상까지 풀어내면
- * 1등급, 표준도 절반을 못 넘기면 8~9등급이다.
+ * 위에서부터 내려오며 조건을 다 채운 첫 칸이 그 학생의 등급이다. 한 등급은
+ * 자기 난이도만이 아니라 그 아래 난이도까지 함께 넘어야 한다. 최상만 보고
+ * 등급을 주면 표준을 절반이나 틀린 학생에게도 1등급이 나온다.
  *
  * 이 값은 예측이 아니라 학원이 정한 도달 기준이다. 시험지 난이도가 바뀌면
  * 같이 손봐야 한다.
  */
 export interface GradeRung {
-  level: string; // 어느 난이도를 보는가
-  min: number; // 그 난이도 정답률이 이 값(%) 이상이면
-  grade: number; // 이 등급
+  grade: number;
+  /** 이 등급을 받으려면 난이도마다 넘어야 하는 정답률(%). 하나라도 못 넘기면 아래 칸으로 내려간다. */
+  need: { level: string; min: number }[];
 }
 
+/**
+ * 기준선은 재수강 판정과 같은 방향을 가리키도록 맞췄다. 학원 학생이 재수강
+ * 경계(40점)에 서면 전국에서는 2등급쯤이라고 본다. 학원 기준이 전국 기준보다
+ * 높기 때문이다. 경계를 넘어 더 틀리면 3등급 아래로 내려간다.
+ */
 export const DEFAULT_GRADE_LADDER: GradeRung[] = [
-  { level: '최상', min: 70, grade: 1 },
-  { level: '최상', min: 40, grade: 2 },
-  { level: '상', min: 80, grade: 3 },
-  { level: '상', min: 60, grade: 4 },
-  { level: '표준', min: 80, grade: 5 },
-  { level: '표준', min: 60, grade: 6 },
-  { level: '표준', min: 40, grade: 7 },
-  { level: '표준', min: 20, grade: 8 },
+  { grade: 1, need: [{ level: '표준', min: 90 }, { level: '상', min: 85 }, { level: '최상', min: 70 }] },
+  { grade: 2, need: [{ level: '표준', min: 80 }, { level: '상', min: 70 }, { level: '최상', min: 40 }] },
+  { grade: 3, need: [{ level: '표준', min: 70 }, { level: '상', min: 55 }, { level: '최상', min: 20 }] },
+  { grade: 4, need: [{ level: '표준', min: 60 }, { level: '상', min: 40 }] },
+  { grade: 5, need: [{ level: '표준', min: 50 }, { level: '상', min: 25 }] },
+  { grade: 6, need: [{ level: '표준', min: 40 }] },
+  { grade: 7, need: [{ level: '표준', min: 25 }] },
+  { grade: 8, need: [{ level: '표준', min: 10 }] },
 ];
 
 /**
@@ -156,8 +162,9 @@ export function gradeFromLevels(levels: TypeStat[], ladder: GradeRung[] = DEFAUL
   if (levels.length === 0) return null;
   const rate = new Map(levels.map((l) => [l.type, l.rate * 100]));
   for (const rung of ladder) {
-    const r = rate.get(rung.level);
-    if (r !== undefined && r >= rung.min) return rung.grade;
+    // 시험지에 없는 난이도는 넘었다고 볼 수 없다. 최상 문항이 하나도 없는
+    // 시험지로 1등급을 줄 수는 없다.
+    if (rung.need.every((q) => (rate.get(q.level) ?? -1) >= q.min)) return rung.grade;
   }
   return ladder.length + 1;
 }

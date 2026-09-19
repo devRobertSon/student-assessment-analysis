@@ -36,8 +36,7 @@ const MATH_ORDER = AREAS.flatMap((a) => a.types);
 
 /**
  * 과학 8유형. 평가원 평가 목표의 행동 영역이 그대로 여덟이라 둘씩 묶이지
- * 않는다. 바탕은 칠하지 않고 차례만 고정한다. 학생마다 같은 자리에 같은
- * 유형이 와야 여러 리포트를 나란히 놓고 볼 수 있다.
+ * 않는다. 바탕은 칠하지 않고 차례만 고정한다.
  */
 const SCIENCE_ORDER = [
   '개념 이해',
@@ -74,25 +73,26 @@ export default function TypeRadar({ stats, plain }: { stats: TypeStat[]; plain?:
   const h = plain ? H_PLAIN : H;
   // 위아래 라벨이 두 줄이라 아래가 더 길다. 그만큼 중심을 위로 올려 둔다.
   const cy = plain ? 182 : 186;
-  const n = stats.length;
 
-  // 아는 8유형이 그대로 다 있으면 차례를 고정한다. 수학은 평가원 영역 넷으로
-  // 묶어 바탕까지 칠하고, 과학은 묶이지 않으므로 차례만 고정한다.
+  // 나온 유형이 모두 아는 8유형 안에 있으면 자리를 고정한다. 여덟 자리를 늘
+  // 다 그리고, 그 시험지에 없는 유형은 이름만 흐리게 두고 점을 찍지 않는다.
+  // 학생마다 같은 자리에 같은 유형이 와야 여러 리포트를 나란히 놓고 볼 수 있다.
   const byType = new Map(stats.map((s) => [s.type, s]));
-  const fits = (order: string[]) => n === order.length && order.every((t) => byType.has(t));
-  const grouped = fits(MATH_ORDER);
-  const fixed = grouped || fits(SCIENCE_ORDER);
+  const within = (order: string[]) => stats.every((s) => order.includes(s.type));
+  const grouped = within(MATH_ORDER);
+  const fixed = grouped || within(SCIENCE_ORDER);
   const order = grouped ? MATH_ORDER : SCIENCE_ORDER;
-  const list = fixed ? order.map((t) => byType.get(t) as TypeStat) : stats;
+  const slots: (TypeStat | null)[] = fixed ? order.map((t) => byType.get(t) ?? null) : stats;
+  const names = fixed ? order : stats.map((s) => s.type);
 
-  // 차례를 고정하지 않을 때는 각 유형이 차지하는 각도를 문제 수에 비례하게
+  // 자리를 고정하지 않을 때는 각 유형이 차지하는 각도를 문제 수에 비례하게
   // 잡되, 균등 배치와 섞어(BLEND) 한 유형이 각을 독차지해 도형이 지나치게
   // 찌그러지는 것을 막는다.
-  const totalQ = list.reduce((sum, s) => sum + s.total, 0) || 1;
+  const totalQ = stats.reduce((sum, s) => sum + s.total, 0) || 1;
   const BLEND = 0.5;
-  const share = list.map((s) => (1 - BLEND) / n + BLEND * (s.total / totalQ));
+  const share = stats.map((s) => (1 - BLEND) / stats.length + BLEND * (s.total / totalQ));
   let acc = 0;
-  const centerFrac = list.map((_, i) => {
+  const centerFrac = stats.map((_, i) => {
     const c = acc + share[i] / 2;
     acc += share[i];
     return c;
@@ -109,8 +109,10 @@ export default function TypeRadar({ stats, plain }: { stats: TypeStat[]; plain?:
     cx + r * Math.cos((deg * Math.PI) / 180),
     cy + r * Math.sin((deg * Math.PI) / 180),
   ];
-  const dataPoly = list
-    .map((s, i) => ptOf(i, R * s.rate).map((v) => v.toFixed(1)).join(','))
+  // 없는 유형은 건너뛴다. 0%로 이으면 다 틀린 것처럼 읽힌다.
+  const dataPoly = slots
+    .map((s, i) => (s ? ptOf(i, R * s.rate).map((v) => v.toFixed(1)).join(',') : null))
+    .filter(Boolean)
     .join(' ');
   const shorten = (t: string) => (t.length > 12 ? t.slice(0, 11) + '…' : t);
 
@@ -120,13 +122,6 @@ export default function TypeRadar({ stats, plain }: { stats: TypeStat[]; plain?:
     const [x1, y1] = at(from + 90, R);
     return `M${cx},${cy} L${x0.toFixed(1)},${y0.toFixed(1)} A${R},${R} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)} Z`;
   };
-  // 바깥 여백의 네 귀퉁이. 영역 이름을 여기에도 한 번 적는다.
-  const CORNER: { x: number; y: number; anchor: 'start' | 'end' }[] = [
-    { x: W - 10, y: 24, anchor: 'end' },
-    { x: W - 10, y: h - 12, anchor: 'end' },
-    { x: 10, y: h - 12, anchor: 'start' },
-    { x: 10, y: 24, anchor: 'start' },
-  ];
 
   return (
     <svg className="type-radar" viewBox={`0 0 ${W} ${h}`} role="img" aria-label="유형별 정답률 레이더 차트">
@@ -143,7 +138,7 @@ export default function TypeRadar({ stats, plain }: { stats: TypeStat[]; plain?:
           strokeWidth={ratio === 1 ? 1.2 : 0.8}
         />
       ))}
-      {list.map((_, i) => {
+      {slots.map((_, i) => {
         const [x, y] = ptOf(i, R);
         return <line key={`axis-${i}`} x1={cx} y1={cy} x2={x} y2={y} stroke="#e7e9ed" strokeWidth={0.8} />;
       })}
@@ -182,7 +177,8 @@ export default function TypeRadar({ stats, plain }: { stats: TypeStat[]; plain?:
           );
         })}
 
-      {list.map((s, i) => {
+      {slots.map((s, i) => {
+        if (!s) return null;
         const [x, y] = ptOf(i, R * s.rate);
         return (
           <circle key={`dot-${i}`} cx={x} cy={y} r={5} fill={rateColor(s.rate)} stroke="#fff" strokeWidth={1.6}>
@@ -191,35 +187,23 @@ export default function TypeRadar({ stats, plain }: { stats: TypeStat[]; plain?:
         );
       })}
 
-      {grouped &&
-        AREAS.map((a, g) => (
-          <text
-            key={`co-${a.name}`}
-            x={CORNER[g].x}
-            y={CORNER[g].y}
-            textAnchor={CORNER[g].anchor}
-            fontSize={14}
-            fontWeight={700}
-            fill={a.ink}
-          >
-            {a.name}
-          </text>
-        ))}
-
-      {list.map((s, i) => {
+      {slots.map((s, i) => {
         const a = angleOf(i);
         const cos = Math.cos(a);
         const sin = Math.sin(a);
         const [x, y] = ptOf(i, LABEL_R);
         const anchor = Math.abs(cos) < 0.35 ? 'middle' : cos > 0 ? 'start' : 'end';
         const dy = sin < -0.35 ? -9 : sin > 0.35 ? 12 : 0;
+        const name = names[i];
         return (
           <g key={`label-${i}`} textAnchor={anchor}>
-            <text x={x} y={y + dy} fontSize={15} fontWeight={700} fill="#16181c">
-              {shorten(s.type)}
-              <title>{s.type}</title>
+            {/* 이 시험지에 없는 유형은 이름만 흐리게 둔다. 자리는 지운 것이
+                아니라 비워 둔 것이라는 뜻이다. */}
+            <text x={x} y={y + dy} fontSize={15} fontWeight={700} fill={s ? '#16181c' : '#b6bac4'}>
+              {shorten(name)}
+              <title>{s ? name : `${name} · 이 시험지에는 없는 유형`}</title>
             </text>
-            {!plain && (
+            {!plain && s && (
               <text x={x} y={y + dy + 17} fontSize={13.5} fontWeight={700} fill={rateColor(s.rate)}>
                 {Math.round(s.rate * 100)}%
               </text>
