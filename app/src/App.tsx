@@ -10,8 +10,9 @@ import ExamManager from './components/ExamManager';
 import GradingPanel from './components/GradingPanel';
 import TypeReport from './components/TypeReport';
 import ManualPage from './components/ManualPage';
+import TypesPage from './components/TypesPage';
 
-type View = 'home' | 'students' | 'exams' | 'grading' | 'report' | 'manual';
+type View = 'home' | 'students' | 'exams' | 'grading' | 'report' | 'types' | 'manual';
 
 // 리포트는 학생 화면에서 열리므로 메뉴에 두지 않는다.
 const NAV: { key: View; label: string }[] = [
@@ -19,6 +20,7 @@ const NAV: { key: View; label: string }[] = [
   { key: 'students', label: '학생' },
   { key: 'exams', label: '시험지' },
   { key: 'grading', label: '채점' },
+  { key: 'types', label: '유형 분석' },
   { key: 'manual', label: '사용법' },
 ];
 
@@ -125,6 +127,12 @@ export default function App() {
           <section className="assess-card">
             <GradingPanel data={data} setData={setData} />
           </section>
+        </main>
+      )}
+
+      {view === 'types' && (
+        <main className="pane">
+          <TypesPage />
         </main>
       )}
 

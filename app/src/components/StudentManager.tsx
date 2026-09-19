@@ -8,7 +8,7 @@ import {
   scoreOf,
   statsCumulative,
 } from '../lib/assessment';
-import { rateTag, STEADY } from './TypeRadar';
+import { STEADY } from './TypeRadar';
 import TypeRadar from './TypeRadar';
 import TypeBars from './TypeBars';
 import ConfirmDialog from './ConfirmDialog';
@@ -436,9 +436,6 @@ export default function StudentManager({
                     })}
                   </tbody>
                 </table>
-                <p className="hint" style={{ marginTop: 8 }}>
-                  지우면 위의 정답률과 리포트에서 바로 빠집니다. 시험지와 학생은 그대로 남습니다.
-                </p>
               </div>
             )}
 
@@ -454,14 +451,6 @@ export default function StudentManager({
                     </div>
                     <TypeBars stats={stats} />
                   </div>
-                  <p className="hint" style={{ marginTop: 10 }}>
-                    {stats.length > 0 && stats[0].rate < 0.5
-                      ? `우선 보강: ${stats
-                          .filter((s) => s.rate < 0.5)
-                          .map((s) => s.type)
-                          .join(', ')}`
-                      : `${rateTag(stats[0]?.rate ?? 0).label} 구간에서 시작합니다.`}
-                  </p>
                 </>
               )}
             </div>
