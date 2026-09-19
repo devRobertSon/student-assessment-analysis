@@ -138,6 +138,7 @@ export default function App() {
         <main className="pane">
           <TypeReport
             data={data}
+            setData={setData}
             studentId={studentId}
             setStudentId={setStudentId}
             onBack={() => setView('students')}

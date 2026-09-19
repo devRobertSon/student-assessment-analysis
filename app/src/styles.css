@@ -785,6 +785,24 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .rp-score em { font-style: normal; font-size: 16px; font-weight: 500; color: var(--navy-pale); }
 .rp-sec-row { display: flex; align-items: baseline; justify-content: space-between; }
 
+/* 예상 등급 — 정답률 상자 옆에 붙는다 */
+.rp-grade {
+  width: 104px; background: var(--fill); border: 1px solid var(--line); border-radius: 6px;
+  padding: 14px 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+}
+.rp-grade > span { font-size: 11px; letter-spacing: 0.04em; color: var(--ink-3); white-space: nowrap; }
+.rp-grade b { font-size: 34px; font-weight: 700; line-height: 1.1; letter-spacing: -0.03em; color: var(--navy); }
+.rp-grade em { font-style: normal; font-size: 11px; color: var(--ink-3); }
+
+/* 등급 컷 편집 */
+.cut-edit > summary { font-weight: 600; cursor: pointer; }
+.cut-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
+.cut-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--ink-3); }
+.cut-grid input {
+  width: 100%; text-align: center; font-size: 14px; font-weight: 600;
+  border: 1px solid var(--line); border-radius: 6px; padding: 6px 2px;
+}
+
 /* ── 리포트: 2쪽 ─────────────────────────────────── */
 .rp-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 20px; }
 .rp-fields > div { display: flex; flex-direction: column; }

@@ -4,6 +4,9 @@ import {
   AssessmentData,
   TARGET_SCHOOLS,
   TypeStat,
+  DEFAULT_GRADE_LADDER,
+  GradeRung,
+  gradeFromLevels,
   scoreOf,
   todayStr,
   statsCumulative,
@@ -98,6 +101,7 @@ function autoSummary(stats: TypeStat[], correct: number, total: number): string 
 
 interface Props {
   data: AssessmentData;
+  setData: (d: AssessmentData) => void;
   studentId: string;
   setStudentId: (id: string) => void;
   onBack: () => void;
@@ -114,7 +118,7 @@ interface SessionFields {
 }
 const EMPTY_SESSION: SessionFields = { summary: '', note: '', consultDate: '', memo: '', signDate: '', signName: '' };
 
-export default function TypeReport({ data, studentId, setStudentId, onBack }: Props) {
+export default function TypeReport({ data, setData, studentId, setStudentId, onBack }: Props) {
   const [session, setSession] = useState<SessionFields>(EMPTY_SESSION);
   const [summaryTouched, setSummaryTouched] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -172,6 +176,9 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
   );
 
   // 선생님이 손대기 전까지는 자동 문안을 따라간다.
+  const ladder = data.gradeLadder ?? DEFAULT_GRADE_LADDER;
+  const grade = gradeFromLevels(levels, ladder);
+
   const draftSummary = useMemo(() => autoSummary(stats, total.correct, total.total), [stats, total.correct, total.total]);
   const summary = summaryTouched ? session.summary : draftSummary;
 
@@ -401,6 +408,55 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
             </div>
           </div>
 
+          <details className="assess-card no-print cut-edit">
+            <summary>
+              예상 등급 기준{' '}
+              <span className="hint">
+                {ladder.map((r) => `${r.level} ${r.min}%→${r.grade}등급`).join(' · ')}
+              </span>
+            </summary>
+            <p className="hint" style={{ margin: '10px 0 12px' }}>
+              학생들 점수를 모아 줄 세우는 상대평가가 아닙니다. <b>문항 난이도를 기준으로 어느 수준까지
+              풀어내는가</b>를 봅니다. 위에서부터 내려오며 처음 걸리는 칸이 그 학생의 등급입니다. 난이도를 안 적은
+              시험지에서는 등급이 나오지 않습니다. 이 값은 예측이 아니라 <b>학원이 정한 도달 기준</b>이니, 시험지
+              난이도가 바뀌면 같이 손보세요. 값은 저장되고 기기 간에 같이 갑니다.
+            </p>
+            <div className="cut-grid">
+              {ladder.map((r, i) => (
+                <label key={i}>
+                  <span>
+                    {r.level} → {r.grade}등급
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={r.min}
+                    onChange={(e) => {
+                      const n = Number(e.target.value);
+                      if (!Number.isFinite(n)) return;
+                      const next: GradeRung[] = ladder.map((x, k) =>
+                        k === i ? { ...x, min: Math.max(0, Math.min(100, n)) } : x
+                      );
+                      setData({ ...data, gradeLadder: next });
+                    }}
+                  />
+                </label>
+              ))}
+            </div>
+            <div className="assess-row" style={{ marginTop: 10 }}>
+              <button className="mini ghost" onClick={() => setData({ ...data, gradeLadder: undefined })}>
+                기본값으로
+              </button>
+              <span className="hint">
+                지금 이 학생:{' '}
+                {levels.length === 0
+                  ? '난이도를 적은 시험지가 없습니다'
+                  : levels.map((l) => `${l.type} ${Math.round(l.rate * 100)}%`).join(' · ')}
+              </span>
+            </div>
+          </details>
+
           <div className="assess-card no-print report-note-edit">
             <h3>인쇄 전 입력</h3>
             <p className="hint" style={{ marginBottom: 12 }}>
@@ -526,6 +582,13 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
                     </em>
                   </div>
                 </div>
+                {grade !== null && (
+                  <div className="rp-grade">
+                    <span>예상 고교 등급</span>
+                    <b>{grade}</b>
+                    <em>등급</em>
+                  </div>
+                )}
               </div>
 
               <section ref={analysisRef} className="report-sec">

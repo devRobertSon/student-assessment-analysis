@@ -8,6 +8,8 @@ import {
   isFullMark,
   makeMark,
   paperHref,
+  DEFAULT_GRADE_LADDER,
+  gradeFromLevels,
   parseGradingCsv,
   pointsOf,
   scoreOf,
@@ -228,6 +230,47 @@ describe('문제지 · 해설 · 출제표', () => {
     expect(paperHref('/papers/a.pdf', '/app/')).toBe('/app/papers/a.pdf');
     // 외부 주소는 손대지 않는다
     expect(paperHref('https://drive.example/x.pdf', '/app/')).toBe('https://drive.example/x.pdf');
+  });
+});
+
+describe('예상 등급 (난이도 사다리)', () => {
+  const lv = (표준: number, 상: number, 최상: number) =>
+    [
+      { type: '표준', total: 10, correct: 0, points: 10, earned: 0, rate: 표준 / 100 },
+      { type: '상', total: 10, correct: 0, points: 10, earned: 0, rate: 상 / 100 },
+      { type: '최상', total: 10, correct: 0, points: 10, earned: 0, rate: 최상 / 100 },
+    ];
+
+  it('위에서부터 내려오며 처음 걸리는 칸이 등급이다', () => {
+    // 최상 80%는 첫 칸(최상 70%)에 걸린다
+    expect(gradeFromLevels(lv(100, 100, 80))).toBe(1);
+    // 최상 50%는 둘째 칸(최상 40%)
+    expect(gradeFromLevels(lv(100, 100, 50))).toBe(2);
+    // 최상이 모자라면 상을 본다
+    expect(gradeFromLevels(lv(100, 85, 10))).toBe(3);
+    expect(gradeFromLevels(lv(100, 65, 10))).toBe(4);
+  });
+
+  it('표준만 풀어내면 5등급 아래로 떨어진다', () => {
+    expect(gradeFromLevels(lv(85, 10, 0))).toBe(5);
+    expect(gradeFromLevels(lv(45, 10, 0))).toBe(7);
+  });
+
+  it('어느 칸에도 안 걸리면 마지막 등급이다', () => {
+    expect(gradeFromLevels(lv(10, 0, 0))).toBe(DEFAULT_GRADE_LADDER.length + 1);
+  });
+
+  it('난이도를 안 적은 시험지는 등급을 지어내지 않는다', () => {
+    expect(gradeFromLevels([])).toBeNull();
+  });
+
+  it('없는 난이도 칸은 건너뛴다', () => {
+    // 최상 문항이 아예 없는 시험지
+    const only = [
+      { type: '표준', total: 10, correct: 0, points: 10, earned: 0, rate: 0.9 },
+      { type: '상', total: 10, correct: 0, points: 10, earned: 0, rate: 0.9 },
+    ];
+    expect(gradeFromLevels(only)).toBe(3);
   });
 });
 
