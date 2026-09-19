@@ -13,7 +13,7 @@ import {
   parseGradingCsv,
   pointsOf,
   resultToCsv,
-  DEFAULT_RETAKE_BUDGET,
+  DEFAULT_RETAKE_SCALE,
   levelGaps,
   retakeCheck,
   scoreOf,
@@ -100,8 +100,8 @@ export default function GradingPanel({ data, setData }: Props) {
   const score = scoreOf(marks);
   const stats = exam ? statsForResult(exam, marks, axis) : [];
   // 학원 기준 판정. 리포트에는 안 들어가고 이 화면에서만 본다.
-  const retakeBudget = data.retakeBudget ?? DEFAULT_RETAKE_BUDGET;
-  const retake = exam ? retakeCheck(exam, marks, retakeBudget) : null;
+  const retakeScale = data.retakeScale ?? DEFAULT_RETAKE_SCALE;
+  const retake = exam ? retakeCheck(exam, marks, retakeScale) : null;
   // 다 채점하기 전에는 '통과'라고 단정하지 않는다. 이미 기준을 넘긴 경우만 확정이다.
   const graded = !!exam && answered === exam.questions.length;
   // 판정과 별개로, 구멍이 기초 쪽인지 심화 쪽인지 가려서 보여 준다.
@@ -371,13 +371,15 @@ export default function GradingPanel({ data, setData }: Props) {
                     <span className="rt-head">
                       학원 기준 <em>{retake.total}문항 채점</em>
                     </span>
-                    <b>{retake.wrongBase + retake.wrongTop}개 틀림</b>
+                    <b>
+                      {retake.wrongBase + retake.wrongTop}개 틀림 · {retake.points}점
+                    </b>
                     <span className="rt-verdict">
                       {!retake.pass ? '재수강 권장' : graded ? '통과' : '채점 중'}
                     </span>
                     <span className="hint">
-                      표준·상 {retake.wrongBase}/{retake.budget.base} · 최상 {retake.wrongTop}/
-                      {retake.budget.top} · 소진 {Math.round(retake.used * 100)}%
+                      표준·상 {retake.wrongBase}×{retake.scale.base} + 최상 {retake.wrongTop}×
+                      {retake.scale.top} · {retake.scale.cut}점부터 재수강
                     </span>
                   </div>
                 )}
@@ -394,7 +396,7 @@ export default function GradingPanel({ data, setData }: Props) {
                           <div key={label} className={`gap ${g.short ? 'short' : ''}`}>
                             <b>{label}</b>
                             <span className="gp-detail">
-                              {g.level} {g.total}문항 중 {g.wrong}개 틀림
+                              {g.level} {g.total}문항 중 {g.wrong}개 틀림 · {g.cut}개부터
                             </span>
                             <span className="gp-verdict">{g.short ? '미달' : '충족'}</span>
                             {g.short && <span className="gp-why">{why}</span>}

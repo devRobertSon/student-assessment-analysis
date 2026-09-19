@@ -166,38 +166,42 @@ export function gradeFromLevels(levels: TypeStat[], ladder: GradeRung[] = DEFAUL
  * 학원 기준 재수강 판정 — 난이도마다 봐 주는 개수를 따로 두고 비율로 합친다.
  *
  * 쉬운 문제를 틀리는 것과 어려운 문제를 못 푸는 것은 뜻이 다르다. 그래서
- * 표준·상은 base 개까지, 최상은 top 개까지 봐 주고, 섞여 틀렸으면 각자
- * 소진한 비율을 더해 1을 넘으면 재수강으로 본다.
- *   표준·상 4개 = 4/4 = 1     → 재수강
- *   최상 8개    = 8/8 = 1     → 재수강
- *   표준·상 2 + 최상 3 = 0.5 + 0.375 = 0.875 → 통과
+ * 틀린 문항마다 난이도에 따라 점수를 붙이고, 그 합이 기준에 닿으면 재수강으로
+ * 본다. 표준·상은 8점, 최상은 5점, 기준은 40점이다.
+ *   표준·상 5개 = 40점            → 재수강
+ *   최상 8개    = 40점            → 재수강
+ *   표준·상 2 + 최상 3 = 16 + 15  → 31점, 통과
+ *   표준·상 3 + 최상 4 = 24 + 20  → 44점, 재수강
+ * 쉬운 문제 하나가 어려운 문제 1.6개만큼 무겁다.
  *
- * 숫자의 근거. 학원 규칙은 "입학 TEST 30문제 중 7문제를 틀리면 그 학기를
+ * 숫자의 출처. 학원 규칙은 "입학 TEST 30문제 중 7문제를 틀리면 그 학기를
  * 다시 듣는다"이고 난이도를 가리지 않는다. 그런데 진단평가는 그 입학 TEST
  * 보다 쉽다 — 입학 TEST 중1-1 은 30문제 중 표준이 1문제뿐인데(상 17, 최상 12)
  * 진단평가는 8문제다. 난이도 구성으로 환산하면 입학 TEST 에서 7개를 틀리는
- * 학생이 진단평가에서는 4.7~6.2개를 틀린다. base 4 · top 8 이면 통과 상한이
- * 총 3~8개(평균 5.3)라 그 환산값을 거의 그대로 지킨다.
+ * 학생이 진단평가에서는 4.7~6.2개를 틀린다.
  *
- * base 를 5로 올리면 평균이 6.0 이 되어 학원 기준보다 한 문제쯤 무뎌진다.
+ * 8·5·40 은 통과 상한이 총 4~8개(평균 6.0)라 그 환산값보다 한 문제쯤 무디다.
+ * 더 조이려면 cut 을 32로 내리면 된다(평균 5.3). 학원이 정할 값이라 데이터에
+ * 두었다.
  *
  * 이 판정은 등급과 성격이 다르다. 등급은 전국에서 어디쯤인가이고, 이것은
  * 이 학원이 "다음 학기로 보내도 되는가"를 정하는 내부 기준이다. 훨씬 엄격해서
  * 섞으면 잘하는 학생에게 낮은 등급이 찍힌다. 그래서 리포트에는 넣지 않는다.
  */
-export interface RetakeBudget {
-  base: number; // 표준·상에서 몇 개부터 재수강인가
-  top: number; // 최상에서 몇 개부터 재수강인가
+export interface RetakeScale {
+  base: number; // 표준·상 한 문항을 틀릴 때 붙는 점수
+  top: number; // 최상 한 문항을 틀릴 때 붙는 점수
+  cut: number; // 이 점수에 닿으면 재수강
 }
 
-export const DEFAULT_RETAKE_BUDGET: RetakeBudget = { base: 4, top: 8 };
+export const DEFAULT_RETAKE_SCALE: RetakeScale = { base: 8, top: 5, cut: 40 };
 
 export interface RetakeCheck {
   total: number; // 채점한 문항 수
   wrongBase: number; // 표준·상 오답
   wrongTop: number; // 최상 오답
-  budget: RetakeBudget;
-  used: number; // 소진율. 1을 넘으면 재수강
+  points: number; // 쌓인 점수
+  scale: RetakeScale;
   pass: boolean;
 }
 
@@ -207,7 +211,7 @@ export interface RetakeCheck {
  * 표준과 상을 굳이 나누지 않은 것은 판정이 기대는 경계를 하나로 줄이기
  * 위해서다. 표준인지 상인지는 사람마다 갈리지만 최상인지 아닌지는 덜 갈린다.
  * 난이도를 안 적은 문항은 표준·상 쪽으로 센다. 난이도가 아예 없는 시험지도
- * 그러면 "base 개부터 재수강"이라는 단순한 규칙으로 자연스럽게 내려앉는다.
+ * 그러면 "다섯 개부터 재수강"이라는 단순한 규칙으로 자연스럽게 내려앉는다.
  */
 const isTop = (q: ExamQuestion) => q.level?.trim() === '최상';
 
@@ -215,7 +219,7 @@ const isTop = (q: ExamQuestion) => q.level?.trim() === '최상';
 export function retakeCheck(
   exam: Exam,
   marks: Mark[],
-  budget: RetakeBudget = DEFAULT_RETAKE_BUDGET
+  scale: RetakeScale = DEFAULT_RETAKE_SCALE
 ): RetakeCheck | null {
   const top = new Set(exam.questions.filter(isTop).map((q) => q.no));
   const nos = new Set(exam.questions.map((q) => q.no));
@@ -224,16 +228,8 @@ export function retakeCheck(
   const wrong = mine.filter((m) => !isFullMark(m));
   const wrongTop = wrong.filter((m) => top.has(m.no)).length;
   const wrongBase = wrong.length - wrongTop;
-  // 판정은 정수로만 따진다. base=4, top=8 이면 표준·상 8점 · 최상 4점 · 기준 32점.
-  const over = wrongBase * budget.top + wrongTop * budget.base >= budget.base * budget.top;
-  return {
-    total: mine.length,
-    wrongBase,
-    wrongTop,
-    budget,
-    used: wrongBase / budget.base + wrongTop / budget.top,
-    pass: !over,
-  };
+  const points = wrongBase * scale.base + wrongTop * scale.top;
+  return { total: mine.length, wrongBase, wrongTop, points, scale, pass: points < scale.cut };
 }
 
 /**
@@ -247,24 +243,33 @@ export function retakeCheck(
  * 난이도가 문항마다 사람이 매긴 판단값이라, 라벨이 조금 흔들려도 학생의
  * 진로가 바뀌지 않도록 일부러 판정과 분리해 두었다.
  *
- * 심화 기준이 50%인 근거: 입학 TEST 는 30문제 중 최상이 12문제여서, 학원
- * 통과선(7개 이하 오답)을 넘으려면 최상 12문제 중 최소 6개를 풀어야 한다.
+ * 재수강은 아니어도 심화가 비어 있으면 그것대로 알아야 하므로, 두 줄은
+ * 판정과 상관없이 늘 나온다.
+ *
+ * 정답률이 아니라 개수로 잡는다. 시험지마다 표준이 7~9문항, 최상이 8~9문항이라
+ * 정답률로 해도 같은 자리에 걸리지만, 개수로 적어 두면 선생님이 화면을 보고
+ * 바로 셀 수 있다.
  */
-export const BASIC_CUT = 0.8; // 표준 정답률이 이보다 낮으면 기초 미달
-export const ADVANCED_CUT = 0.5; // 최상 정답률이 이보다 낮으면 심화 미달
+export interface GapCuts {
+  basic: number; // 표준을 이만큼 이상 틀리면 기초 미달
+  top: number; // 최상을 이만큼 이상 틀리면 심화 미달
+}
+
+export const DEFAULT_GAP_CUTS: GapCuts = { basic: 2, top: 5 };
 
 export interface LevelGap {
   level: string;
   total: number;
   wrong: number;
-  rate: number; // 0~1
+  cut: number; // 몇 개부터 미달인가
   short: boolean; // 미달인가
 }
 
 /** 그 난이도의 문항을 아직 채점하지 않았으면 그 자리는 null. */
 export function levelGaps(
   exam: Exam,
-  marks: Mark[]
+  marks: Mark[],
+  cuts: GapCuts = DEFAULT_GAP_CUTS
 ): { basic: LevelGap | null; advanced: LevelGap | null } {
   const pick = (level: string, cut: number): LevelGap | null => {
     const nos = new Set(
@@ -273,10 +278,9 @@ export function levelGaps(
     const mine = marks.filter((m) => nos.has(m.no));
     if (mine.length === 0) return null;
     const wrong = mine.filter((m) => !isFullMark(m)).length;
-    const rate = (mine.length - wrong) / mine.length;
-    return { level, total: mine.length, wrong, rate, short: rate < cut };
+    return { level, total: mine.length, wrong, cut, short: wrong >= cut };
   };
-  return { basic: pick('표준', BASIC_CUT), advanced: pick('최상', ADVANCED_CUT) };
+  return { basic: pick('표준', cuts.basic), advanced: pick('최상', cuts.top) };
 }
 
 export interface AssessmentData {
@@ -288,7 +292,7 @@ export interface AssessmentData {
   /** 예상 등급 사다리. 안 적었으면 DEFAULT_GRADE_LADDER 를 쓴다. */
   gradeLadder?: GradeRung[];
   /** 재수강 판정에서 봐 주는 개수. 안 적었으면 DEFAULT_RETAKE_BUDGET. */
-  retakeBudget?: RetakeBudget;
+  retakeScale?: RetakeScale;
 }
 
 const KEY = 'sda.assess.v1';
@@ -309,11 +313,12 @@ export function loadAssessment(): AssessmentData {
       dismissed: Array.isArray(p.dismissed) ? p.dismissed : [],
       // 판정 기준이 정답률 % → 오답 개수 → 난이도별 허용 개수로 두 번 바뀌었다.
       // 예전에 저장된 값을 그대로 읽으면 엉뚱한 기준이 되므로 모양이 맞을 때만 쓴다.
-      retakeBudget:
-        p.retakeBudget &&
-        typeof p.retakeBudget.base === 'number' &&
-        typeof p.retakeBudget.top === 'number'
-          ? p.retakeBudget
+      retakeScale:
+        p.retakeScale &&
+        typeof p.retakeScale.base === 'number' &&
+        typeof p.retakeScale.top === 'number' &&
+        typeof p.retakeScale.cut === 'number'
+          ? p.retakeScale
           : undefined,
       gradeLadder:
         Array.isArray(p.gradeLadder) && p.gradeLadder.length === DEFAULT_GRADE_LADDER.length
