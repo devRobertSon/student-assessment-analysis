@@ -467,10 +467,17 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
               화면에 적어둔 값이 그대로 들어갑니다. 이 칸들은 저장되지 않는 임시 입력이라 학생을 바꾸면 비워집니다.
             </p>
 
+            {/* 칸마다 테두리를 둘러 카드로 만든다. 한 줄에 놓이는 두 카드는 높이를
+                같이 맞추고 글 상자가 남는 자리를 채운다. 그렇지 않으면 rows 가 다른
+                상자끼리 아래가 들쭉날쭉해진다. */}
             <div className="edit-grid">
-              <label className="fld">
-                <span>
-                  종합 의견 <span className="hint">자동 생성 · 고쳐 쓸 수 있습니다 · {summary.length}/{SUMMARY_MAX}자</span>
+              <label className="fld wide">
+                <span className="fld-head">
+                  종합 의견
+                  <em>자동 생성 · 고쳐 쓸 수 있습니다</em>
+                  <i>
+                    {summary.length}/{SUMMARY_MAX}자
+                  </i>
                 </span>
                 <textarea
                   className="report-note-input"
@@ -497,8 +504,12 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
               </label>
 
               <label className="fld">
-                <span>
-                  선생님 의견 <span className="hint">비워두면 인쇄에서 빠집니다 · 3줄까지 인쇄 · {session.note.length}/{NOTE_MAX}자</span>
+                <span className="fld-head">
+                  선생님 의견
+                  <em>비워두면 인쇄에서 빠집니다 · 3줄까지 인쇄</em>
+                  <i>
+                    {session.note.length}/{NOTE_MAX}자
+                  </i>
                 </span>
                 <textarea
                   className="report-note-input"
@@ -511,8 +522,12 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
               </label>
 
               <label className="fld">
-                <span>
-                  상담 메모 · 특이사항 <span className="hint">2쪽 · {session.memo.length}/{MEMO_MAX}자</span>
+                <span className="fld-head">
+                  상담 메모 · 특이사항
+                  <em>2쪽에 인쇄</em>
+                  <i>
+                    {session.memo.length}/{MEMO_MAX}자
+                  </i>
                 </span>
                 <textarea
                   className="report-note-input"
@@ -524,9 +539,12 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
                 />
               </label>
 
-              <div className="fld">
-                <span>2쪽 · 상담일과 서명란</span>
-                <div className="assess-row wrap">
+              <div className="fld wide">
+                <span className="fld-head">
+                  상담일과 서명란
+                  <em>2쪽과 마지막 쪽에 인쇄</em>
+                </span>
+                <div className="fld-row">
                   <label className="assess-field">
                     상담일
                     {/* 상담일과 동의서 작성일은 같은 날이라 한 칸만 받아 두 곳에 쓴다. */}
@@ -538,7 +556,12 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
                   </label>
                   <label className="assess-field">
                     성명
-                    <input type="text" placeholder="비워두면 빈칸" value={session.signName} onChange={(e) => set({ signName: e.target.value })} />
+                    <input
+                      type="text"
+                      placeholder="비워두면 빈칸"
+                      value={session.signName}
+                      onChange={(e) => set({ signName: e.target.value })}
+                    />
                   </label>
                 </div>
               </div>

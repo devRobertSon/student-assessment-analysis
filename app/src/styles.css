@@ -544,9 +544,8 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .report-note-edit { border-left: 3px solid var(--navy); }
 /* 이 칸의 설명은 회색이면 읽히지 않는다. 칸 이름도 안내도 검은색으로 둔다.
    회색으로 남기는 것은 메모·의견 칸 안의 안내 글(placeholder) 뿐이다. */
-.report-note-edit .fld > span,
+.report-note-edit .fld-head,
 .report-note-edit .assess-field,
-.report-note-edit .hint,
 .report-note-edit > p.hint { color: var(--ink); }
 .report-note-edit ::placeholder { color: var(--ink-3); }
 .report-note-input {
@@ -838,8 +837,24 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .tally-row .g { width: 30px; font-size: 11px; font-weight: 700; color: var(--ink-2); text-align: right; }
 
 /* ── 리포트: 편집 영역 ───────────────────────────── */
-.edit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; }
-.edit-grid .fld > span { font-size: 12px; }
+/* 인쇄 전 입력. 칸마다 테두리를 둘러 카드로 만들고, 한 줄에 놓이는 두 카드는
+   높이를 맞춘다. 글 상자가 남는 자리를 채우므로 rows 가 달라도 아래가
+   들쭉날쭉해지지 않는다. */
+.edit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
+.edit-grid .fld {
+  display: flex; flex-direction: column; gap: 7px;
+  padding: 12px 14px 13px; background: var(--card);
+  border: 1px solid var(--line); border-radius: var(--r-md);
+}
+.edit-grid .fld.wide { grid-column: 1 / -1; }
+/* 칸 이름은 검게, 설명과 글자 수는 흐리게. 글자 수는 오른쪽 끝에 붙여
+   이름과 설명이 밀리지 않게 한다. */
+.fld-head { display: flex; align-items: baseline; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.fld-head em { font-style: normal; font-size: 11.5px; font-weight: 400; color: var(--ink-3); }
+.fld-head i { margin-left: auto; font-style: normal; font-size: 11.5px; font-weight: 400; color: var(--ink-3); }
+.edit-grid .fld textarea { flex-grow: 1; }
+.fld-row { display: flex; flex-wrap: wrap; gap: 12px 18px; }
+.fld-row .assess-field { min-width: 160px; }
 /* 지면은 794px 고정이다. 창이 좁다고 지면까지 줄어들면 줄바꿈이 달라져
    미리보기와 PDF가 서로 달라진다. 줄이지 말고 가로로 넘기게 둔다. */
 .print-preview { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; overflow-x: auto; }
