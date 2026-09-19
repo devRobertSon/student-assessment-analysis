@@ -100,13 +100,17 @@ export default function ExamManager({ data, setData }: Props) {
                 <th style={{ width: 34, textAlign: 'center' }}>
                   <input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="전체 선택" />
                 </th>
-                <th>시험지</th>
+                {/* 이름이 짜부라지지 않을 만큼은 잡아 둔다. 이보다 좁아지면
+                    표가 가로로 넘어간다(.table-scroll). */}
+                <th style={{ minWidth: 150 }}>시험지</th>
                 <th style={{ width: 66 }}>과목</th>
                 <th style={{ width: 96 }}>등록일</th>
                 <th style={{ width: 56, textAlign: 'center' }}>문항</th>
                 <th style={{ width: 52 }}>유형</th>
                 <th style={{ width: 52 }}>단원</th>
-                <th style={{ width: 312 }}>인쇄물</th>
+                {/* width 1 은 '내용만큼만' 이라는 뜻이다. 자동 배치 표에서 남는
+                    폭을 이 칸이 아니라 시험지 이름 칸이 가져가게 한다. */}
+                <th style={{ width: 1 }}>인쇄물</th>
                 <th style={{ width: 92 }}></th>
                 <th style={{ width: 44 }}></th>
               </tr>

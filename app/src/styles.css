@@ -206,8 +206,9 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 
 /* 시험지 목록의 인쇄물 칸. 이름 아래에 [보기] [다운로드]를 둔다.
    지우는 단추는 두지 않는다. 옆에 있으면 누르려다 잘못 눌린다. */
-/* 세 칩이 한 줄에 들어갈 만큼은 확보한다. 표가 좁으면 접힌다. */
-.ex-files { display: flex; gap: 6px; align-items: flex-start; flex-wrap: wrap; min-width: 312px; }
+/* 접지 않는다. 그래야 이 칸이 필요한 폭을 표에 요구하고, 남는 폭은 시험지
+   이름 열이 가져간다. 창이 좁으면 표 전체가 가로로 넘어간다(.table-scroll). */
+.ex-files { display: flex; gap: 6px; align-items: flex-start; flex-wrap: nowrap; }
 .file-chip {
   display: flex; flex-direction: column; align-items: stretch; gap: 3px;
   min-width: 74px; padding: 5px 7px; border: 1px solid var(--line); border-radius: 7px;
