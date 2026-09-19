@@ -4,7 +4,8 @@ import { TypeStat } from '../lib/assessment';
 // 화면에는 항상 rateTag()의 글자 라벨을 함께 붙인다.
 /** 이 위는 이미 자리 잡은 유형. 리포트 머리의 '강점 유형 N개'도 같은 선을 쓴다. */
 export const STEADY = 0.8;
-const FAIR = 0.5;
+/** 이 아래는 보완할 유형. 종합 의견 초안도 같은 선에서 문장을 가른다. */
+export const FAIR = 0.5;
 
 export function rateColor(rate: number): string {
   if (rate >= STEADY) return '#0ca30c';

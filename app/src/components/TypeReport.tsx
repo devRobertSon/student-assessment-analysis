@@ -12,7 +12,7 @@ import {
   statsCumulative,
 } from '../lib/assessment';
 import { logoUrl, sealUrl } from '../lib/brand';
-import TypeRadar, { STEADY } from './TypeRadar';
+import TypeRadar, { FAIR, STEADY } from './TypeRadar';
 import TypeBars from './TypeBars';
 
 // styles.css의 .report-capture min-height와 같은 값. A4 한 쪽(96dpi)이다.
@@ -71,29 +71,31 @@ function josa(text: string, withBatchim: string, without: string): string {
 
 /**
  * 종합 의견 초안. 학부모가 읽는 글이라 본 대로만 적는다.
- * 어느 유형에서 틀렸는지, 그게 오답의 몇 문항인지, 어느 유형이 안정적인지.
+ * 어느 유형에서 틀렸는지, 그게 오답의 몇 문항인지, 어느 유형의 정답률이 높은지.
+ * '안정적입니다', '실점이 많았습니다' 처럼 무엇을 가리키는지 흐린 말은 쓰지 않는다.
+ * 문장에 쓰는 50%·80% 는 화면의 보완·강점 구분선과 같은 값이라 표와 어긋나지 않는다.
  * 해석이나 처방은 선생님이 [선생님 의견]에 직접 쓴다.
  */
 function autoSummary(stats: TypeStat[], correct: number, total: number): string {
   if (stats.length === 0 || total === 0) return '';
   const label = (list: TypeStat[]) => list.map((s) => s.type).join(', ');
   // stats는 약한 순으로 들어온다. 보완할 것은 앞에서, 강점은 뒤에서 세 개를 고른다.
-  const worst = stats.filter((s) => s.rate < 0.5).slice(0, 3);
-  const best = stats.filter((s) => s.rate >= 0.8).slice(-3).reverse();
+  const worst = stats.filter((s) => s.rate < FAIR).slice(0, 3);
+  const best = stats.filter((s) => s.rate >= STEADY).slice(-3).reverse();
   const wrong = total - correct;
   // 이름을 댄 유형만 센다. 그래야 문장 안에서 숫자와 유형이 어긋나지 않는다.
   const worstWrong = worst.reduce((a, s) => a + (s.total - s.correct), 0);
 
   const parts: string[] = [];
   if (worst.length > 0) {
-    parts.push(`${label(worst)} 유형에서 실점이 많았습니다.`);
+    parts.push(`${label(worst)} 유형에서 틀린 문항이 많습니다.`);
     if (wrong > 0 && worstWrong > 0) parts.push(`오답 ${wrong}문항 중 ${worstWrong}문항이 이 유형입니다.`);
   } else {
-    parts.push('크게 약한 유형 없이 고르게 맞혔습니다.');
+    parts.push(`정답률이 ${FAIR * 100}%에 못 미치는 유형은 없습니다.`);
   }
   if (best.length > 0) {
     const g = label(best);
-    parts.push(`${g}${josa(g, '은', '는')} 안정적입니다.`);
+    parts.push(`${g}${josa(g, '은', '는')} 정답률 ${STEADY * 100}% 이상입니다.`);
   }
   const text = parts.join(' ');
   return text.length > SUMMARY_MAX ? text.slice(0, SUMMARY_MAX - 1) + '…' : text;
