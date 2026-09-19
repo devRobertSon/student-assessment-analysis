@@ -1,12 +1,7 @@
 import { Fragment, useState } from 'react';
-import {
-  AssessmentData,
-  fmtPoints,
-  isEssay,
-  pointsOf,
-  splitTypes,
-} from '../lib/assessment';
+import { AssessmentData, splitTypes } from '../lib/assessment';
 import ExamFiles from './ExamFiles';
+import ExamComposition from './ExamComposition';
 
 interface Props {
   data: AssessmentData;
@@ -84,33 +79,14 @@ export default function ExamManager({ data, setData }: Props) {
                     </td>
                     <td>
                       <button className="mini ghost" onClick={() => setOpenId(openId === ex.id ? null : ex.id)}>
-                        {openId === ex.id ? '접기' : '유형 보기'}
+                        {openId === ex.id ? '접기' : '구성 보기'}
                       </button>
                     </td>
                   </tr>
                   {openId === ex.id && (
                     <tr>
                       <td colSpan={8}>
-                        <div className="hint" style={{ marginBottom: 7 }}>
-                          {ex.title} · 문항별 유형 · 만점{' '}
-                          {fmtPoints(ex.questions.reduce((a, q) => a + pointsOf(q), 0))}점
-                          {(() => {
-                            const n = ex.questions.filter(isEssay).length;
-                            return n > 0 ? ` · 서술형 ${n}문항` : '';
-                          })()}
-                        </div>
-                        <div className="assess-preview-grid">
-                          {ex.questions.map((q) => (
-                            <span key={q.no} className="assess-chip">
-                              <b>{q.no}</b> {q.type}
-                              {isEssay(q) && <span className="q-fmt">서술형</span>}
-                              {q.level ? <span className="q-lv">{q.level}</span> : null}
-                              {q.unit ? ` · ${q.unit}` : ''}
-                              {q.answer ? ` · 답 ${q.answer}` : ''}
-                              {q.source ? ` · ${q.source}${q.sourceNo ? ' ' + q.sourceNo + '번' : ''}` : ''}
-                            </span>
-                          ))}
-                        </div>
+                        <ExamComposition exam={ex} />
                       </td>
                     </tr>
                   )}

@@ -345,8 +345,8 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
    머리글만 가운데로 하면 값과 어긋나 보인다. 이름 열(2번째)은 왼쪽 그대로. */
 .assess-table.exam-table th,
 .assess-table.exam-table td { text-align: center; white-space: nowrap; }
-.assess-table.exam-table th:nth-child(2),
-.assess-table.exam-table td:nth-child(2) { text-align: left; white-space: normal; }
+.assess-table.exam-table th:first-child,
+.assess-table.exam-table td:first-child { text-align: left; white-space: normal; }
 .assess-table.exam-table .ex-files { justify-content: center; }
 .assess-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .assess-table th {
@@ -434,6 +434,36 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .ox-o.on { color: #fff; background: var(--navy); border-color: var(--navy); }
 .ox-x.on { color: #fff; background: var(--bad-ink); border-color: var(--bad-ink); }
 /* 서술형: 색만으로 구분하지 않도록 '서술형' 글자 배지를 함께 단다 */
+/* 시험지 구성 보기: 영역·단원·난이도 세 축을 띠와 막대로 그린다.
+   색은 구분용일 뿐이라 개수와 %를 항상 글자로 함께 적는다. */
+.xc { text-align: left; white-space: normal; }
+.xc-top { margin-bottom: 12px; }
+.xc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 18px 26px; }
+.xc-block { min-width: 0; }
+.xc-head { display: flex; align-items: baseline; gap: 7px; margin-bottom: 7px; }
+.xc-head b { font-size: 13px; color: var(--navy); }
+.xc-stack { display: flex; height: 11px; border-radius: 4px; overflow: hidden; background: var(--line-2); margin-bottom: 9px; }
+.xc-stack span { display: block; height: 100%; }
+.xc-rows { display: flex; flex-direction: column; gap: 5px; }
+.xc-row { display: flex; align-items: center; gap: 7px; font-size: 12px; }
+.xc-dot { flex: none; width: 8px; height: 8px; border-radius: 2px; }
+/* '중1-1 복습 · 정수와 유리수' 같은 긴 단원 이름까지 들어가는 폭이다.
+   그보다 길면 잘리고 전체는 title 로 뜬다. */
+.xc-name { flex: none; width: 146px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.xc-track { flex: 1 1 auto; min-width: 34px; height: 9px; border-radius: 3px; background: var(--line-2); }
+.xc-fill { display: block; height: 100%; border-radius: 3px; }
+.xc-n { flex: none; width: 44px; text-align: right; font-weight: 700; color: var(--ink); }
+.xc-pct { flex: none; width: 32px; text-align: right; color: var(--ink-2); }
+.xc-pt { flex: none; width: 34px; text-align: right; color: var(--ink-3); }
+/* 좁아지면 배점을 먼저 접는다. 구성을 볼 때 먼저 읽는 것은 문항 수다. */
+@media (max-width: 1000px) {
+  .xc-pt { display: none; }
+}
+@media (max-width: 560px) {
+  .xc-name { width: 96px; }
+  .xc-pct { display: none; }
+}
+
 .q-lv { flex-shrink: 0; margin-left: 4px; padding: 1px 5px; font-size: 10px; font-weight: 700; color: #5F5E5A; background: #f1efe8; border-radius: 4px; }
 .q-fmt { flex-shrink: 0; padding: 2px 6px; font-size: 10px; font-weight: 700; color: var(--navy); background: #eaf0fb; border: 1px solid #d3deef; border-radius: 4px; }
 /* 서술형은 번호 색으로만 구분한다. 채점은 객관식과 같은 O/X다.
