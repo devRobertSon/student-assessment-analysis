@@ -30,11 +30,11 @@ const R = 140;
 const LABEL_R = R + 18;
 
 /**
- * plain 을 주면 꼭짓점에 영역 이름만 적는다.
+ * plain 을 주면 꼭짓점에 영역 이름만 적고, 아니면 정답률까지 적는다.
  *
- * 학생 화면은 레이더 옆에 막대가 붙어 있어 정답률과 강점·보완이 거기 다 있다.
- * 레이더에 또 적으면 같은 값이 두 번 나온다. 리포트 1쪽은 레이더만 나가고
- * 흑백으로 인쇄하므로 거기서는 글자를 그대로 붙인다.
+ * 학생 화면은 레이더 옆에 막대가 붙어 있어 정답률이 거기 있다. 레이더에 또
+ * 적으면 같은 값이 두 번 나온다. 리포트 1쪽은 레이더만 나가므로 정답률을 적는다.
+ * 강점·보완 글자는 양쪽 다 적지 않는다.
  */
 export default function TypeRadar({ stats, plain }: { stats: TypeStat[]; plain?: boolean }) {
   if (stats.length < 3) {
@@ -113,15 +113,9 @@ export default function TypeRadar({ stats, plain }: { stats: TypeStat[]; plain?:
               {shorten(s.type)}
               <title>{s.type}</title>
             </text>
-            {/* 막대를 뺐으므로 강점/보완을 색으로만 알리게 된다.
-                흑백 인쇄와 색각 이상에서도 읽히도록 글자 라벨을 % 옆에 붙인다. */}
             {!plain && (
               <text x={x} y={y + dy + 17} fontSize={13.5} fontWeight={700} fill={rateColor(s.rate)}>
                 {Math.round(s.rate * 100)}%
-                <tspan fontSize={11.5} fontWeight={600} fill="#5b606b">
-                  {' '}
-                  {rateTag(s.rate).label}
-                </tspan>
               </text>
             )}
           </g>

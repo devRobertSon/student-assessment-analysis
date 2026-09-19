@@ -607,20 +607,8 @@ export default function TypeReport({ data, setData, studentId, setStudentId, onB
               <section ref={analysisRef} className="report-sec">
                 <div className="rp-sec-row">
                   <span className="report-sec-h">유형별 성취</span>
-                  {/* 난이도는 줄을 더 쓰지 않도록 이 제목 줄에 함께 넣는다.
-                      A4 한 쪽을 넘기지 않으려면 여기 말고 남는 가로 공간이 없다. */}
-                  {levels.length > 0 ? (
-                    <span className="rp-levels">
-                      {levels.map((l) => (
-                        <span key={l.type} className="rp-lv">
-                          <b>{l.type}</b>
-                          <em>{Math.round(l.rate * 100)}%</em>
-                        </span>
-                      ))}
-                    </span>
-                  ) : (
-                    <span className="hint">정답률이 낮은 유형부터</span>
-                  )}
+                  {/* 난이도별 정답률은 여기 적지 않는다. 예상 고교 등급이 이미
+                      난이도로 매긴 값이라 같은 것을 두 번 보여주게 된다. */}
                 </div>
                 {/* 막대를 옆에 세우면 레이더가 작아져 여덟 유형의 균형이 안 보인다.
                     쪽이 나뉘어 1쪽이 분석 전용이 될 때만 레이더를 키우고 막대를 아래에 붙인다. */}
