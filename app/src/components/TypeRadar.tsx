@@ -23,17 +23,27 @@ export function rateTag(rate: number): { label: string; cls: string } {
 // 리포트 한가운데에 크게 놓는 도형이다. 글자를 키운 만큼 라벨이 길어지므로
 // 가로를 넉넉히 잡고(560), 세로는 라벨이 실제로 차지하는 만큼만 남긴다(380).
 const W = 560;
+// 라벨이 두 줄(이름 + 정답률)일 때의 높이다. plain 은 한 줄이라 아래가 남는다.
 const H = 380;
+const H_PLAIN = 364;
 const R = 140;
 const LABEL_R = R + 18;
 
-export default function TypeRadar({ stats }: { stats: TypeStat[] }) {
+/**
+ * plain 을 주면 꼭짓점에 영역 이름만 적는다.
+ *
+ * 학생 화면은 레이더 옆에 막대가 붙어 있어 정답률과 강점·보완이 거기 다 있다.
+ * 레이더에 또 적으면 같은 값이 두 번 나온다. 리포트 1쪽은 레이더만 나가고
+ * 흑백으로 인쇄하므로 거기서는 글자를 그대로 붙인다.
+ */
+export default function TypeRadar({ stats, plain }: { stats: TypeStat[]; plain?: boolean }) {
   if (stats.length < 3) {
     return <p className="muted">레이더 차트는 유형이 3개 이상일 때 표시됩니다.</p>;
   }
   const cx = W / 2;
+  const h = plain ? H_PLAIN : H;
   // 위아래 라벨이 두 줄이라 아래가 더 길다. 그만큼 중심을 위로 올려 둔다.
-  const cy = 186;
+  const cy = plain ? 182 : 186;
   const n = stats.length;
   // 각 유형이 차지하는 각도를 문제 수에 비례하게 잡되, 균등 배치와 섞어(BLEND)
   // 한 유형이 각을 독차지해 도형이 지나치게 찌그러지는 것을 막는다.
@@ -57,7 +67,7 @@ export default function TypeRadar({ stats }: { stats: TypeStat[] }) {
   const shorten = (t: string) => (t.length > 12 ? t.slice(0, 11) + '…' : t);
 
   return (
-    <svg className="type-radar" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="유형별 정답률 레이더 차트">
+    <svg className="type-radar" viewBox={`0 0 ${W} ${h}`} role="img" aria-label="유형별 정답률 레이더 차트">
       {[0.25, 0.5, 0.75, 1].map((ratio) => (
         <circle
           key={ratio}
@@ -105,13 +115,15 @@ export default function TypeRadar({ stats }: { stats: TypeStat[] }) {
             </text>
             {/* 막대를 뺐으므로 강점/보완을 색으로만 알리게 된다.
                 흑백 인쇄와 색각 이상에서도 읽히도록 글자 라벨을 % 옆에 붙인다. */}
-            <text x={x} y={y + dy + 17} fontSize={13.5} fontWeight={700} fill={rateColor(s.rate)}>
-              {Math.round(s.rate * 100)}%
-              <tspan fontSize={11.5} fontWeight={600} fill="#5b606b">
-                {' '}
-                {rateTag(s.rate).label}
-              </tspan>
-            </text>
+            {!plain && (
+              <text x={x} y={y + dy + 17} fontSize={13.5} fontWeight={700} fill={rateColor(s.rate)}>
+                {Math.round(s.rate * 100)}%
+                <tspan fontSize={11.5} fontWeight={600} fill="#5b606b">
+                  {' '}
+                  {rateTag(s.rate).label}
+                </tspan>
+              </text>
+            )}
           </g>
         );
       })}

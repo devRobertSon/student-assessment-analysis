@@ -1,9 +1,14 @@
 import { TypeStat } from '../lib/assessment';
 import { rateColor, rateTag } from './TypeRadar';
 
-// 유형별 정답률 막대. 색 옆에 항상 '보완/보통/강점' 글자를 붙여
-// 색각 이상이나 흑백 인쇄에서도 구분이 남게 한다.
-export default function TypeBars({ stats }: { stats: TypeStat[] }) {
+/**
+ * 유형별 정답률 막대. 색 옆에 '보완/보통/강점' 글자를 붙여 색각 이상이나
+ * 흑백 인쇄에서도 구분이 남게 한다.
+ *
+ * showTag 를 false 로 주면 그 글자를 뺀다. 학생 화면은 아래 표에 같은 값이
+ * 또 있어 두 번 읽게 된다. 인쇄로 나가는 리포트에서는 붙인 채로 둔다.
+ */
+export default function TypeBars({ stats, showTag = true }: { stats: TypeStat[]; showTag?: boolean }) {
   if (stats.length === 0) return <p className="muted">표시할 데이터가 없습니다.</p>;
   return (
     <div className="type-bars">
@@ -24,7 +29,7 @@ export default function TypeBars({ stats }: { stats: TypeStat[] }) {
             <div className="type-bar-count">
               {s.correct}/{s.total}
             </div>
-            <div className={`type-bar-tag ${tag.cls}`}>{tag.label}</div>
+            {showTag && <div className={`type-bar-tag ${tag.cls}`}>{tag.label}</div>}
           </div>
         );
       })}

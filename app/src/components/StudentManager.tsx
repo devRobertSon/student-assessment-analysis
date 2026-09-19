@@ -284,8 +284,8 @@ export default function StudentManager({
                 <button className="primary mini" onClick={onOpenReport} disabled={studentResults.length === 0}>
                   리포트 열기
                 </button>
-                <button className="del" onClick={() => setPending({ kind: 'student' })} title="학생 삭제">
-                  ✕
+                <button className="del-btn mini" onClick={() => setPending({ kind: 'student' })}>
+                  학생 삭제
                 </button>
               </div>
             </div>
@@ -433,8 +433,11 @@ export default function StudentManager({
                             {sc.correct}/{sc.total} · {Math.round(sc.rate * 100)}%
                           </td>
                           <td>
-                            <button className="del" onClick={() => setPending({ kind: 'result', id: r.id, label: `${ex?.title ?? '시험'} · ${r.date}` })} title="이 채점 결과 삭제">
-                              ✕
+                            <button
+                              className="del-btn mini"
+                              onClick={() => setPending({ kind: 'result', id: r.id, label: `${ex?.title ?? '시험'} · ${r.date}` })}
+                            >
+                              삭제
                             </button>
                           </td>
                         </tr>
@@ -453,9 +456,9 @@ export default function StudentManager({
                   <h3>유형별 정답률</h3>
                   <div className="type-bars-wrap">
                     <div className="type-radar-wrap">
-                      <TypeRadar stats={stats} />
+                      <TypeRadar stats={stats} plain />
                     </div>
-                    <TypeBars stats={stats} />
+                    <TypeBars stats={stats} showTag={false} />
                   </div>
                 </>
               )}
