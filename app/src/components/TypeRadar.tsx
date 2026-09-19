@@ -200,12 +200,12 @@ export default function TypeRadar({ stats, plain }: { stats: TypeStat[]; plain?:
           <g key={`label-${i}`} textAnchor={anchor}>
             {/* 이 시험지에 없는 유형은 이름만 흐리게 둔다. 자리는 지운 것이
                 아니라 비워 둔 것이라는 뜻이다. */}
-            <text x={x} y={y + dy} fontSize={15} fontWeight={700} fill={s ? '#16181c' : '#b6bac4'}>
+            <text x={x} y={y + dy} fontSize={13.5} fontWeight={700} fill={s ? '#16181c' : '#b6bac4'}>
               {shorten(name)}
               <title>{s ? name : `${name} · 이 시험지에는 없는 유형`}</title>
             </text>
             {!plain && s && (
-              <text x={x} y={y + dy + 17} fontSize={13.5} fontWeight={700} fill={rateColor(s.rate)}>
+              <text x={x} y={y + dy + 16} fontSize={12.5} fontWeight={700} fill={rateColor(s.rate)}>
                 {Math.round(s.rate * 100)}%
               </text>
             )}
