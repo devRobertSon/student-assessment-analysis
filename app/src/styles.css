@@ -282,7 +282,8 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 }
 .cf-title { font-size: 16px; }
 .cf-msg { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink); }
-.cf-detail { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--bad-ink); }
+/* 빈 문항 번호를 줄을 나눠 적는다. 한 줄로 이으면 번호가 문장에 묻힌다. */
+.cf-detail { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--bad-ink); white-space: pre-line; }
 .cf-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
 .cf-yes { font-weight: 600; }
 .csv-box .pick-head .hint { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
@@ -473,6 +474,11 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 /* 서술형은 번호 색으로만 구분한다. 채점은 객관식과 같은 O/X다.
    칸에 테두리를 두르면 둥근 모서리와 겹쳐 지저분해진다. */
 .ox-item.essay .ox-no { color: var(--navy); }
+
+/* 아직 O도 X도 안 누른 칸. 번호에 노란 표를 달아 격자에서 바로 보인다.
+   줄무늬 바탕 위에도 보이도록 테두리까지 준다. */
+.ox-item.blank { box-shadow: inset 0 0 0 1.5px var(--warn); }
+.ox-item.blank .ox-no { color: var(--warn-ink); }
 .assess-scorebar {
   background: var(--navy);
   border-radius: var(--r-lg);
@@ -848,6 +854,12 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .rp-score b { font-size: 38px; font-weight: 700; color: #fff; line-height: 1.1; letter-spacing: -0.03em; }
 .rp-score em { font-style: normal; font-size: 16px; font-weight: 500; color: var(--navy-pale); }
 .rp-sec-row { display: flex; align-items: baseline; justify-content: space-between; }
+
+/* 점수 상자 안에서 아직 안 누른 문항 번호를 적는다. 몇 개인지만 알면
+   어느 문항을 채워야 하는지 다시 찾아야 한다. */
+.sb-blank { margin-top: 3px; font-size: 13px; line-height: 1.5; color: var(--navy-soft); }
+.sb-blank b { color: var(--warn); font-weight: 700; }
+.sb-blank span { display: block; font-size: 12px; }
 
 /* 학원 기준 판정 — 채점 화면에만. 리포트에는 안 나간다.
    불이 꺼져 있다가 기준에 닿으면 켜진다. 숫자는 적지 않는다. 바로 위 점수

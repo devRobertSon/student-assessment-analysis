@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { notify } from '../lib/notice';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ask, notify } from '../lib/notice';
 import {
   AssessmentData,
   Axis,
@@ -37,6 +37,12 @@ const AXES: { key: Axis; label: string }[] = [
   { key: 'level', label: '난이도' },
 ];
 const AXIS_LABEL: Record<Axis, string> = { type: '유형', unit: '단원', level: '난이도' };
+
+/** 문항 번호를 읽기 좋게 잇는다. 너무 길면 뒤를 접어 창이 길어지지 않게 한다. */
+function listNos(nos: number[], max = 24): string {
+  if (nos.length <= max) return nos.join(', ') + '번';
+  return nos.slice(0, max).join(', ') + `번 외 ${nos.length - max}문항`;
+}
 
 export default function GradingPanel({ data, setData }: Props) {
   const [studentId, setStudentId] = useState('');
@@ -88,6 +94,10 @@ export default function GradingPanel({ data, setData }: Props) {
         .map((q) => makeMark(q, cells[q.no] as number))
     : [];
   const answered = marks.length;
+  // 아직 O도 X도 누르지 않은 문항. 화면에도 표시하고 저장할 때도 묻는다.
+  const blankNos = exam
+    ? exam.questions.filter((q) => cells[q.no] === null || cells[q.no] === undefined).map((q) => q.no)
+    : [];
   const score = scoreOf(marks);
   const stats = exam ? statsForResult(exam, marks, axis) : [];
   // 학원 기준 판정. 리포트에는 안 들어가고 이 화면에서만 본다.
@@ -100,10 +110,22 @@ export default function GradingPanel({ data, setData }: Props) {
   // 배점이나 서술형이 있는 시험지인지. 둘 다 없으면 한 문항 1점이라 점수 = 문항 수다.
   const scoredExam = !!exam && (essayCount > 0 || fullPoints !== exam.questions.length);
 
-  const save = () => {
+  const save = async () => {
     if (!studentId || !exam) {
       notify('채점 저장', '학생과 시험지를 모두 고르세요.');
       return;
+    }
+    // 빈 문항이 있으면 어느 문항인지 보여주고 한 번 묻는다. 빈 채로 저장하면
+    // 그 문항은 없는 셈이 되어 정답률이 실제보다 높게 나온다.
+    if (blankNos.length > 0) {
+      const ok = await ask('채점이 덜 되었습니다', `${blankNos.length}문항이 비어 있습니다. 그래도 저장할까요?`, {
+        detail: `비어 있는 문항
+${listNos(blankNos)}
+
+빈 문항은 저장되지 않고, 입력한 문항만으로 정답률을 계산합니다.`,
+        yesLabel: '예, 저장합니다',
+      });
+      if (!ok) return;
     }
     const res: Result = { id: existing?.id ?? newId('res'), studentId, examId, date, marks };
     const others = data.results.filter((r) => !(r.studentId === studentId && r.examId === examId));
@@ -121,6 +143,25 @@ export default function GradingPanel({ data, setData }: Props) {
     setDate(todayStr());
     setAskDelete(false);
   };
+
+  // 저장된 채점을 불러왔는데 빈 문항이 있으면 한 번 알려 준다. 같은 학생·시험지를
+  // 보고 있는 동안에는 다시 뜨지 않는다. 저장할 때마다 또 뜨면 성가시다.
+  const toldFor = useRef('');
+  useEffect(() => {
+    if (!exam || !existing) return;
+    const key = `${studentId}|${examId}`;
+    if (toldFor.current === key) return;
+    toldFor.current = key;
+    const done = new Set(existing.marks.map((m) => m.no));
+    const left = exam.questions.filter((q) => !done.has(q.no)).map((q) => q.no);
+    if (left.length === 0) return;
+    notify(
+      '채점이 덜 된 시험지입니다',
+      `${exam.title} · ${existing.date} 채점에 ${left.length}문항이 비어 있습니다.`,
+      `비어 있는 문항
+${listNos(left)}`
+    );
+  }, [exam, existing, studentId, examId]);
 
   const canGrade = data.students.length > 0 && data.exams.length > 0;
 
@@ -221,7 +262,12 @@ export default function GradingPanel({ data, setData }: Props) {
                     const v = cells[q.no];
                     const pts = pointsOf(q);
                     return (
-                      <div key={q.no} className={`ox-item ${isEssay(q) ? 'essay' : ''}`}>
+                      <div
+                        key={q.no}
+                        className={`ox-item ${isEssay(q) ? 'essay' : ''} ${
+                          v === null || v === undefined ? 'blank' : ''
+                        }`}
+                      >
                         <span className="ox-no">{q.no}</span>
                         <span className="ox-btns">
                           <button
@@ -264,11 +310,16 @@ export default function GradingPanel({ data, setData }: Props) {
                 <div style={{ fontSize: 13, color: 'var(--navy-soft)', marginTop: 5 }}>
                   맞은 문제 수 {score.correct}/{exam.questions.length} · 전체 {fmtPoints(fullPoints)}점
                 </div>
-                <div style={{ fontSize: 13, color: 'var(--navy-soft)', marginTop: 3 }}>
-                  {answered === exam.questions.length
-                    ? `${exam.questions.length}문항 모두 입력 완료`
-                    : `${exam.questions.length - answered}문항 남음`}
-                </div>
+                {blankNos.length === 0 ? (
+                  <div style={{ fontSize: 13, color: 'var(--navy-soft)', marginTop: 3 }}>
+                    {exam.questions.length}문항 모두 입력 완료
+                  </div>
+                ) : (
+                  <div className="sb-blank">
+                    <b>{blankNos.length}문항 남음</b>
+                    <span>{listNos(blankNos, 12)}</span>
+                  </div>
+                )}
               </div>
 
               <div className="assess-card grow">
