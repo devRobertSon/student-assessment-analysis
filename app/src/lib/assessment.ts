@@ -47,7 +47,7 @@ export interface Exam {
   questions: ExamQuestion[];
   /**
    * 딸린 인쇄물. 값은 사이트의 papers/ 에 올려 둔 파일 이름이거나 'http…' 주소다.
-   * 짧은 문자열이라 기존 동기화에 그대로 얹힌다.
+   * 짧은 문자열이라 다른 데이터와 함께 동기화된다.
    */
   files?: Partial<Record<AttachKind, string>>;
 }
@@ -90,7 +90,7 @@ export interface Student {
 export interface Mark {
   no: number;
   // 채점 당시의 값을 함께 적어둔다. 시험지를 나중에 고쳐도
-  // 이미 저장된 채점의 점수가 흔들리지 않는다.
+  // 이미 저장된 채점의 점수가 바뀌지 않는다.
   earned: number; // 득점
   points: number; // 배점
 }

@@ -6,7 +6,7 @@ import { SitePaper, fmtSize, useSitePapers } from '../lib/papers';
  * 시험지에 붙일 인쇄물을 고르는 창.
  *
  * 사이트의 papers/ 에 올려 둔 파일만 나온다. 시험지에는 파일 이름만 저장되므로
- * 기존 동기화에 그대로 얹히고, 다른 기기에서도 그대로 열린다.
+ * 다른 데이터와 함께 동기화되고, 다른 기기에서도 그대로 열린다.
  * 새 파일은 app/public/papers/ 에 넣고 push 하면 다음 배포부터 여기에 보인다.
  */
 export default function PaperPicker({

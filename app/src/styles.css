@@ -713,7 +713,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .edit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; }
 .edit-grid .fld > span { font-size: 12px; }
 /* 지면은 794px 고정이다. 창이 좁다고 지면까지 줄어들면 줄바꿈이 달라져
-   미리보기와 PDF가 서로 다른 물건이 된다. 줄이지 말고 가로로 넘기게 둔다. */
+   미리보기와 PDF가 서로 달라진다. 줄이지 말고 가로로 넘기게 둔다. */
 .print-preview { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; overflow-x: auto; }
 .report-capture { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); flex: none; }
 
@@ -772,7 +772,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 /* 리포트는 794px 고정 지면이므로 화면 폭에 반응하면 안 된다.
    레이더 하나만 놓고 가운데로 모은다. 폭을 키우면 세로도 같이 커지는데,
    A4 한 쪽이 정해진 높이라 420px가 뒤 블록을 밀지 않는 상한이다. */
-/* 응시 이력과 의견은 한 덩어리로 움직인다. 1쪽 안에 있을 때와 따로 한 쪽을
+/* 응시 이력과 의견은 함께 움직인다. 1쪽 안에 있을 때와 따로 한 쪽을
    차지할 때의 생김새가 같도록 지면과 같은 간격을 준다. */
 .rp-movable { display: flex; flex-direction: column; gap: 9px; }
 
@@ -865,7 +865,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 /* 줄바꿈하면 어색한 짧은 나열에만 붙인다 */
 .nowrap { white-space: nowrap; }
 
-/* 리포트 — 난이도는 섹션 머리줄에 얹어 세로 자리를 쓰지 않는다 */
+/* 리포트 — 난이도는 섹션 제목 줄에 넣어 세로 공간을 쓰지 않는다 */
 .rp-levels { display: inline-flex; align-items: baseline; gap: 2px; line-height: 1.15; }
 .rp-lv { display: inline-flex; align-items: baseline; gap: 4px; padding: 0 7px; border-left: 1px solid var(--line); }
 .rp-lv:first-child { border-left: 0; padding-left: 0; }

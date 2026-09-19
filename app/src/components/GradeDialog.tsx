@@ -6,9 +6,9 @@ type Cell = number | null;
 /**
  * 한 문항씩 크게 띄워 손으로 채점하는 창.
  *
- * 아래 표에서도 채점할 수 있지만 30문항을 훑으려면 스크롤을 해야 한다.
- * 여기서는 O / X 를 누르면 바로 다음 문항으로 넘어가므로, 답안지를 보며
- * 같은 자리에서 손만 움직이면 된다. 키보드로도 같다 — O·X·숫자·Enter.
+ * 아래 표에서도 채점할 수 있지만 30문항을 보려면 화면을 내려야 한다.
+ * 여기서는 O / X 를 누르면 바로 다음 문항으로 넘어가므로 화면을 움직이지
+ * 않아도 된다. 키보드로도 같다 — O·X·숫자·Enter.
  */
 export default function GradeDialog({
   exam,
@@ -39,7 +39,7 @@ export default function GradeDialog({
   const mark = (value: number) => {
     if (!q) return;
     onSet(q.no, value);
-    // 서술형은 점수를 고쳐 적을 일이 많아 자동으로 넘기지 않는다.
+    // 서술형은 점수를 고쳐 적는 일이 많아 자동으로 넘기지 않는다.
     if (!essay) setTimeout(() => go(1), 90);
   };
 

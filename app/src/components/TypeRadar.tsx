@@ -97,7 +97,7 @@ export default function TypeRadar({ stats }: { stats: TypeStat[] }) {
               {shorten(s.type)}
               <title>{s.type}</title>
             </text>
-            {/* 막대를 걷어냈으므로 강점/약점을 색으로만 알리게 된다.
+            {/* 막대를 뺐으므로 강점/약점을 색으로만 알리게 된다.
                 흑백 인쇄와 색각 이상에서도 읽히도록 글자 라벨을 % 옆에 붙인다. */}
             <text x={x} y={y + dy + 17} fontSize={13.5} fontWeight={700} fill={rateColor(s.rate)}>
               {Math.round(s.rate * 100)}%

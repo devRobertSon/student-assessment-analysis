@@ -97,7 +97,7 @@ describe('statsForResult', () => {
     expect(stats[0].type).toBe('밀도');
   });
 
-  it('실수로 유형을 둘 적어도 한 덩어리로 묶이지 않고 각 유형에 집계된다', () => {
+  it('실수로 유형을 둘 적어도 하나로 묶이지 않고 각 유형에 집계된다', () => {
     const multi: Exam = {
       id: 'e2',
       title: 't2',
@@ -120,7 +120,7 @@ describe('statsForResult', () => {
     expect(stats.reduce((a, s) => a + s.total, 0)).toBe(4);
   });
 
-  it('scoreOf: 배점을 안 적은 시험지는 한 문항 1점이라 득점률이 곧 정답률이다', () => {
+  it('scoreOf: 배점을 안 적은 시험지는 한 문항 1점이라 득점률과 정답률이 같다', () => {
     const qs = [1, 2, 3].map((no) => ({ no, type: '밀도' }));
     const s = scoreOf(qs.map((q, i) => makeMark(q, i === 1 ? 0 : 1)));
     expect(s).toEqual({ correct: 2, total: 3, earned: 2, points: 3, rate: 2 / 3 });

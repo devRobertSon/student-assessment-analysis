@@ -81,7 +81,7 @@ export default function GradingPanel({ data, setData }: Props) {
       return { ...c, [no]: Math.max(0, Math.min(max, v)) };
     });
   // 팝업에서 쓰는 setter. 표의 setCell은 같은 값을 다시 누르면 지우는 토글이지만
-  // 여기서는 누른 값을 그대로 넣는다(넘어간 뒤 되돌아와도 값이 흔들리지 않게).
+  // 여기서는 누른 값을 그대로 넣는다(넘어간 뒤 되돌아와도 값이 바뀌지 않게).
   const putCell = (no: number, v: Cell) => setCells((c) => ({ ...c, [no]: v }));
 
   const setAll = (v: 'full' | 'zero' | 'clear') => {
@@ -117,7 +117,7 @@ export default function GradingPanel({ data, setData }: Props) {
     alert('채점을 저장했습니다.');
   };
 
-  /** 불러온 채점 결과를 지운다. 화면의 입력칸도 같이 비워 되살아나지 않게 한다. */
+  /** 불러온 채점 결과를 지운다. 화면의 입력칸도 같이 비워 다시 저장되지 않게 한다. */
   const removeSaved = () => {
     if (!existing || !exam) return;
     if (!confirm(`${exam.title} · ${existing.date} 채점 결과를 삭제할까요?`)) return;

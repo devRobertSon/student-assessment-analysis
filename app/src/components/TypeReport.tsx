@@ -20,7 +20,7 @@ const NOTE_MAX = 170;
 const MEMO_MAX = 200;
 
 /**
- * 손으로 적을 날짜 칸. '20    년    월    일'처럼 공백을 늘어놓으면
+ * 손으로 적을 날짜 칸. '20    년    월    일'처럼 공백을 여러 개 넣으면
  * HTML이 공백을 하나로 합쳐 버려서 인쇄했을 때 적을 자리가 남지 않는다.
  * 폭을 가진 빈 칸을 끼워 넣어 실제 여백을 만든다.
  */
@@ -55,6 +55,22 @@ function SealStamp() {
 }
 
 // 유형별 결과에서 종합 의견 초안을 만든다. 선생님이 그대로 쓰거나 고쳐 쓴다.
+/**
+ * 받침에 맞는 조사를 고른다. '정리는', '해석은'처럼 나오게 한다.
+ * 이걸 안 하면 '표현 해석은(는)'처럼 괄호가 그대로 인쇄된다.
+ */
+function josa(text: string, withBatchim: string, without: string): string {
+  const last = text.trim().slice(-1);
+  const code = last.charCodeAt(0);
+  if (code < 0xac00 || code > 0xd7a3) return without;
+  return (code - 0xac00) % 28 ? withBatchim : without;
+}
+
+/**
+ * 종합 의견 초안. 학부모가 읽는 글이라 본 대로만 적는다.
+ * 어느 유형에서 틀렸는지, 그게 오답의 몇 문항인지, 어느 유형이 안정적인지.
+ * 해석이나 처방은 선생님이 [선생님 의견]에 직접 쓴다.
+ */
 function autoSummary(stats: TypeStat[], correct: number, total: number): string {
   if (stats.length === 0 || total === 0) return '';
   const name = (list: TypeStat[]) => list.slice(0, 3).map((s) => s.type).join(', ');
@@ -65,12 +81,16 @@ function autoSummary(stats: TypeStat[], correct: number, total: number): string 
 
   const parts: string[] = [];
   if (weak.length > 0) {
-    parts.push(`${name(weak)} 유형에서 실점이 집중되었습니다.`);
-    if (wrong > 0 && weakWrong > 0) parts.push(`오답 ${wrong}문항 중 ${weakWrong}문항이 여기에서 나왔습니다.`);
+    const w = name(weak);
+    parts.push(`${w} 유형에서 실점이 많았습니다.`);
+    if (wrong > 0 && weakWrong > 0) parts.push(`오답 ${wrong}문항 중 ${weakWrong}문항이 이 유형입니다.`);
   } else {
-    parts.push('특별히 약한 유형 없이 고르게 맞혔습니다.');
+    parts.push('크게 약한 유형 없이 고르게 맞혔습니다.');
   }
-  if (strong.length > 0) parts.push(`${name(strong)}은(는) 안정적입니다.`);
+  if (strong.length > 0) {
+    const g = name(strong);
+    parts.push(`${g}${josa(g, '은', '는')} 안정적입니다.`);
+  }
   const text = parts.join(' ');
   return text.length > SUMMARY_MAX ? text.slice(0, SUMMARY_MAX - 1) + '…' : text;
 }
@@ -105,7 +125,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
   const page2Ref = useRef<HTMLDivElement>(null);
   const movedRef = useRef<HTMLDivElement>(null);
   const analysisRef = useRef<HTMLElement>(null);
-  // 응시 이력이 길어지면 의견 두 칸이 1쪽에서 밀려난다. 그때만 쪽을 하나 더 낸다.
+  // 응시 이력이 길어지면 의견 두 칸이 1쪽에 들어가지 않는다. 그때만 쪽을 하나 더 낸다.
   const [splitNotes, setSplitNotes] = useState(false);
   const pageCount = splitNotes ? 3 : 2;
 
@@ -173,7 +193,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
    * 1쪽이 A4를 넘으면 응시 이력과 의견을 통째로 다음 쪽으로 보낸다.
    *
    * 나뉘고 나면 1쪽은 분석 전용이 되어 레이더가 커지고 막대가 붙는다.
-   * 그 상태를 그대로 재면 "합치면 들어가는가"를 영영 알 수 없으므로,
+   * 그 상태를 그대로 재면 합쳤을 때 들어가는지 알 수 없으므로,
    * 유형 섹션을 좁은 배치였을 때의 높이로 되돌려 놓고 잰다.
    * 그래서 이 값은 지금 나뉘어 있는지와 무관하고, 나눔과 합침을 오가지 않는다.
    */
@@ -510,8 +530,8 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
               <section ref={analysisRef} className="report-sec">
                 <div className="rp-sec-row">
                   <span className="report-sec-h">유형별 강점과 약점</span>
-                  {/* 난이도는 자리를 더 쓰지 않도록 이 머리줄에 얹는다.
-                      A4 한 쪽을 넘기지 않으려면 여기가 유일하게 남는 가로 공간이다. */}
+                  {/* 난이도는 줄을 더 쓰지 않도록 이 제목 줄에 함께 넣는다.
+                      A4 한 쪽을 넘기지 않으려면 여기 말고 남는 가로 공간이 없다. */}
                   {levels.length > 0 ? (
                     <span className="rp-levels">
                       {levels.map((l) => (

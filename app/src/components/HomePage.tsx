@@ -9,7 +9,7 @@ export type HomeTarget = 'students' | 'exams' | 'grading' | 'report';
 
 const CARDS: { n: string; t: string; d: string; go: HomeTarget; accent?: boolean }[] = [
   { n: '01', t: '학생 관리', d: '이름과 학년을 등록하거나 CSV로 한 번에 불러옵니다.', go: 'students' },
-  { n: '02', t: '시험지 관리', d: '시험지와 문제지·해설·출제표를 한자리에서 봅니다.', go: 'exams' },
+  { n: '02', t: '시험지 관리', d: '시험지와 문제지·해설·출제표를 한 화면에서 봅니다.', go: 'exams' },
   { n: '03', t: '채점 입력', d: 'O/X만 누르면 유형·단원·난이도로 자동 집계됩니다.', go: 'grading' },
   { n: '04', t: '리포트', d: '강점·약점을 레이더 차트로 보고 PDF로 저장합니다.', go: 'report', accent: true },
 ];
