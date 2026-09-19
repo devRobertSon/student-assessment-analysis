@@ -163,44 +163,77 @@ export function gradeFromLevels(levels: TypeStat[], ladder: GradeRung[] = DEFAUL
 }
 
 /**
- * 학원 기준 재수강 판정 — 난이도를 가리지 않고 틀린 개수만 센다.
+ * 학원 기준 재수강 판정 — 난이도마다 봐 주는 개수를 따로 두고 비율로 합친다.
  *
- * 학원의 실제 규칙은 "입학 TEST 30문제 중 7문제를 틀리면 그 학기를 다시
- * 듣는다"이다. 진단평가는 그 입학 TEST 보다 쉽다. 입학 TEST 중1-1 을 세어
- * 보면 30문제 중 표준이 1문제뿐인데(상 17, 최상 12) 진단평가는 표준이
- * 8문제다. 같은 학생이라도 여기서는 덜 틀린다.
+ * 쉬운 문제를 틀리는 것과 어려운 문제를 못 푸는 것은 뜻이 다르다. 그래서
+ * 표준·상은 base 개까지, 최상은 top 개까지 봐 주고, 섞여 틀렸으면 각자
+ * 소진한 비율을 더해 1을 넘으면 재수강으로 본다.
+ *   표준·상 4개 = 4/4 = 1     → 재수강
+ *   최상 8개    = 8/8 = 1     → 재수강
+ *   표준·상 2 + 최상 3 = 0.5 + 0.375 = 0.875 → 통과
  *
- * 난이도 구성으로 환산하면 입학 TEST 에서 7개를 틀리는 학생은 진단평가에서
- * 4.7~6.2개를 틀린다(어느 난이도를 주로 흘리느냐에 따라). 그래서 5개로 둔다.
+ * 숫자의 근거. 학원 규칙은 "입학 TEST 30문제 중 7문제를 틀리면 그 학기를
+ * 다시 듣는다"이고 난이도를 가리지 않는다. 그런데 진단평가는 그 입학 TEST
+ * 보다 쉽다 — 입학 TEST 중1-1 은 30문제 중 표준이 1문제뿐인데(상 17, 최상 12)
+ * 진단평가는 8문제다. 난이도 구성으로 환산하면 입학 TEST 에서 7개를 틀리는
+ * 학생이 진단평가에서는 4.7~6.2개를 틀린다. base 4 · top 8 이면 통과 상한이
+ * 총 3~8개(평균 5.3)라 그 환산값을 거의 그대로 지킨다.
  *
- * 난이도별 가중치를 두지 않은 데에는 이유가 있다. 난이도는 문항마다 사람이
- * 매긴 판단값이라 라벨 하나가 흔들리면 판정이 뒤집힌다. 개수만 세면 그 흔들림이
- * 없고, 학원 규칙과도 같은 모양이라 설명할 것이 없다.
+ * base 를 5로 올리면 평균이 6.0 이 되어 학원 기준보다 한 문제쯤 무뎌진다.
  *
  * 이 판정은 등급과 성격이 다르다. 등급은 전국에서 어디쯤인가이고, 이것은
  * 이 학원이 "다음 학기로 보내도 되는가"를 정하는 내부 기준이다. 훨씬 엄격해서
  * 섞으면 잘하는 학생에게 낮은 등급이 찍힌다. 그래서 리포트에는 넣지 않는다.
  */
-export const DEFAULT_RETAKE_MISSES = 5;
+export interface RetakeBudget {
+  base: number; // 표준·상에서 몇 개부터 재수강인가
+  top: number; // 최상에서 몇 개부터 재수강인가
+}
+
+export const DEFAULT_RETAKE_BUDGET: RetakeBudget = { base: 4, top: 8 };
 
 export interface RetakeCheck {
   total: number; // 채점한 문항 수
-  wrong: number; // 그중 만점을 못 받은 문항 수
-  misses: number; // 몇 개부터 재수강인가
+  wrongBase: number; // 표준·상 오답
+  wrongTop: number; // 최상 오답
+  budget: RetakeBudget;
+  used: number; // 소진율. 1을 넘으면 재수강
   pass: boolean;
 }
+
+/**
+ * 난이도를 최상과 그 나머지 둘로만 가른다.
+ *
+ * 표준과 상을 굳이 나누지 않은 것은 판정이 기대는 경계를 하나로 줄이기
+ * 위해서다. 표준인지 상인지는 사람마다 갈리지만 최상인지 아닌지는 덜 갈린다.
+ * 난이도를 안 적은 문항은 표준·상 쪽으로 센다. 난이도가 아예 없는 시험지도
+ * 그러면 "base 개부터 재수강"이라는 단순한 규칙으로 자연스럽게 내려앉는다.
+ */
+const isTop = (q: ExamQuestion) => q.level?.trim() === '최상';
 
 /** 아직 채점한 문항이 없으면 null. 판정을 지어내지 않는다. */
 export function retakeCheck(
   exam: Exam,
   marks: Mark[],
-  misses: number = DEFAULT_RETAKE_MISSES
+  budget: RetakeBudget = DEFAULT_RETAKE_BUDGET
 ): RetakeCheck | null {
+  const top = new Set(exam.questions.filter(isTop).map((q) => q.no));
   const nos = new Set(exam.questions.map((q) => q.no));
   const mine = marks.filter((m) => nos.has(m.no));
   if (mine.length === 0) return null;
-  const wrong = mine.filter((m) => !isFullMark(m)).length;
-  return { total: mine.length, wrong, misses, pass: wrong < misses };
+  const wrong = mine.filter((m) => !isFullMark(m));
+  const wrongTop = wrong.filter((m) => top.has(m.no)).length;
+  const wrongBase = wrong.length - wrongTop;
+  // 판정은 정수로만 따진다. base=4, top=8 이면 표준·상 8점 · 최상 4점 · 기준 32점.
+  const over = wrongBase * budget.top + wrongTop * budget.base >= budget.base * budget.top;
+  return {
+    total: mine.length,
+    wrongBase,
+    wrongTop,
+    budget,
+    used: wrongBase / budget.base + wrongTop / budget.top,
+    pass: !over,
+  };
 }
 
 /**
@@ -254,8 +287,8 @@ export interface AssessmentData {
   dismissed?: string[];
   /** 예상 등급 사다리. 안 적었으면 DEFAULT_GRADE_LADDER 를 쓴다. */
   gradeLadder?: GradeRung[];
-  /** 재수강 판정 기준(몇 개부터 재수강인가). 안 적었으면 DEFAULT_RETAKE_MISSES. */
-  retakeMisses?: number;
+  /** 재수강 판정에서 봐 주는 개수. 안 적었으면 DEFAULT_RETAKE_BUDGET. */
+  retakeBudget?: RetakeBudget;
 }
 
 const KEY = 'sda.assess.v1';
@@ -274,9 +307,14 @@ export function loadAssessment(): AssessmentData {
       exams: Array.isArray(p.exams) ? p.exams : [],
       results: Array.isArray(p.results) ? p.results : [],
       dismissed: Array.isArray(p.dismissed) ? p.dismissed : [],
-      // 이름을 retakeCut(정답률 %)에서 retakeMisses(오답 개수)로 바꿨다.
-      // 예전에 저장된 77 같은 값을 그대로 읽으면 '77개부터 재수강'이 되므로 버린다.
-      retakeMisses: typeof p.retakeMisses === 'number' ? p.retakeMisses : undefined,
+      // 판정 기준이 정답률 % → 오답 개수 → 난이도별 허용 개수로 두 번 바뀌었다.
+      // 예전에 저장된 값을 그대로 읽으면 엉뚱한 기준이 되므로 모양이 맞을 때만 쓴다.
+      retakeBudget:
+        p.retakeBudget &&
+        typeof p.retakeBudget.base === 'number' &&
+        typeof p.retakeBudget.top === 'number'
+          ? p.retakeBudget
+          : undefined,
       gradeLadder:
         Array.isArray(p.gradeLadder) && p.gradeLadder.length === DEFAULT_GRADE_LADDER.length
           ? p.gradeLadder

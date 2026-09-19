@@ -252,17 +252,37 @@ describe('학원 기준 재수강 판정', () => {
   const marks = (wrong: number[]) =>
     exam.questions.map((q) => makeMark(q, wrong.includes(q.no) ? 0 : 1));
 
-  it('난이도를 가리지 않고 틀린 개수만 센다', () => {
-    // 최상만 4개를 틀리든 표준만 4개를 틀리든 판정은 같다
-    expect(retakeCheck(exam, marks([10, 11, 12, 13]))!).toMatchObject({ wrong: 4, pass: true });
-    expect(retakeCheck(exam, marks([1, 2, 3, 4]))!).toMatchObject({ wrong: 4, pass: true });
-    // 5개부터 재수강
-    expect(retakeCheck(exam, marks([1, 2, 3, 4, 5]))!).toMatchObject({ wrong: 5, pass: false });
+  // 기본 허용치는 표준·상 4개 / 최상 8개
+  it('표준·상은 4개부터 재수강', () => {
+    expect(retakeCheck(exam, marks([1, 2, 3]))!).toMatchObject({ wrongBase: 3, pass: true });
+    expect(retakeCheck(exam, marks([1, 2, 3, 4]))!).toMatchObject({ wrongBase: 4, pass: false });
   });
 
-  it('기준을 바꾸면 판정도 바뀐다', () => {
-    expect(retakeCheck(exam, marks([1, 2, 3]), 3)!.pass).toBe(false);
-    expect(retakeCheck(exam, marks([1, 2, 3]), 4)!.pass).toBe(true);
+  it('최상은 더 봐 준다 — 네 문항을 다 틀려도 통과', () => {
+    const r = retakeCheck(exam, marks([10, 11, 12, 13]))!;
+    expect(r).toMatchObject({ wrongBase: 0, wrongTop: 4, pass: true });
+    expect(r.used).toBeCloseTo(0.5); // 4/8
+  });
+
+  it('섞여 틀리면 소진 비율을 더해서 본다', () => {
+    // 표준·상 2/4 + 최상 3/8 = 0.875 → 통과
+    expect(retakeCheck(exam, marks([1, 2, 10, 11, 12]))!.pass).toBe(true);
+    // 한 문항 더 틀리면 0.5 + 0.5 = 1 → 재수강. 쉬운 쪽이 더 무겁게 먹힌다.
+    expect(retakeCheck(exam, marks([1, 2, 10, 11, 12, 13]))!.pass).toBe(false);
+  });
+
+  it('허용치를 바꾸면 판정도 바뀐다', () => {
+    expect(retakeCheck(exam, marks([1, 2]), { base: 2, top: 4 })!.pass).toBe(false);
+    expect(retakeCheck(exam, marks([1, 2]), { base: 3, top: 6 })!.pass).toBe(true);
+  });
+
+  it('난이도를 안 적은 문항은 표준·상 쪽으로 센다', () => {
+    const plain: Exam = {
+      ...exam,
+      questions: [1, 2, 3, 4].map((no) => ({ no, type: '계산', points: 1 })),
+    };
+    const all = plain.questions.map((q) => makeMark(q, 0));
+    expect(retakeCheck(plain, all)!).toMatchObject({ wrongBase: 4, wrongTop: 0, pass: false });
   });
 
   it('채점한 문항이 없으면 판정하지 않는다', () => {
