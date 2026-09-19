@@ -267,7 +267,10 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
-      const MARGIN = 12;
+      // 쪽 가장자리 여백. 이 안쪽은 전부 리포트 그림이고, 그림에도 제 여백이
+      // 있어 글자는 종이 끝에서 13mm 쯤부터 시작한다. 그래서 여기는 좁게 잡아도
+      // 인쇄에서 글자가 잘리지 않는다.
+      const MARGIN = 6;
       const contentW = pageW - MARGIN * 2;
       const contentH = pageH - MARGIN * 2;
 

@@ -568,7 +568,8 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
   box-sizing: border-box;
   background: #fff;
   color: var(--ink);
-  padding: 38px 52px 26px;
+  /* 쪽 안쪽 여백. PDF 바깥 여백과 합쳐 종이 끝에서 글자까지 13~16mm 가 된다. */
+  padding: 28px 38px 20px;
   display: flex;
   flex-direction: column;
   /* 레이더를 키운 만큼 블록 사이를 좁혀 A4 한 쪽을 지킨다. */
