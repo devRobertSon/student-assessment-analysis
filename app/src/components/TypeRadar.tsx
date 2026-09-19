@@ -2,15 +2,19 @@ import { TypeStat } from '../lib/assessment';
 
 // 정답률 구간. 색만으로 뜻을 전하면 색각 이상·흑백 인쇄에서 구분이 사라지므로
 // 화면에는 항상 rateTag()의 글자 라벨을 함께 붙인다.
+/** 이 위는 이미 자리 잡은 유형. 리포트 머리의 '안정 유형 N개'도 같은 선을 쓴다. */
+export const STEADY = 0.8;
+const FAIR = 0.5;
+
 export function rateColor(rate: number): string {
-  if (rate >= 0.8) return '#0ca30c';
-  if (rate >= 0.5) return '#fab219';
+  if (rate >= STEADY) return '#0ca30c';
+  if (rate >= FAIR) return '#fab219';
   return '#d03b3b';
 }
 
 export function rateTag(rate: number): { label: string; cls: string } {
-  if (rate >= 0.8) return { label: '강점', cls: 'tag-good' };
-  if (rate >= 0.5) return { label: '보통', cls: 'tag-warn' };
+  if (rate >= STEADY) return { label: '강점', cls: 'tag-good' };
+  if (rate >= FAIR) return { label: '보통', cls: 'tag-warn' };
   return { label: '약점', cls: 'tag-bad' };
 }
 

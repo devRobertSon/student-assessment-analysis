@@ -12,7 +12,7 @@ import {
   statsCumulative,
 } from '../lib/assessment';
 import { logoUrl, sealUrl } from '../lib/brand';
-import TypeRadar from './TypeRadar';
+import TypeRadar, { STEADY } from './TypeRadar';
 import TypeBars from './TypeBars';
 
 // styles.css의 .report-capture min-height와 같은 값. A4 한 쪽(96dpi)이다.
@@ -178,6 +178,9 @@ export default function TypeReport({ data, setData, studentId, setStudentId, onB
   // 선생님이 손대기 전까지는 자동 문안을 따라간다.
   const ladder = data.gradeLadder ?? DEFAULT_GRADE_LADDER;
   const grade = gradeFromLevels(levels, ladder);
+  // 리포트 머리에는 '몇 개가 부족한가'가 아니라 '몇 개가 자리 잡았는가'를 적는다.
+  // 같은 사실이라도 학부모가 먼저 읽는 숫자는 딛고 설 곳이어야 한다.
+  const steady = stats.filter((s) => s.rate >= STEADY).length;
 
   const draftSummary = useMemo(() => autoSummary(stats, total.correct, total.total), [stats, total.correct, total.total]);
   const summary = summaryTouched ? session.summary : draftSummary;
@@ -582,6 +585,13 @@ export default function TypeReport({ data, setData, studentId, setStudentId, onB
                     </em>
                   </div>
                 </div>
+                {stats.length > 0 && (
+                  <div className="rp-grade">
+                    <span>안정 유형</span>
+                    <b>{steady}</b>
+                    <em>/ {stats.length}개</em>
+                  </div>
+                )}
                 {grade !== null && (
                   <div className="rp-grade">
                     <span>예상 고교 등급</span>

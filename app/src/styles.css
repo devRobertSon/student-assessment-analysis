@@ -964,3 +964,14 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .rp-lv:first-child { border-left: 0; padding-left: 0; }
 .rp-lv b { font-size: 10.5px; font-weight: 600; color: var(--ink-3); }
 .rp-lv em { font-size: 11.5px; font-weight: 700; font-style: normal; color: var(--navy); }
+
+/* 사용법 — 유형마다 무엇을 보고 어떻게 훈련하는지 */
+.manual-h4 { margin: 22px 0 8px; font-size: 14px; }
+.type-guide > li { margin-bottom: 14px; }
+.type-guide > li > p { margin: 3px 0 0; }
+.tg-area {
+  margin-left: 6px; padding: 1px 7px; border-radius: 4px; font-size: 11px;
+  color: var(--navy); background: #eef1f7; border: 1px solid #cfd8e8;
+}
+.tg-train { color: var(--ink-2); }
+.tg-train > b { color: var(--navy); }
