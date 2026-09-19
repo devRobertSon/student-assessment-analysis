@@ -4,7 +4,7 @@ import {
   AssessmentData,
   TARGET_SCHOOLS,
   TypeStat,
-  DEFAULT_GRADE_LADDER,
+  scaledScore,
   gradeFromLevels,
   scoreOf,
   todayStr,
@@ -177,7 +177,8 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
 
   // 선생님이 손대기 전까지는 자동 문안을 따라간다.
   // 예상 등급 기준은 학원이 정한 고정값이다. 화면에서 고치지 않는다.
-  const grade = gradeFromLevels(levels, DEFAULT_GRADE_LADDER);
+  const grade = gradeFromLevels(levels);
+  const scaled = scaledScore(levels);
   // 리포트 머리에는 '몇 개가 모자라는가'가 아니라 '몇 개가 자리 잡았는가'를 적는다.
   // 같은 사실이라도 학부모가 먼저 읽는 숫자는 딛고 설 곳이어야 한다.
   const steady = stats.filter((s) => s.rate >= STEADY).length;
@@ -550,7 +551,8 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
                     <div className="rp-val">
                       <b>{grade}</b>
                     </div>
-                    <em className="rp-sub">등급</em>
+                    {/* 등급을 매긴 값이 무엇인지 함께 적는다. */}
+                    <em className="rp-sub">환산 {scaled === null ? '—' : Math.round(scaled)}점</em>
                   </div>
                 )}
               </div>

@@ -132,41 +132,77 @@ export interface Result {
  * 이 값은 예측이 아니라 학원이 정한 도달 기준이다. 시험지 난이도가 바뀌면
  * 같이 손봐야 한다.
  */
-export interface GradeRung {
-  grade: number;
-  /** 이 등급을 받으려면 난이도마다 넘어야 하는 정답률(%). 하나라도 못 넘기면 아래 칸으로 내려간다. */
-  need: { level: string; min: number }[];
+/** 난이도별 문항 무게. 어려운 문항을 맞히는 것이 더 큰 성취다. */
+export const LEVEL_WEIGHT: Record<string, number> = { 표준: 1, 상: 2, 최상: 3 };
+
+/**
+ * 환산점수. 난이도와 문항 수를 함께 반영한 50~100점이다.
+ *
+ * 원점수(맞은 문항 수)로는 이 시험지를 잴 수 없다. 진단평가 30문항 중
+ * 표준은 7문항뿐이고 나머지는 상·최상이라 학교 시험보다 훨씬 어렵다. 여기서
+ * 60%를 맞힌 학생과 학교 시험에서 60%를 맞힌 학생은 같은 학생이 아니다.
+ *
+ * 그래서 문항마다 난이도 무게를 주어 더하고, 0점이 곧 바닥이 되지 않도록
+ * 50~100 구간에 편다. 무게 만점이 네 시험지 모두 61~62점이라 시험지끼리
+ * 환산점수를 견주어도 된다.
+ */
+export function scaledScore(levels: TypeStat[]): number | null {
+  let got = 0;
+  let full = 0;
+  for (const l of levels) {
+    const w = LEVEL_WEIGHT[l.type];
+    if (!w) continue;
+    got += l.correct * w;
+    full += l.total * w;
+  }
+  if (full === 0) return null;
+  return 50 + (50 * got) / full;
 }
 
 /**
- * 기준선은 재수강 판정과 같은 방향을 가리키도록 맞췄다. 학원 학생이 재수강
- * 경계(40점)에 서면 전국에서는 2등급쯤이라고 본다. 학원 기준이 전국 기준보다
- * 높기 때문이다. 경계를 넘어 더 틀리면 3등급 아래로 내려간다.
+ * 환산점수를 등급으로 바꾸는 칸. 위에서부터 내려오며 처음 걸리는 칸이 등급이다.
+ *
+ * 재수강 판정과 같은 방향을 가리키도록 맞췄다. 학원 학생이 재수강 경계(40점)에
+ * 서면 전국에서는 2등급쯤이라고 본다. 학원 기준이 전국 기준보다 높기 때문이다.
+ * 시험지가 어려워서, 많이 틀려도 5~6등급에서 멈춘다.
  */
-export const DEFAULT_GRADE_LADDER: GradeRung[] = [
-  { grade: 1, need: [{ level: '표준', min: 90 }, { level: '상', min: 85 }, { level: '최상', min: 70 }] },
-  { grade: 2, need: [{ level: '표준', min: 80 }, { level: '상', min: 70 }, { level: '최상', min: 40 }] },
-  { grade: 3, need: [{ level: '표준', min: 70 }, { level: '상', min: 55 }, { level: '최상', min: 20 }] },
-  { grade: 4, need: [{ level: '표준', min: 60 }, { level: '상', min: 40 }] },
-  { grade: 5, need: [{ level: '표준', min: 50 }, { level: '상', min: 25 }] },
-  { grade: 6, need: [{ level: '표준', min: 40 }] },
-  { grade: 7, need: [{ level: '표준', min: 25 }] },
-  { grade: 8, need: [{ level: '표준', min: 10 }] },
+export const GRADE_CUTS: { grade: number; min: number }[] = [
+  { grade: 1, min: 93 },
+  { grade: 2, min: 85 },
+  { grade: 3, min: 78 },
+  { grade: 4, min: 71 },
+  { grade: 5, min: 63 },
+  { grade: 6, min: 57 },
+  { grade: 7, min: 54 },
+  { grade: 8, min: 52 },
+];
+
+/**
+ * 표준 문항을 못 맞히면 위로 올라가지 못하게 막는 선.
+ *
+ * 환산점수만 보면 표준을 다 틀리고 최상을 다 맞힌 학생이 1등급이 된다. 무게가
+ * 최상 쪽에 실려 있어서다. 기초가 서지 않은 채 어려운 문제만 맞히는 것을 위로
+ * 쳐 주지 않는다.
+ */
+const BASE_CAPS: { under: number; worst: number }[] = [
+  { under: 60, worst: 4 },
+  { under: 40, worst: 6 },
 ];
 
 /**
  * 난이도별 정답률에서 등급을 뽑는다.
  * 시험지에 난이도를 안 적었으면(=칸이 비었으면) null. 등급을 지어내지 않는다.
  */
-export function gradeFromLevels(levels: TypeStat[], ladder: GradeRung[] = DEFAULT_GRADE_LADDER): number | null {
-  if (levels.length === 0) return null;
-  const rate = new Map(levels.map((l) => [l.type, l.rate * 100]));
-  for (const rung of ladder) {
-    // 시험지에 없는 난이도는 넘었다고 볼 수 없다. 최상 문항이 하나도 없는
-    // 시험지로 1등급을 줄 수는 없다.
-    if (rung.need.every((q) => (rate.get(q.level) ?? -1) >= q.min)) return rung.grade;
+export function gradeFromLevels(levels: TypeStat[]): number | null {
+  const score = scaledScore(levels);
+  if (score === null) return null;
+  let grade = GRADE_CUTS.find((c) => score >= c.min)?.grade ?? GRADE_CUTS.length + 1;
+  const std = levels.find((l) => l.type === '표준');
+  if (std && std.total > 0) {
+    const rate = (std.correct / std.total) * 100;
+    for (const cap of BASE_CAPS) if (rate < cap.under) grade = Math.max(grade, cap.worst);
   }
-  return ladder.length + 1;
+  return grade;
 }
 
 /**

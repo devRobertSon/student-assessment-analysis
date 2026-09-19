@@ -8,7 +8,7 @@ import {
   isFullMark,
   makeMark,
   paperHref,
-  DEFAULT_GRADE_LADDER,
+  scaledScore,
   gradeFromLevels,
   advancedGap,
   retakeCheck,
@@ -297,44 +297,63 @@ describe('심화 미달', () => {
   });
 });
 
-describe('예상 등급 (난이도 사다리)', () => {
+describe('예상 등급 (난이도 환산점수)', () => {
+  /** 난이도마다 10문항. 무게 만점은 10×1 + 10×2 + 10×3 = 60점이다. */
   const lv = (표준: number, 상: number, 최상: number) =>
     [
-      { type: '표준', total: 10, correct: 0, points: 10, earned: 0, rate: 표준 / 100 },
-      { type: '상', total: 10, correct: 0, points: 10, earned: 0, rate: 상 / 100 },
-      { type: '최상', total: 10, correct: 0, points: 10, earned: 0, rate: 최상 / 100 },
-    ];
+      ['표준', 표준],
+      ['상', 상],
+      ['최상', 최상],
+    ].map(([type, pct]) => ({
+      type: type as string,
+      total: 10,
+      correct: ((pct as number) / 10),
+      points: 10,
+      earned: 0,
+      rate: (pct as number) / 100,
+    }));
+
+  it('환산점수는 난이도 무게로 매기고 50~100 사이에 편다', () => {
+    expect(scaledScore(lv(100, 100, 100))).toBe(100);
+    expect(scaledScore(lv(0, 0, 0))).toBe(50);
+    // 표준 10 + 상 20 + 최상 24 = 54 → 50 + 50×54/60
+    expect(scaledScore(lv(100, 100, 80))).toBe(95);
+  });
 
   it('위에서부터 내려오며 처음 걸리는 칸이 등급이다', () => {
-    // 최상 80%는 첫 칸(최상 70%)에 걸린다
+    expect(gradeFromLevels(lv(100, 100, 100))).toBe(1);
     expect(gradeFromLevels(lv(100, 100, 80))).toBe(1);
-    // 최상 50%는 둘째 칸(최상 40%)
     expect(gradeFromLevels(lv(100, 100, 50))).toBe(2);
-    // 최상이 모자라면 상을 본다
-    expect(gradeFromLevels(lv(100, 85, 10))).toBe(3);
-    expect(gradeFromLevels(lv(100, 65, 10))).toBe(4);
+    expect(gradeFromLevels(lv(100, 90, 40))).toBe(3);
+    expect(gradeFromLevels(lv(100, 70, 20))).toBe(4);
+    expect(gradeFromLevels(lv(90, 50, 10))).toBe(5);
   });
 
-  it('표준만 풀어내면 5등급 아래로 떨어진다', () => {
-    expect(gradeFromLevels(lv(85, 10, 0))).toBe(5);
-    expect(gradeFromLevels(lv(45, 10, 0))).toBe(7);
+  it('많이 틀려도 5~6등급에서 멈춘다', () => {
+    // 시험지가 어려워서 원점수가 낮아도 바닥까지 떨어지지 않는다
+    expect(gradeFromLevels(lv(60, 30, 10))).toBe(6);
   });
 
-  it('어느 칸에도 안 걸리면 마지막 등급이다', () => {
-    expect(gradeFromLevels(lv(10, 0, 0))).toBe(DEFAULT_GRADE_LADDER.length + 1);
+  it('표준을 못 맞히면 환산점수가 높아도 위로 못 올라간다', () => {
+    // 무게가 최상 쪽에 실려 있어 환산점수만 보면 1등급이 된다
+    expect(scaledScore(lv(50, 100, 100))).toBeGreaterThan(93);
+    expect(gradeFromLevels(lv(50, 100, 100))).toBe(4);
+    expect(gradeFromLevels(lv(30, 100, 100))).toBe(6);
   });
 
   it('난이도를 안 적은 시험지는 등급을 지어내지 않는다', () => {
     expect(gradeFromLevels([])).toBeNull();
+    expect(scaledScore([])).toBeNull();
   });
 
-  it('없는 난이도 칸은 건너뛴다', () => {
-    // 최상 문항이 아예 없는 시험지
+  it('없는 난이도는 무게 만점에서도 빠진다', () => {
+    // 최상 문항이 아예 없는 시험지. 만점은 10×1 + 10×2 = 30점이다.
     const only = [
-      { type: '표준', total: 10, correct: 0, points: 10, earned: 0, rate: 0.9 },
-      { type: '상', total: 10, correct: 0, points: 10, earned: 0, rate: 0.9 },
+      { type: '표준', total: 10, correct: 9, points: 10, earned: 0, rate: 0.9 },
+      { type: '상', total: 10, correct: 9, points: 10, earned: 0, rate: 0.9 },
     ];
-    expect(gradeFromLevels(only)).toBe(3);
+    expect(scaledScore(only)).toBe(95);
+    expect(gradeFromLevels(only)).toBe(1);
   });
 });
 
