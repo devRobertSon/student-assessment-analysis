@@ -354,24 +354,21 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .cloud-logout { font-size: 13px; padding: 7px 12px; }
 
 /* ── 채점 ────────────────────────────────────────── */
-.ox-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 28px; }
-.ox-item { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 8px; }
-.ox-item:nth-child(4n+3), .ox-item:nth-child(4n+4) { background: #fafbfc; }
-.ox-no { width: 24px; font-size: 13px; font-weight: 700; color: var(--ink-3); text-align: right; }
-.ox-item .t { flex-grow: 1; font-size: 14px; }
+/* 번호와 O/X만 두어 한 줄에 여러 문항이 들어가게 한다. 답안지를 보며
+   번호만 따라 내려가면 되므로 유형 이름은 여기서 읽을 일이 없다. */
+.ox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 6px 10px; }
+.ox-item { display: flex; align-items: center; gap: 7px; padding: 5px 7px; border-radius: 8px; background: var(--fill); }
+.ox-no { width: 22px; font-size: 13px; font-weight: 700; color: var(--ink-3); text-align: right; }
 .ox-btns { display: flex; gap: 5px; }
 .ox-btns button { width: 34px; height: 30px; padding: 0; font-size: 14px; font-weight: 600; color: var(--ink-3); border-radius: 6px; }
 .ox-o.on { color: #fff; background: var(--navy); border-color: var(--navy); }
 .ox-x.on { color: #fff; background: var(--bad-ink); border-color: var(--bad-ink); }
 /* 서술형: 색만으로 구분하지 않도록 '서술형' 글자 배지를 함께 단다 */
-.ox-item .t { display: flex; align-items: center; gap: 7px; }
 .q-lv { flex-shrink: 0; margin-left: 4px; padding: 1px 5px; font-size: 10px; font-weight: 700; color: #5F5E5A; background: #f1efe8; border-radius: 4px; }
 .q-fmt { flex-shrink: 0; padding: 2px 6px; font-size: 10px; font-weight: 700; color: var(--navy); background: #eaf0fb; border: 1px solid #d3deef; border-radius: 4px; }
-.ox-item.essay { box-shadow: inset 2px 0 0 var(--navy); }
-.ox-score { width: 46px; height: 30px; padding: 0 4px; font-size: 14px; font-weight: 600; text-align: center; border: 1px solid var(--line); border-radius: 6px; }
-.ox-score::-webkit-outer-spin-button, .ox-score::-webkit-inner-spin-button { margin: 0; -webkit-appearance: none; }
-.ox-score { -moz-appearance: textfield; }
-.ox-max { min-width: 22px; font-size: 12px; color: var(--ink-3); }
+/* 서술형은 번호 색으로만 구분한다. 채점은 객관식과 같은 O/X다.
+   칸에 테두리를 두르면 둥근 모서리와 겹쳐 지저분해진다. */
+.ox-item.essay .ox-no { color: var(--navy); }
 .assess-scorebar {
   background: var(--navy);
   border-radius: var(--r-lg);

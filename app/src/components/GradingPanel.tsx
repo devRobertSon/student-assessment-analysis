@@ -258,19 +258,14 @@ export default function GradingPanel({ data, setData }: Props) {
                   {exam.questions.map((q) => {
                     const v = cells[q.no];
                     const pts = pointsOf(q);
-                    const essay = isEssay(q);
                     return (
-                      <div key={q.no} className={`ox-item ${essay ? 'essay' : ''}`}>
+                      <div key={q.no} className={`ox-item ${isEssay(q) ? 'essay' : ''}`}>
                         <span className="ox-no">{q.no}</span>
-                        <span className="t">
-                          {q.type}
-                          {essay && <span className="q-fmt">서술형</span>}
-                        </span>
                         <span className="ox-btns">
                           <button
                             className={`ox-o ${v === pts ? 'on' : ''}`}
                             onClick={() => setCell(q.no, pts)}
-                            aria-label={`${q.no}번 맞음`}
+                            aria-label={`${q.no}번 ${q.type} 맞음`}
                             aria-pressed={v === pts}
                           >
                             O
@@ -278,7 +273,7 @@ export default function GradingPanel({ data, setData }: Props) {
                           <button
                             className={`ox-x ${v === 0 ? 'on' : ''}`}
                             onClick={() => setCell(q.no, 0)}
-                            aria-label={`${q.no}번 틀림`}
+                            aria-label={`${q.no}번 ${q.type} 틀림`}
                             aria-pressed={v === 0}
                           >
                             X

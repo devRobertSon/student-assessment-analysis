@@ -29,14 +29,14 @@
           "label": "출제표 CSV",
           "file": "중1-1_진단평가_출제표.csv",
           "ext": "csv",
-          "size": 2444
+          "size": 2413
         },
         {
           "kind": "채점표",
           "label": "채점표 CSV",
           "file": "중1-1_진단평가_채점표.csv",
           "ext": "csv",
-          "size": 1222
+          "size": 1191
         }
       ]
     },
@@ -69,14 +69,14 @@
           "label": "출제표 CSV",
           "file": "중1-2_진단평가_출제표.csv",
           "ext": "csv",
-          "size": 2665
+          "size": 2634
         },
         {
           "kind": "채점표",
           "label": "채점표 CSV",
           "file": "중1-2_진단평가_채점표.csv",
           "ext": "csv",
-          "size": 1222
+          "size": 1191
         }
       ]
     },
@@ -109,14 +109,14 @@
           "label": "출제표 CSV",
           "file": "중2-1_진단평가_출제표.csv",
           "ext": "csv",
-          "size": 2234
+          "size": 2203
         },
         {
           "kind": "채점표",
           "label": "채점표 CSV",
           "file": "중2-1_진단평가_채점표.csv",
           "ext": "csv",
-          "size": 1222
+          "size": 1191
         }
       ]
     },
@@ -149,14 +149,14 @@
           "label": "출제표 CSV",
           "file": "중2-2_진단평가_출제표.csv",
           "ext": "csv",
-          "size": 2470
+          "size": 2439
         },
         {
           "kind": "채점표",
           "label": "채점표 CSV",
           "file": "중2-2_진단평가_채점표.csv",
           "ext": "csv",
-          "size": 1222
+          "size": 1191
         }
       ]
     }
