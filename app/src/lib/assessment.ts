@@ -233,29 +233,20 @@ export function retakeCheck(
 }
 
 /**
- * 기초 미달 · 심화 미달을 따로 본다.
+ * 심화 미달. 최상 난이도를 몇 개나 놓쳤는지만 따로 본다.
  *
- * 재수강 판정은 틀린 개수만 세므로 어디가 비었는지는 말해 주지 않는다.
- * 같은 5개를 틀려도 표준을 흘린 학생과 최상만 못 푼 학생은 처방이 다르다.
- * 앞은 지난 학기를 다시 봐야 하고, 뒤는 더 어려운 문제를 줘야 한다.
+ * 기초 쪽은 따로 두지 않는다. 표준을 틀리면 한 문항이 8점이라 재수강 판정이
+ * 먼저 걸린다. 재수강 권장이 곧 기초가 비었다는 뜻이라, 같은 말을 두 줄로
+ * 적으면 화면만 복잡해진다.
  *
- * 학기를 정하는 것은 재수강 판정 쪽이고 이것은 눈길 줄 곳만 가리킨다.
- * 난이도가 문항마다 사람이 매긴 판단값이라, 라벨이 조금 흔들려도 학생의
- * 진로가 바뀌지 않도록 일부러 판정과 분리해 두었다.
+ * 반대로 최상은 한 문항이 5점이라 여덟 개를 놓쳐야 판정에 닿는다. 그래서
+ * 통과한 학생 중에도 심화가 비어 있는 경우가 생기고, 그것은 따로 알아야 한다.
+ * 재수강 여부와 상관없이 늘 나온다.
  *
- * 재수강은 아니어도 심화가 비어 있으면 그것대로 알아야 하므로, 두 줄은
- * 판정과 상관없이 늘 나온다.
- *
- * 정답률이 아니라 개수로 잡는다. 시험지마다 표준이 7~9문항, 최상이 8~9문항이라
- * 정답률로 해도 같은 자리에 걸리지만, 개수로 적어 두면 선생님이 화면을 보고
- * 바로 셀 수 있다.
+ * 정답률이 아니라 개수로 잡는다. 시험지마다 최상이 8~9문항이라 정답률로 해도
+ * 같은 자리에 걸리지만, 개수로 적어 두면 선생님이 화면을 보고 바로 셀 수 있다.
  */
-export interface GapCuts {
-  basic: number; // 표준을 이만큼 이상 틀리면 기초 미달
-  top: number; // 최상을 이만큼 이상 틀리면 심화 미달
-}
-
-export const DEFAULT_GAP_CUTS: GapCuts = { basic: 2, top: 5 };
+export const DEFAULT_ADVANCED_CUT = 5;
 
 export interface LevelGap {
   level: string;
@@ -265,22 +256,17 @@ export interface LevelGap {
   short: boolean; // 미달인가
 }
 
-/** 그 난이도의 문항을 아직 채점하지 않았으면 그 자리는 null. */
-export function levelGaps(
+/** 최상 문항을 아직 채점하지 않았으면 null. */
+export function advancedGap(
   exam: Exam,
   marks: Mark[],
-  cuts: GapCuts = DEFAULT_GAP_CUTS
-): { basic: LevelGap | null; advanced: LevelGap | null } {
-  const pick = (level: string, cut: number): LevelGap | null => {
-    const nos = new Set(
-      exam.questions.filter((q) => q.level?.trim() === level).map((q) => q.no)
-    );
-    const mine = marks.filter((m) => nos.has(m.no));
-    if (mine.length === 0) return null;
-    const wrong = mine.filter((m) => !isFullMark(m)).length;
-    return { level, total: mine.length, wrong, cut, short: wrong >= cut };
-  };
-  return { basic: pick('표준', cuts.basic), advanced: pick('최상', cuts.top) };
+  cut: number = DEFAULT_ADVANCED_CUT
+): LevelGap | null {
+  const nos = new Set(exam.questions.filter(isTop).map((q) => q.no));
+  const mine = marks.filter((m) => nos.has(m.no));
+  if (mine.length === 0) return null;
+  const wrong = mine.filter((m) => !isFullMark(m)).length;
+  return { level: '최상', total: mine.length, wrong, cut, short: wrong >= cut };
 }
 
 export interface AssessmentData {

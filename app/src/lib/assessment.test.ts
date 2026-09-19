@@ -10,7 +10,7 @@ import {
   paperHref,
   DEFAULT_GRADE_LADDER,
   gradeFromLevels,
-  levelGaps,
+  advancedGap,
   retakeCheck,
   parseGradingCsv,
   pointsOf,
@@ -293,41 +293,35 @@ describe('학원 기준 재수강 판정', () => {
   });
 });
 
-describe('기초 미달 · 심화 미달', () => {
+describe('심화 미달', () => {
   const exam = lvExam();
   const marks = (wrong: number[]) =>
     exam.questions.map((q) => makeMark(q, wrong.includes(q.no) ? 0 : 1));
 
-  it('표준은 2개, 최상은 5개부터 미달', () => {
-    expect(levelGaps(exam, marks([1])).basic).toMatchObject({ wrong: 1, short: false });
-    expect(levelGaps(exam, marks([1, 2])).basic).toMatchObject({ wrong: 2, short: true });
-    expect(levelGaps(exam, marks([23, 24, 25, 26])).advanced).toMatchObject({ wrong: 4, short: false });
-    expect(levelGaps(exam, marks([23, 24, 25, 26, 27])).advanced).toMatchObject({ wrong: 5, short: true });
+  it('최상을 5개부터 미달로 본다', () => {
+    expect(advancedGap(exam, marks([23, 24, 25, 26]))).toMatchObject({ wrong: 4, short: false });
+    expect(advancedGap(exam, marks([23, 24, 25, 26, 27]))).toMatchObject({ wrong: 5, short: true });
+  });
+
+  it('표준·상을 아무리 틀려도 심화 미달로는 안 잡힌다', () => {
+    // 기초 쪽은 재수강 판정이 먼저 걸리므로 여기서 다시 세지 않는다.
+    expect(advancedGap(exam, marks([1, 2, 3, 4, 5, 6, 7, 8]))).toMatchObject({ wrong: 0, short: false });
   });
 
   it('재수강이 아니어도 심화 미달은 따로 뜬다', () => {
     // 최상 5개 = 25점이라 재수강은 아니지만 심화는 비어 있다
     const m = marks([23, 24, 25, 26, 27]);
     expect(retakeCheck(exam, m)!.pass).toBe(true);
-    expect(levelGaps(exam, m).advanced!.short).toBe(true);
-  });
-
-  it('두 미달은 서로 독립이다', () => {
-    const top = levelGaps(exam, marks([23, 24, 25, 26, 27, 28, 29, 30]));
-    expect(top.basic!.short).toBe(false);
-    expect(top.advanced!.short).toBe(true);
-    const base = levelGaps(exam, marks([1, 2, 3]));
-    expect(base.basic!.short).toBe(true);
-    expect(base.advanced!.short).toBe(false);
+    expect(advancedGap(exam, m)!.short).toBe(true);
   });
 
   it('기준을 바꾸면 미달선도 바뀐다', () => {
-    expect(levelGaps(exam, marks([23, 24, 25]), { basic: 2, top: 3 }).advanced!.short).toBe(true);
+    expect(advancedGap(exam, marks([23, 24, 25]), 3)!.short).toBe(true);
   });
 
-  it('그 난이도를 채점하지 않았으면 그 자리는 null', () => {
+  it('최상 문항을 채점하지 않았으면 null', () => {
     const noTop: Exam = { ...exam, questions: exam.questions.filter((q) => q.level !== '최상') };
-    expect(levelGaps(noTop, marks([1])).advanced).toBeNull();
+    expect(advancedGap(noTop, marks([1]))).toBeNull();
   });
 });
 

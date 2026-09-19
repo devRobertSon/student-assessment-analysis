@@ -14,7 +14,7 @@ import {
   pointsOf,
   resultToCsv,
   DEFAULT_RETAKE_SCALE,
-  levelGaps,
+  advancedGap,
   retakeCheck,
   scoreOf,
   statsForResult,
@@ -104,8 +104,8 @@ export default function GradingPanel({ data, setData }: Props) {
   const retake = exam ? retakeCheck(exam, marks, retakeScale) : null;
   // 다 채점하기 전에는 '통과'라고 단정하지 않는다. 이미 기준을 넘긴 경우만 확정이다.
   const graded = !!exam && answered === exam.questions.length;
-  // 판정과 별개로, 구멍이 기초 쪽인지 심화 쪽인지 가려서 보여 준다.
-  const gaps = exam ? levelGaps(exam, marks) : null;
+  // 재수강 판정과 별개로, 심화가 비었는지는 따로 알아야 한다.
+  const gap = exam ? advancedGap(exam, marks) : null;
   const fullPoints = exam ? exam.questions.reduce((a, q) => a + pointsOf(q), 0) : 0;
   const essayCount = exam ? exam.questions.filter(isEssay).length : 0;
   // 배점이나 서술형이 있는 시험지인지. 둘 다 없으면 한 문항 1점이라 점수 = 문항 수다.
@@ -383,26 +383,16 @@ export default function GradingPanel({ data, setData }: Props) {
                     </span>
                   </div>
                 )}
-                {gaps && (gaps.basic || gaps.advanced) && (
+                {gap && (
                   <div className="gaps">
-                    {(
-                      [
-                        ['기초', gaps.basic, '지난 학기를 다시 봐야 한다'],
-                        ['심화', gaps.advanced, '더 어려운 문제를 줘야 한다'],
-                      ] as const
-                    ).map(
-                      ([label, g, why]) =>
-                        g && (
-                          <div key={label} className={`gap ${g.short ? 'short' : ''}`}>
-                            <b>{label}</b>
-                            <span className="gp-detail">
-                              {g.level} {g.total}문항 중 {g.wrong}개 틀림 · {g.cut}개부터
-                            </span>
-                            <span className="gp-verdict">{g.short ? '미달' : '충족'}</span>
-                            {g.short && <span className="gp-why">{why}</span>}
-                          </div>
-                        )
-                    )}
+                    <div className={`gap ${gap.short ? 'short' : ''}`}>
+                      <b>심화</b>
+                      <span className="gp-detail">
+                        최상 {gap.total}문항 중 {gap.wrong}개 틀림 · {gap.cut}개부터
+                      </span>
+                      <span className="gp-verdict">{gap.short ? '미달' : '충족'}</span>
+                      {gap.short && <span className="gp-why">더 어려운 문제를 줘야 한다</span>}
+                    </div>
                   </div>
                 )}
                 <p className="hint" style={{ marginTop: 12 }}>
