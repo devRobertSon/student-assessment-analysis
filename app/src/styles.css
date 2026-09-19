@@ -849,33 +849,17 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .rp-score em { font-style: normal; font-size: 16px; font-weight: 500; color: var(--navy-pale); }
 .rp-sec-row { display: flex; align-items: baseline; justify-content: space-between; }
 
-/* 학원 기준 재수강 판정 — 채점 화면에만. 리포트에는 안 나간다. */
-.retake {
-  margin-top: 12px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line);
-  display: flex; flex-direction: column; gap: 3px;
+/* 학원 기준 판정 — 채점 화면에만. 리포트에는 안 나간다.
+   불이 꺼져 있다가 기준에 닿으면 켜진다. 숫자는 적지 않는다. 바로 위 점수
+   상자의 점수와 판정 점수가 서로 다른 값이라 나란히 두면 어느 쪽이 학생
+   점수인지 헷갈린다. */
+.verdicts { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict {
+  padding: 7px 14px; border-radius: 999px;
+  font-size: 13px; font-weight: 700;
+  border: 1px solid var(--line); background: var(--fill); color: var(--ink-3);
 }
-.retake.ok { border-color: var(--good-ink); background: #f4fbf4; }
-.retake.no { border-color: var(--bad); background: #fdf5f5; }
-.rt-head { font-size: 11.5px; color: var(--ink-3); }
-.rt-head em { font-style: normal; }
-.retake b { font-size: 16px; }
-.rt-verdict { font-size: 13px; font-weight: 700; }
-.retake.ok .rt-verdict { color: var(--good-ink); }
-.retake.no .rt-verdict { color: var(--bad-ink); }
-
-/* 심화 미달. 재수강 판정과 달리 최상 난이도만 따로 센다 */
-.gaps { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
-.gap {
-  display: grid; grid-template-columns: 32px 1fr auto; align-items: baseline;
-  gap: 4px 8px; padding: 8px 10px; border-radius: 7px;
-  border: 1px solid var(--line); background: var(--fill);
-}
-.gap.short { border-color: var(--bad); background: #fdf5f5; }
-.gap b { font-size: 12.5px; }
-.gp-detail { font-size: 12px; color: var(--ink-3); }
-.gp-verdict { font-size: 12.5px; font-weight: 700; color: var(--ink-3); }
-.gap.short .gp-verdict { color: var(--bad-ink); }
-.gp-why { grid-column: 2 / -1; font-size: 11.5px; color: var(--ink-3); }
+.verdict.on { border-color: var(--bad); background: #fdf5f5; color: var(--bad-ink); }
 
 /* 예상 등급 — 정답률 상자 옆에 붙는다 */
 .rp-grade {

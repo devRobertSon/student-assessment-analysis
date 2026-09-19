@@ -93,8 +93,6 @@ export default function GradingPanel({ data, setData }: Props) {
   // 학원 기준 판정. 리포트에는 안 들어가고 이 화면에서만 본다.
   const retakeScale = data.retakeScale ?? DEFAULT_RETAKE_SCALE;
   const retake = exam ? retakeCheck(exam, marks, retakeScale) : null;
-  // 다 채점하기 전에는 '통과'라고 단정하지 않는다. 이미 기준을 넘긴 경우만 확정이다.
-  const graded = !!exam && answered === exam.questions.length;
   // 재수강 판정과 별개로, 최상 난이도를 얼마나 놓쳤는지는 따로 알아야 한다.
   const gap = exam ? advancedGap(exam, marks) : null;
   const fullPoints = exam ? exam.questions.reduce((a, q) => a + pointsOf(q), 0) : 0;
@@ -309,38 +307,14 @@ export default function GradingPanel({ data, setData }: Props) {
                     ))}
                   </div>
                 )}
-                {retake && (
-                  <div className={`retake ${!retake.pass ? 'no' : graded ? 'ok' : ''}`}>
-                    <span className="rt-head">
-                      학원 기준 <em>{retake.total}문항 채점</em>
-                    </span>
-                    <b>
-                      {retake.wrongBase + retake.wrongTop}개 틀림 · {retake.points}점
-                    </b>
-                    <span className="rt-verdict">
-                      {!retake.pass ? '재수강 권장' : graded ? '통과' : '채점 중'}
-                    </span>
-                    <span className="hint">
-                      표준·상 {retake.wrongBase}×{retake.scale.base} + 최상 {retake.wrongTop}×
-                      {retake.scale.top} · {retake.scale.cut}점부터 재수강
-                    </span>
+                {/* 판정은 켜짐·꺼짐만 보여준다. 점수를 적어 두면 바로 위 점수 상자의
+                    점수와 서로 다른 값이라 어느 쪽이 학생 점수인지 헷갈린다. */}
+                {(retake || gap) && (
+                  <div className="verdicts">
+                    {retake && <span className={`verdict ${!retake.pass ? 'on' : ''}`}>재수강 권장</span>}
+                    {gap && <span className={`verdict ${gap.short ? 'on' : ''}`}>심화 미달</span>}
                   </div>
                 )}
-                {gap && (
-                  <div className="gaps">
-                    <div className={`gap ${gap.short ? 'short' : ''}`}>
-                      <b>심화</b>
-                      <span className="gp-detail">
-                        최상 {gap.total}문항 중 {gap.wrong}개 틀림 · {gap.cut}개부터
-                      </span>
-                      <span className="gp-verdict">{gap.short ? '미달' : '충족'}</span>
-                      {gap.short && <span className="gp-why">더 어려운 문제를 줘야 한다</span>}
-                    </div>
-                  </div>
-                )}
-                <p className="hint" style={{ marginTop: 12 }}>
-                  저장하면 리포트에 바로 반영됩니다. 위 판정은 학원 내부용이라 리포트에 안 나갑니다.
-                </p>
               </div>
 
             </aside>
