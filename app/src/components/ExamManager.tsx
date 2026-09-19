@@ -94,7 +94,7 @@ export default function ExamManager({ data, setData }: Props) {
           </div>
           {/* 표가 화면보다 넓다. 휴대폰에서 칸이 카드 밖으로 삐져나오지 않게 감싼다. */}
           <div className="table-scroll">
-          <table className="assess-table">
+          <table className="assess-table exam-table">
             <thead>
               <tr>
                 <th style={{ width: 34, textAlign: 'center' }}>

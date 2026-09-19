@@ -340,6 +340,14 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 /* 표가 화면보다 넓을 때 카드 안에서 가로로 넘긴다. 없으면 휴대폰에서
    칸이 카드 밖으로 그려진다. */
 .table-scroll { overflow-x: auto; }
+
+/* 시험지 목록은 이름 말고는 다 짧은 값이라 머리글과 값을 함께 가운데로 둔다.
+   머리글만 가운데로 하면 값과 어긋나 보인다. 이름 열(2번째)은 왼쪽 그대로. */
+.assess-table.exam-table th,
+.assess-table.exam-table td { text-align: center; white-space: nowrap; }
+.assess-table.exam-table th:nth-child(2),
+.assess-table.exam-table td:nth-child(2) { text-align: left; white-space: normal; }
+.assess-table.exam-table .ex-files { justify-content: center; }
 .assess-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .assess-table th {
   text-align: left;
