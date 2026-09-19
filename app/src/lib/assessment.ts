@@ -163,49 +163,87 @@ export function gradeFromLevels(levels: TypeStat[], ladder: GradeRung[] = DEFAUL
 }
 
 /**
- * 학원 기준 재수강 판정.
+ * 학원 기준 재수강 판정 — 난이도를 가리지 않고 틀린 개수만 센다.
  *
- * "입학테스트 심화형 30문제 중 5~7문제를 틀리면 해당 학기를 다시 듣는다"는
- * 학원의 실제 규칙을 그대로 옮긴 것이다. 진단평가는 여러 교재에서 문항을
- * 가져왔으므로, 그중 입학 심화형에서 온 문항만 골라 정답률을 본다.
+ * 학원의 실제 규칙은 "입학 TEST 30문제 중 7문제를 틀리면 그 학기를 다시
+ * 듣는다"이다. 진단평가는 그 입학 TEST 보다 쉽다. 입학 TEST 중1-1 을 세어
+ * 보면 30문제 중 표준이 1문제뿐인데(상 17, 최상 12) 진단평가는 표준이
+ * 8문제다. 같은 학생이라도 여기서는 덜 틀린다.
+ *
+ * 난이도 구성으로 환산하면 입학 TEST 에서 7개를 틀리는 학생은 진단평가에서
+ * 4.7~6.2개를 틀린다(어느 난이도를 주로 흘리느냐에 따라). 그래서 5개로 둔다.
+ *
+ * 난이도별 가중치를 두지 않은 데에는 이유가 있다. 난이도는 문항마다 사람이
+ * 매긴 판단값이라 라벨 하나가 흔들리면 판정이 뒤집힌다. 개수만 세면 그 흔들림이
+ * 없고, 학원 규칙과도 같은 모양이라 설명할 것이 없다.
  *
  * 이 판정은 등급과 성격이 다르다. 등급은 전국에서 어디쯤인가이고, 이것은
  * 이 학원이 "다음 학기로 보내도 되는가"를 정하는 내부 기준이다. 훨씬 엄격해서
  * 섞으면 잘하는 학생에게 낮은 등급이 찍힌다. 그래서 리포트에는 넣지 않는다.
  */
-export const DEFAULT_RETAKE_CUT = 77;
-
-/** 입학 심화형에서 온 문항인지. '입학 심화형 (중1-1)' 처럼 뒤에 붙는 말도 받는다. */
-export function isAdvanced(q: ExamQuestion): boolean {
-  return /입학\s*심화형/.test(q.source ?? '');
-}
+export const DEFAULT_RETAKE_MISSES = 5;
 
 export interface RetakeCheck {
-  total: number; // 심화형 문항 수
-  correct: number; // 그중 만점
-  rate: number; // 0~1
+  total: number; // 채점한 문항 수
+  wrong: number; // 그중 만점을 못 받은 문항 수
+  misses: number; // 몇 개부터 재수강인가
   pass: boolean;
 }
 
-/** 시험지에 입학 심화형 문항이 없으면 null. 판정을 지어내지 않는다. */
+/** 아직 채점한 문항이 없으면 null. 판정을 지어내지 않는다. */
 export function retakeCheck(
   exam: Exam,
   marks: Mark[],
-  cut: number = DEFAULT_RETAKE_CUT
+  misses: number = DEFAULT_RETAKE_MISSES
 ): RetakeCheck | null {
-  const adv = exam.questions.filter(isAdvanced);
-  if (adv.length === 0) return null;
-  const nos = new Set(adv.map((q) => q.no));
+  const nos = new Set(exam.questions.map((q) => q.no));
   const mine = marks.filter((m) => nos.has(m.no));
   if (mine.length === 0) return null;
-  const correct = mine.filter(isFullMark).length;
-  const rate = correct / mine.length;
-  return {
-    total: mine.length,
-    correct,
-    rate,
-    pass: rate * 100 >= cut,
+  const wrong = mine.filter((m) => !isFullMark(m)).length;
+  return { total: mine.length, wrong, misses, pass: wrong < misses };
+}
+
+/**
+ * 기초 미달 · 심화 미달을 따로 본다.
+ *
+ * 재수강 판정은 틀린 개수만 세므로 어디가 비었는지는 말해 주지 않는다.
+ * 같은 5개를 틀려도 표준을 흘린 학생과 최상만 못 푼 학생은 처방이 다르다.
+ * 앞은 지난 학기를 다시 봐야 하고, 뒤는 더 어려운 문제를 줘야 한다.
+ *
+ * 학기를 정하는 것은 재수강 판정 쪽이고 이것은 눈길 줄 곳만 가리킨다.
+ * 난이도가 문항마다 사람이 매긴 판단값이라, 라벨이 조금 흔들려도 학생의
+ * 진로가 바뀌지 않도록 일부러 판정과 분리해 두었다.
+ *
+ * 심화 기준이 50%인 근거: 입학 TEST 는 30문제 중 최상이 12문제여서, 학원
+ * 통과선(7개 이하 오답)을 넘으려면 최상 12문제 중 최소 6개를 풀어야 한다.
+ */
+export const BASIC_CUT = 0.8; // 표준 정답률이 이보다 낮으면 기초 미달
+export const ADVANCED_CUT = 0.5; // 최상 정답률이 이보다 낮으면 심화 미달
+
+export interface LevelGap {
+  level: string;
+  total: number;
+  wrong: number;
+  rate: number; // 0~1
+  short: boolean; // 미달인가
+}
+
+/** 그 난이도의 문항을 아직 채점하지 않았으면 그 자리는 null. */
+export function levelGaps(
+  exam: Exam,
+  marks: Mark[]
+): { basic: LevelGap | null; advanced: LevelGap | null } {
+  const pick = (level: string, cut: number): LevelGap | null => {
+    const nos = new Set(
+      exam.questions.filter((q) => q.level?.trim() === level).map((q) => q.no)
+    );
+    const mine = marks.filter((m) => nos.has(m.no));
+    if (mine.length === 0) return null;
+    const wrong = mine.filter((m) => !isFullMark(m)).length;
+    const rate = (mine.length - wrong) / mine.length;
+    return { level, total: mine.length, wrong, rate, short: rate < cut };
   };
+  return { basic: pick('표준', BASIC_CUT), advanced: pick('최상', ADVANCED_CUT) };
 }
 
 export interface AssessmentData {
@@ -216,8 +254,8 @@ export interface AssessmentData {
   dismissed?: string[];
   /** 예상 등급 사다리. 안 적었으면 DEFAULT_GRADE_LADDER 를 쓴다. */
   gradeLadder?: GradeRung[];
-  /** 재수강 판정 기준(심화형 정답률 %). 안 적었으면 DEFAULT_RETAKE_CUT. */
-  retakeCut?: number;
+  /** 재수강 판정 기준(몇 개부터 재수강인가). 안 적었으면 DEFAULT_RETAKE_MISSES. */
+  retakeMisses?: number;
 }
 
 const KEY = 'sda.assess.v1';
@@ -236,7 +274,9 @@ export function loadAssessment(): AssessmentData {
       exams: Array.isArray(p.exams) ? p.exams : [],
       results: Array.isArray(p.results) ? p.results : [],
       dismissed: Array.isArray(p.dismissed) ? p.dismissed : [],
-      retakeCut: typeof p.retakeCut === 'number' ? p.retakeCut : undefined,
+      // 이름을 retakeCut(정답률 %)에서 retakeMisses(오답 개수)로 바꿨다.
+      // 예전에 저장된 77 같은 값을 그대로 읽으면 '77개부터 재수강'이 되므로 버린다.
+      retakeMisses: typeof p.retakeMisses === 'number' ? p.retakeMisses : undefined,
       gradeLadder:
         Array.isArray(p.gradeLadder) && p.gradeLadder.length === DEFAULT_GRADE_LADDER.length
           ? p.gradeLadder

@@ -13,7 +13,8 @@ import {
   parseGradingCsv,
   pointsOf,
   resultToCsv,
-  DEFAULT_RETAKE_CUT,
+  DEFAULT_RETAKE_MISSES,
+  levelGaps,
   retakeCheck,
   scoreOf,
   statsForResult,
@@ -99,8 +100,12 @@ export default function GradingPanel({ data, setData }: Props) {
   const score = scoreOf(marks);
   const stats = exam ? statsForResult(exam, marks, axis) : [];
   // 학원 기준 판정. 리포트에는 안 들어가고 이 화면에서만 본다.
-  const retakeCut = data.retakeCut ?? DEFAULT_RETAKE_CUT;
-  const retake = exam ? retakeCheck(exam, marks, retakeCut) : null;
+  const retakeMisses = data.retakeMisses ?? DEFAULT_RETAKE_MISSES;
+  const retake = exam ? retakeCheck(exam, marks, retakeMisses) : null;
+  // 다 채점하기 전에는 '통과'라고 단정하지 않는다. 이미 기준을 넘긴 경우만 확정이다.
+  const graded = !!exam && answered === exam.questions.length;
+  // 판정과 별개로, 구멍이 기초 쪽인지 심화 쪽인지 가려서 보여 준다.
+  const gaps = exam ? levelGaps(exam, marks) : null;
   const fullPoints = exam ? exam.questions.reduce((a, q) => a + pointsOf(q), 0) : 0;
   const essayCount = exam ? exam.questions.filter(isEssay).length : 0;
   // 배점이나 서술형이 있는 시험지인지. 둘 다 없으면 한 문항 1점이라 점수 = 문항 수다.
@@ -362,15 +367,37 @@ export default function GradingPanel({ data, setData }: Props) {
                   </div>
                 )}
                 {retake && (
-                  <div className={`retake ${retake.pass ? 'ok' : 'no'}`}>
+                  <div className={`retake ${!retake.pass ? 'no' : graded ? 'ok' : ''}`}>
                     <span className="rt-head">
-                      학원 기준 <em>심화형 {retake.total}문항</em>
+                      학원 기준 <em>{retake.total}문항 채점</em>
                     </span>
-                    <b>
-                      {retake.correct}/{retake.total} · {Math.round(retake.rate * 100)}%
-                    </b>
-                    <span className="rt-verdict">{retake.pass ? '통과' : '재수강 권장'}</span>
-                    <span className="hint">기준 {retakeCut}%</span>
+                    <b>{retake.wrong}개 틀림</b>
+                    <span className="rt-verdict">
+                      {!retake.pass ? '재수강 권장' : graded ? '통과' : '채점 중'}
+                    </span>
+                    <span className="hint">{retake.misses}개부터 재수강</span>
+                  </div>
+                )}
+                {gaps && (gaps.basic || gaps.advanced) && (
+                  <div className="gaps">
+                    {(
+                      [
+                        ['기초', gaps.basic, '지난 학기를 다시 봐야 한다'],
+                        ['심화', gaps.advanced, '더 어려운 문제를 줘야 한다'],
+                      ] as const
+                    ).map(
+                      ([label, g, why]) =>
+                        g && (
+                          <div key={label} className={`gap ${g.short ? 'short' : ''}`}>
+                            <b>{label}</b>
+                            <span className="gp-detail">
+                              {g.level} {g.total}문항 중 {g.wrong}개 틀림
+                            </span>
+                            <span className="gp-verdict">{g.short ? '미달' : '충족'}</span>
+                            {g.short && <span className="gp-why">{why}</span>}
+                          </div>
+                        )
+                    )}
                   </div>
                 )}
                 <p className="hint" style={{ marginTop: 12 }}>

@@ -10,6 +10,7 @@ import {
   paperHref,
   DEFAULT_GRADE_LADDER,
   gradeFromLevels,
+  levelGaps,
   retakeCheck,
   parseGradingCsv,
   pointsOf,
@@ -234,35 +235,69 @@ describe('문제지 · 해설 · 출제표', () => {
   });
 });
 
-describe('학원 기준 재수강 판정', () => {
-  const mk = (n: number, src: string) => ({ no: n, type: '계산', points: 1, source: src });
-  const exam: Exam = {
+const lvExam = (): Exam => {
+  const mk = (n: number, level: string) => ({ no: n, type: '계산', points: 1, level });
+  return {
     id: 'e', title: 't', subject: '수학', date: '',
     questions: [
-      ...[1, 2, 3, 4].map((n) => mk(n, '입학 심화형')),
-      ...[5, 6].map((n) => mk(n, '응용')),
+      ...[1, 2, 3, 4, 5].map((n) => mk(n, '표준')),
+      ...[6, 7, 8, 9].map((n) => mk(n, '상')),
+      ...[10, 11, 12, 13].map((n) => mk(n, '최상')),
     ],
   };
+};
+
+describe('학원 기준 재수강 판정', () => {
+  const exam = lvExam();
   const marks = (wrong: number[]) =>
     exam.questions.map((q) => makeMark(q, wrong.includes(q.no) ? 0 : 1));
 
-  it('입학 심화형 문항만 세어 판정한다', () => {
-    // 4문항 중 1개 틀림 = 75% < 77% → 재수강
-    const r = retakeCheck(exam, marks([1]))!;
-    expect(r).toMatchObject({ total: 4, correct: 3, pass: false });
-    expect(r.rate).toBeCloseTo(0.75);
-    // 응용 문항을 틀린 것은 판정에 안 들어간다
-    expect(retakeCheck(exam, marks([5, 6]))!).toMatchObject({ total: 4, correct: 4, pass: true });
+  it('난이도를 가리지 않고 틀린 개수만 센다', () => {
+    // 최상만 4개를 틀리든 표준만 4개를 틀리든 판정은 같다
+    expect(retakeCheck(exam, marks([10, 11, 12, 13]))!).toMatchObject({ wrong: 4, pass: true });
+    expect(retakeCheck(exam, marks([1, 2, 3, 4]))!).toMatchObject({ wrong: 4, pass: true });
+    // 5개부터 재수강
+    expect(retakeCheck(exam, marks([1, 2, 3, 4, 5]))!).toMatchObject({ wrong: 5, pass: false });
   });
 
   it('기준을 바꾸면 판정도 바뀐다', () => {
-    expect(retakeCheck(exam, marks([1]), 70)!.pass).toBe(true);
-    expect(retakeCheck(exam, marks([1]), 80)!.pass).toBe(false);
+    expect(retakeCheck(exam, marks([1, 2, 3]), 3)!.pass).toBe(false);
+    expect(retakeCheck(exam, marks([1, 2, 3]), 4)!.pass).toBe(true);
   });
 
-  it('입학 심화형 문항이 없으면 판정하지 않는다', () => {
-    const plain: Exam = { ...exam, questions: [mk(1, '응용'), mk(2, '심화')] };
-    expect(retakeCheck(plain, [makeMark(plain.questions[0], 1)])).toBeNull();
+  it('채점한 문항이 없으면 판정하지 않는다', () => {
+    expect(retakeCheck(exam, [])).toBeNull();
+  });
+});
+
+describe('기초 미달 · 심화 미달', () => {
+  const exam = lvExam();
+  const marks = (wrong: number[]) =>
+    exam.questions.map((q) => makeMark(q, wrong.includes(q.no) ? 0 : 1));
+
+  it('표준은 80%, 최상은 50%를 밑돌면 미달', () => {
+    // 표준 5문항 중 1개 틀림 = 80% → 기준에 걸치므로 충족
+    expect(levelGaps(exam, marks([1])).basic).toMatchObject({ wrong: 1, short: false });
+    expect(levelGaps(exam, marks([1, 2])).basic).toMatchObject({ wrong: 2, short: true });
+    // 최상 4문항 중 2개 틀림 = 50% → 충족
+    expect(levelGaps(exam, marks([10, 11])).advanced).toMatchObject({ short: false });
+    expect(levelGaps(exam, marks([10, 11, 12])).advanced).toMatchObject({ short: true });
+  });
+
+  it('두 미달은 서로 독립이다', () => {
+    // 최상을 전부 틀린 학생 — 기초는 멀쩡하고 심화만 비었다
+    const top = levelGaps(exam, marks([10, 11, 12, 13]));
+    expect(top.basic!.short).toBe(false);
+    expect(top.advanced!.short).toBe(true);
+    // 표준만 흘린 학생 — 정반대
+    const base = levelGaps(exam, marks([1, 2, 3]));
+    expect(base.basic!.short).toBe(true);
+    expect(base.advanced!.short).toBe(false);
+  });
+
+  it('그 난이도를 채점하지 않았으면 그 자리는 null', () => {
+    const noTop: Exam = { ...exam, questions: exam.questions.filter((q) => q.level !== '최상') };
+    expect(levelGaps(noTop, marks([1])).advanced).toBeNull();
   });
 });
 

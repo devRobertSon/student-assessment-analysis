@@ -799,6 +799,20 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .retake.ok .rt-verdict { color: var(--good-ink); }
 .retake.no .rt-verdict { color: var(--bad-ink); }
 
+/* 기초·심화 미달 — 재수강 판정과 달리 '어디가 비었나'를 가리킨다 */
+.gaps { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.gap {
+  display: grid; grid-template-columns: 32px 1fr auto; align-items: baseline;
+  gap: 4px 8px; padding: 8px 10px; border-radius: 7px;
+  border: 1px solid var(--line); background: var(--fill);
+}
+.gap.short { border-color: var(--bad); background: #fdf5f5; }
+.gap b { font-size: 12.5px; }
+.gp-detail { font-size: 12px; color: var(--ink-3); }
+.gp-verdict { font-size: 12.5px; font-weight: 700; color: var(--ink-3); }
+.gap.short .gp-verdict { color: var(--bad-ink); }
+.gp-why { grid-column: 2 / -1; font-size: 11.5px; color: var(--ink-3); }
+
 /* 예상 등급 — 정답률 상자 옆에 붙는다 */
 .rp-grade {
   width: 104px; background: var(--fill); border: 1px solid var(--line); border-radius: 6px;
