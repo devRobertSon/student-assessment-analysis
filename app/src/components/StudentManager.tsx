@@ -13,7 +13,7 @@ import {
   todayStr,
   upsertStudents,
 } from '../lib/assessment';
-import { rateTag } from './TypeRadar';
+import { rateTag, STEADY } from './TypeRadar';
 import TypeRadar from './TypeRadar';
 import TypeBars from './TypeBars';
 import ConfirmDialog from './ConfirmDialog';
@@ -75,6 +75,8 @@ export default function StudentManager({
     [selectedId, data.exams, studentResults]
   );
   const total = scoreOf(studentResults.flatMap((r) => r.marks));
+  // 선생님이 보는 화면이라 자리 잡은 쪽과 손봐야 하는 쪽을 함께 둔다.
+  const strongCount = stats.filter((s) => s.rate >= STEADY).length;
   const weakCount = stats.filter((s) => s.rate < 0.5).length;
   const lastExam = studentResults.length
     ? data.exams.find((e) => e.id === studentResults[studentResults.length - 1].examId)
@@ -287,6 +289,12 @@ export default function StudentManager({
                     <div>
                       <span className="hint">전체 정답률</span>
                       <b>{Math.round(total.rate * 100)}%</b>
+                    </div>
+                    <div>
+                      <span className="hint">강점 유형</span>
+                      <b>
+                        {strongCount}/{stats.length}
+                      </b>
                     </div>
                     <div>
                       <span className="hint">보완 유형</span>

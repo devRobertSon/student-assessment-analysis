@@ -257,14 +257,14 @@ describe('학원 기준 재수강 판정', () => {
     expect(retakeCheck(exam, marks([1, 2, 3, 4, 5]))!).toMatchObject({ points: 40, pass: false });
   });
 
-  it('최상은 8개부터 재수강 — 일곱 개까지는 봐 준다', () => {
+  it('최상은 8개부터 재수강. 일곱 개까지는 봐 준다', () => {
     expect(retakeCheck(exam, marks([23, 24, 25, 26, 27, 28, 29]))!)
       .toMatchObject({ wrongTop: 7, points: 35, pass: true });
     expect(retakeCheck(exam, marks([23, 24, 25, 26, 27, 28, 29, 30]))!)
       .toMatchObject({ wrongTop: 8, points: 40, pass: false });
   });
 
-  it('섞여 틀리면 점수를 더해서 본다 — 개수가 적어도 쉬운 쪽이 무겁다', () => {
+  it('섞여 틀리면 점수를 더해서 본다. 개수가 적어도 쉬운 쪽이 무겁다', () => {
     // 6개를 틀렸어도 넷이 최상이면 36점이라 통과
     expect(retakeCheck(exam, marks([1, 2, 23, 24, 25, 26]))!)
       .toMatchObject({ wrongBase: 2, wrongTop: 4, points: 36, pass: true });
