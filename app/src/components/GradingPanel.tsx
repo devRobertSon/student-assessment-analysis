@@ -263,7 +263,7 @@ export default function GradingPanel({ data, setData }: Props) {
                   </span>
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--navy-soft)', marginTop: 5 }}>
-                  만점 {score.correct}/{exam.questions.length}문항 · 전체 {fmtPoints(fullPoints)}점
+                  O {score.correct}/{exam.questions.length}문항 · 전체 {fmtPoints(fullPoints)}점
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--navy-soft)', marginTop: 3 }}>
                   {answered === exam.questions.length

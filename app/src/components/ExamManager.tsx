@@ -72,7 +72,7 @@ export default function ExamManager({ data, setData }: Props) {
             const cnt = data.results.filter((r) => gone.has(r.examId)).length;
             return cnt
               ? `채점 결과 ${cnt}건도 함께 지워집니다. 되돌릴 수 없습니다.`
-              : '되돌릴 수 없습니다. 저장소에 CSV가 남아 있어도 다시 들어오지 않습니다.';
+              : '되돌릴 수 없습니다. 다시 보려면 관리자에게 등록을 요청해야 합니다.';
           })()}
           onYes={doRemove}
           onNo={() => setPending(null)}

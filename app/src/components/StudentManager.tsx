@@ -225,7 +225,7 @@ export default function StudentManager({
       <div className="main">
         {!student ? (
           <div className="assess-card empty-state">
-            <p className="muted">왼쪽에서 학생을 선택하면 진단 결과가 표시됩니다.</p>
+            <p className="muted">왼쪽에서 학생을 고르면 진단 결과가 나옵니다.</p>
           </div>
         ) : (
           <>
@@ -287,7 +287,7 @@ export default function StudentManager({
             <div className="assess-card">
               <div className="stu-info-head">
                 <h3>학생 정보</h3>
-                <span className="hint">적어두면 상담 카드에 자동으로 채워집니다. 비워두면 인쇄 시 빈칸으로 나옵니다.</span>
+                <span className="hint">적어두면 상담 카드에 자동으로 채워집니다. 비워두면 인쇄할 때 빈칸으로 나옵니다.</span>
               </div>
 
               <div className="field-grid">
@@ -352,7 +352,7 @@ export default function StudentManager({
                     <tr>
                       <th>과목</th>
                       <th>
-                        현재 진도 <span className="rp-eg">(예: 중 3-2, 대수)</span>
+                        현재 진도 <span className="rp-eg">(예: 중3-2, 대수)</span>
                       </th>
                       <th>
                         학습 내용 <span className="rp-eg">(예: 중등 - 쎈)</span>
@@ -441,7 +441,7 @@ export default function StudentManager({
 
             <div className="assess-card grow">
               {studentResults.length === 0 ? (
-                <p className="muted">채점된 시험이 없습니다. [채점 입력]에서 O/X를 입력하면 여기에 결과가 표시됩니다.</p>
+                <p className="muted">채점된 시험이 없습니다. [채점 입력]에서 O/X를 누르면 여기에 결과가 나옵니다.</p>
               ) : (
                 <>
                   <h3>유형별 정답률</h3>
