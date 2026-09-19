@@ -1,4 +1,4 @@
-// src/lib/cloud.ts — 구글 로그인 + Firestore 문서 실시간 동기화 훅
+// src/lib/cloud.ts: 구글 로그인 + Firestore 문서 실시간 동기화 훅
 import { useEffect, useRef, useState } from 'react';
 import {
   GoogleAuthProvider,

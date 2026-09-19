@@ -3,7 +3,7 @@ import { ATTACH_KINDS, ATTACH_LABEL, AttachKind, Exam, paperHref } from '../lib/
 import PaperPicker from './PaperPicker';
 
 /**
- * 시험지 한 줄의 인쇄물 칸 — 문제지 · 해설 · 출제표.
+ * 시험지 한 줄의 인쇄물 칸. 문제지 · 해설 · 출제표.
  *
  * 붙어 있으면 내려받기, 없으면 고르기다. 값은 사이트의 papers/ 에 올려 둔
  * 파일 이름뿐이라 시험지와 함께 동기화되고 어느 기기에서나 그대로 열린다.

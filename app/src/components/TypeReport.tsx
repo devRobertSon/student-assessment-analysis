@@ -218,7 +218,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
       .filter((el) => el !== sec && el !== moved)
       .reduce((a, el) => a + H(el), 0);
 
-    // 좁은 배치의 1쪽은 여섯 덩이 — 레터헤드·제목·학생·유형·이동그룹·푸터. 사이는 다섯 칸.
+    // 좁은 배치의 1쪽은 여섯 칸이다. 레터헤드·제목·학생·유형·이동그룹·푸터. 사이는 다섯 칸.
     const whole =
       stable + narrowSecH + H(moved) + gap * 5 + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
     setSplitNotes(whole > PAGE_H);
@@ -403,7 +403,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
           <div className="assess-card no-print report-note-edit">
             <h3>인쇄 전 입력</h3>
             <p className="hint" style={{ marginBottom: 12 }}>
-              여기에 적은 내용이 아래 미리보기와 PDF에 그대로 들어갑니다. (저장되지 않는 임시 입력 — 학생을 바꾸면 비워집니다)
+              여기에 적은 내용이 아래 미리보기와 PDF에 그대로 들어갑니다. (저장되지 않는 임시 입력입니다. 학생을 바꾸면 비워집니다)
             </p>
 
             <div className="edit-grid">

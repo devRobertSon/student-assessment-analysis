@@ -29,7 +29,7 @@ export default function TypeRadar({ stats }: { stats: TypeStat[] }) {
   // 위아래 라벨이 두 줄이라 아래가 더 길다. 그만큼 중심을 위로 올려 둔다.
   const cy = 186;
   const n = stats.length;
-  // 각 유형이 차지하는 각도를 문제 수에 비례하게 — 단, 균등 배치와 섞어(BLEND)
+  // 각 유형이 차지하는 각도를 문제 수에 비례하게 잡되, 균등 배치와 섞어(BLEND)
   // 한 유형이 각을 독차지해 도형이 지나치게 찌그러지는 것을 막는다.
   const totalQ = stats.reduce((sum, s) => sum + s.total, 0) || 1;
   const BLEND = 0.5;

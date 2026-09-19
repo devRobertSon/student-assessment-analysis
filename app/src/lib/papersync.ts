@@ -3,7 +3,7 @@
 // 시험지는 저장소의 papers/ 에서만 들어온다.
 //
 // app/public/papers/ 에 <이름>_시험지.csv 를 넣고 push 하면 다음 배포부터
-// 앱의 시험지 목록에 나타난다. 앱에서 올리는 길은 없다 — 시험지가 늘 저장소와
+// 앱의 시험지 목록에 나타난다. 앱에서 올리는 길은 없다. 시험지가 늘 저장소와
 // 같은 상태가 되고, 어느 기기에서 열어도 똑같이 보인다.
 //
 // 목록은 빌드 때 만든 papers/index.json에서 나온다(scripts/papers-manifest.mjs).
@@ -23,7 +23,7 @@ async function examFromSheet(file: string): Promise<Exam | null> {
       const res = examQuestionsFromCsv(await r.text());
       if (res.questions.length > 0) {
         made = {
-          id: '', // 붙일 때 정한다 — 이미 있는 시험지면 그 id를 이어 쓴다
+          id: '', // 붙일 때 정한다. 이미 있는 시험지면 그 id를 이어 쓴다
           title: (res.title || file.replace(/_?시험지\.csv$/i, '').replace(/_/g, ' ')).trim(),
           subject: res.subject || '수학',
           date: todayStr(),
@@ -49,7 +49,7 @@ const shape = (e: Exam) => JSON.stringify([e.title, e.subject, e.questions, e.fi
  * - 있던 시험지는 문항·인쇄물을 저장소 내용으로 맞춘다 (id는 그대로 두어
  *   이미 저장된 채점 결과가 끊기지 않게 한다)
  * - 손으로 지운 시험지(dismissed)는 다시 넣지 않는다
- * - 저장소에서 빠진 시험지는 지우지 않는다 — 채점 결과가 딸려 있을 수 있다
+ * - 저장소에서 빠진 시험지는 지우지 않는다. 채점 결과가 딸려 있을 수 있다
  *
  * 바뀐 게 없으면 null. 그래야 열 때마다 쓸데없이 저장·동기화되지 않는다.
  */

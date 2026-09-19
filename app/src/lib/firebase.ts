@@ -1,9 +1,9 @@
-// src/lib/firebase.ts — Firebase 초기화(구글 로그인 + Firestore 실시간 동기화)
+// src/lib/firebase.ts: Firebase 초기화(구글 로그인 + Firestore 실시간 동기화)
 //
 // firebaseConfig 값은 공개용 식별자라 저장소에 그대로 두어도 됩니다.
 // 실제 접근 통제는 Firestore 보안 규칙(허용 이메일 목록)으로 합니다. README 참고.
 //
-// 프로젝트: student-assessment-analysis (이 앱 전용 — 시간표 앱의 sodam-alpha와 별개)
+// 프로젝트: student-assessment-analysis (이 앱 전용. 시간표 앱의 sodam-alpha와 별개)
 import { initializeApp } from 'firebase/app';
 import { Auth, getAuth } from 'firebase/auth';
 import {

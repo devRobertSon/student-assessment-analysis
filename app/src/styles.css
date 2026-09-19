@@ -1,4 +1,4 @@
-/* styles.css — 진단평가 분석 디자인 시스템
+/* styles.css: 진단평가 분석 디자인 시스템
    색·간격·타이포는 여기 토큰에서만 정의하고, 컴포넌트는 클래스만 쓴다. */
 
 :root {
@@ -21,7 +21,7 @@
   --cream-line: #e5e1d8;
   --cream-ink: #a99f8c;
 
-  /* 상태 — 색만으로 뜻을 전하지 않는다. 반드시 글자 라벨과 함께 쓸 것 */
+  /* 상태: 색만으로 뜻을 전하지 않는다. 반드시 글자 라벨과 함께 쓸 것 */
   --good: #0ca30c;
   --warn: #fab219;
   --bad: #d03b3b;
@@ -204,7 +204,7 @@ button.del { font-size: 15px; color: #a0a5af; background: none; border: none; pa
 button.del:hover { color: var(--bad-ink); background: none; }
 button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; }
 
-/* 시험지 목록의 인쇄물 칸 — 붙어 있으면 내려받기, 없으면 올리기. */
+/* 시험지 목록의 인쇄물 칸. 붙어 있으면 내려받기, 없으면 올리기. */
 /* 세 칩이 한 줄에 들어갈 만큼은 늘 확보한다. 표가 좁아 접히면 줄이 두 겹이 된다. */
 .ex-files { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; min-width: 236px; }
 .file-chip { display: inline-flex; align-items: stretch; }
@@ -363,7 +363,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .ox-btns button { width: 34px; height: 30px; padding: 0; font-size: 14px; font-weight: 600; color: var(--ink-3); border-radius: 6px; }
 .ox-o.on { color: #fff; background: var(--navy); border-color: var(--navy); }
 .ox-x.on { color: #fff; background: var(--bad-ink); border-color: var(--bad-ink); }
-/* 서술형 — 색만으로 구분하지 않도록 '서술형' 글자 배지를 함께 단다 */
+/* 서술형: 색만으로 구분하지 않도록 '서술형' 글자 배지를 함께 단다 */
 .ox-item .t { display: flex; align-items: center; gap: 7px; }
 .q-lv { flex-shrink: 0; margin-left: 4px; padding: 1px 5px; font-size: 10px; font-weight: 700; color: #5F5E5A; background: #f1efe8; border-radius: 4px; }
 .q-fmt { flex-shrink: 0; padding: 2px 6px; font-size: 10px; font-weight: 700; color: var(--navy); background: #eaf0fb; border: 1px solid #d3deef; border-radius: 4px; }
@@ -696,7 +696,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .grade-side .assess-card { margin-top: 0; }
 .grade-tools { margin: 14px 0; padding-bottom: 14px; border-bottom: 1px solid var(--line-2); }
 .grade-save { padding: 13px 0; font-size: 15px; }
-/* 집계 축 전환 — 유형 / 단원 / 난이도 */
+/* 집계 축 전환: 유형 / 단원 / 난이도 */
 .tally-head { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; }
 .tally-head h3 { margin: 0; }
 .axis-tabs { display: flex; gap: 2px; margin-left: auto; padding: 2px; background: #f2f4f7; border-radius: 7px; }
@@ -750,7 +750,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
   display: flex; align-items: center;
 }
 .rp-date { display: inline-flex; align-items: baseline; white-space: nowrap; }
-/* 20[   ]년[   ]월[   ]일 — 숫자를 적을 빈 칸. */
+/* 20[   ]년[   ]월[   ]일. 숫자를 적을 빈 칸. */
 .rp-gap { display: inline-block; width: 38px; }
 .rp-line-checks { gap: 14px; }
 .rp-memo-box {
@@ -865,7 +865,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 /* 줄바꿈하면 어색한 짧은 나열에만 붙인다 */
 .nowrap { white-space: nowrap; }
 
-/* 리포트 — 난이도는 섹션 제목 줄에 넣어 세로 공간을 쓰지 않는다 */
+/* 리포트: 난이도는 섹션 제목 줄에 넣어 세로 공간을 쓰지 않는다 */
 .rp-levels { display: inline-flex; align-items: baseline; gap: 2px; line-height: 1.15; }
 .rp-lv { display: inline-flex; align-items: baseline; gap: 4px; padding: 0 7px; border-left: 1px solid var(--line); }
 .rp-lv:first-child { border-left: 0; padding-left: 0; }

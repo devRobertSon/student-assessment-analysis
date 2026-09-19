@@ -1,4 +1,4 @@
-// Firestore 보안 규칙 — Firebase 콘솔 → Firestore Database → 규칙 에 붙여넣고 [게시]
+// Firestore 보안 규칙: Firebase 콘솔 → Firestore Database → 규칙 에 붙여넣고 [게시]
 //
 // firebaseConfig는 공개 식별자라 누구나 볼 수 있습니다.
 // 실제 접근 통제는 전적으로 이 규칙이 담당하므로, 허용 이메일을 정확히 관리해야 합니다.

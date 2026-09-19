@@ -1,17 +1,17 @@
-// src/lib/assessment.ts — 진단평가 데이터(학생·시험지·채점) + CSV 임포트 + 집계
+// src/lib/assessment.ts: 진단평가 데이터(학생·시험지·채점) + CSV 임포트 + 집계
 // 저장: localStorage 단일 키 + JSON 백업
 // 채점 방식이 갈린다. 객관식은 O/X, 서술형은 0점~배점 사이의 부분점수를 준다.
 export type QFormat = '객관식' | '서술형';
 
 export interface ExamQuestion {
   no: number;
-  type: string; // 유형 — 무엇을 하다 막히는가 (행동영역)
+  type: string; // 유형. 어떤 능력에서 막히는지 (행동영역)
   format?: QFormat; // 없으면 객관식
   answer?: string;
   points?: number;
   // 아래 넷은 선택이다. 적어 두면 유형 말고 다른 축으로도 집계된다.
-  unit?: string; // 단원 — 무엇을 안 배웠는가
-  level?: string; // 난이도 — 어디서 멈추는가 (표준·상·최상)
+  unit?: string; // 단원. 어느 단원을 안 배웠는지
+  level?: string; // 난이도. 어느 난이도부터 틀리는지 (표준·상·최상)
   source?: string; // 출처 교재
   sourceNo?: string; // 그 교재에서의 문항 번호
 }
@@ -397,7 +397,7 @@ export function parseStudentsCsv(text: string): { drafts: StudentDraft[]; errors
   return { drafts, errors };
 }
 
-// 이름 기준 업서트(있으면 갱신, 없으면 추가) — 채점 결과 보존
+// 이름 기준 업서트(있으면 갱신, 없으면 추가). 채점 결과는 보존한다
 export function upsertStudents(
   data: AssessmentData,
   drafts: StudentDraft[]
@@ -541,7 +541,7 @@ function finishStats(acc: Map<string, TypeAcc>, order?: string[]): TypeStat[] {
     rate: a.points ? a.earned / a.points : 0,
   }));
   if (!order) {
-    // 유형은 약한 것부터 — 리포트의 레이더·막대가 이 순서를 그대로 쓴다
+    // 유형은 약한 것부터. 리포트의 레이더·막대가 이 순서를 그대로 쓴다
     return rows.sort((a, b) => a.rate - b.rate || b.total - a.total);
   }
   const rank = new Map(order.map((k, i) => [k, i]));
@@ -550,9 +550,9 @@ function finishStats(acc: Map<string, TypeAcc>, order?: string[]): TypeStat[] {
 
 // ── 집계 축 ──────────────────────────────────────────────
 // 한 시험에서 세 가지를 읽는다.
-//   유형   무엇을 하다 막히는가   — 약한 순
-//   단원   무엇을 안 배웠는가     — 시험지에 나온 순(교육과정 순)
-//   난이도 어디서 멈추는가        — 표준 → 상 → 최상
+//   유형   어떤 능력에서 막히는지     약한 순
+//   단원   어느 단원을 안 배웠는지   시험지에 나온 순(교육과정 순)
+//   난이도 어느 난이도부터 틀리는지 표준 → 상 → 최상
 export type Axis = 'type' | 'unit' | 'level';
 
 const LEVEL_ORDER = ['표준', '상', '최상'];
@@ -600,13 +600,13 @@ export function statsCumulative(exams: Exam[], results: Result[], axis: Axis = '
   return finishStats(acc, orderFor(used, axis));
 }
 
-/** 그 축을 쓸 수 있는 시험지인지 — 단원·난이도를 안 적었으면 탭을 숨긴다. */
+/** 그 축을 쓸 수 있는 시험지인지. 단원·난이도를 안 적었으면 탭을 숨긴다. */
 export function hasAxis(exam: Exam, axis: Axis): boolean {
   return exam.questions.some((q) => keysOf(q, axis).length > 0);
 }
 
 // 등록된 시험지들에 실제로 등장하는 문항 유형의 가짓수.
-// 홈 화면의 '분석 유형' 숫자 — 유형 분류를 바꿔도 이 값이 저절로 따라온다.
+// 홈 화면의 '분석 유형' 숫자. 유형 분류를 바꿔도 이 값이 저절로 따라온다.
 export function countTypes(exams: Exam[]): number {
   const seen = new Set<string>();
   for (const e of exams) for (const q of e.questions) for (const t of splitTypes(q.type)) seen.add(t);

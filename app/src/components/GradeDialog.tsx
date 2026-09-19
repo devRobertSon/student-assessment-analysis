@@ -8,7 +8,7 @@ type Cell = number | null;
  *
  * 아래 표에서도 채점할 수 있지만 30문항을 보려면 화면을 내려야 한다.
  * 여기서는 O / X 를 누르면 바로 다음 문항으로 넘어가므로 화면을 움직이지
- * 않아도 된다. 키보드로도 같다 — O·X·숫자·Enter.
+ * 않아도 된다. 키보드로도 같다. O·X·숫자·Enter.
  */
 export default function GradeDialog({
   exam,

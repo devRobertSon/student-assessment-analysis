@@ -10,7 +10,7 @@ import { logoUrl } from '../lib/brand';
 const MARK_W = 1586 / 3378; // 0.4695
 const CENTER_X = (923 + 2508) / 2 / 3378; // 0.5078
 const CENTER_Y = (602 + 2150) / 2 / 3378; // 0.4073
-const FILL = 0.9; // 가장자리 여백 — 반올림으로 1px 잘리는 것까지 방지
+const FILL = 0.9; // 가장자리 여백. 반올림으로 1px 잘리는 것까지 방지
 
 export default function Logo({ size = 32 }: { size?: number }) {
   if (logoUrl) {
