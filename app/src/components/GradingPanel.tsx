@@ -13,6 +13,8 @@ import {
   parseGradingCsv,
   pointsOf,
   resultToCsv,
+  DEFAULT_RETAKE_CUT,
+  retakeCheck,
   scoreOf,
   statsForResult,
   todayStr,
@@ -96,6 +98,9 @@ export default function GradingPanel({ data, setData }: Props) {
   const answered = marks.length;
   const score = scoreOf(marks);
   const stats = exam ? statsForResult(exam, marks, axis) : [];
+  // 학원 기준 판정. 리포트에는 안 들어가고 이 화면에서만 본다.
+  const retakeCut = data.retakeCut ?? DEFAULT_RETAKE_CUT;
+  const retake = exam ? retakeCheck(exam, marks, retakeCut) : null;
   const fullPoints = exam ? exam.questions.reduce((a, q) => a + pointsOf(q), 0) : 0;
   const essayCount = exam ? exam.questions.filter(isEssay).length : 0;
   // 배점이나 서술형이 있는 시험지인지. 둘 다 없으면 한 문항 1점이라 점수 = 문항 수다.
@@ -356,8 +361,22 @@ export default function GradingPanel({ data, setData }: Props) {
                     ))}
                   </div>
                 )}
+                {retake && (
+                  <div className={`retake ${retake.pass ? 'ok' : 'no'}`}>
+                    <span className="rt-head">
+                      학원 기준 <em>심화형 {retake.total}문항</em>
+                    </span>
+                    <b>
+                      {retake.correct}/{retake.total} · {Math.round(retake.rate * 100)}%
+                    </b>
+                    <span className="rt-verdict">{retake.pass ? '통과' : '재수강 권장'}</span>
+                    <span className="hint">
+                      기준 {retakeCut}% · 한 문제 {retake.perQuestion}%
+                    </span>
+                  </div>
+                )}
                 <p className="hint" style={{ marginTop: 12 }}>
-                  저장하면 리포트에 바로 반영됩니다.
+                  저장하면 리포트에 바로 반영됩니다. 위 판정은 학원 내부용이라 리포트에 안 나갑니다.
                 </p>
               </div>
 

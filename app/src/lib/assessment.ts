@@ -162,6 +162,55 @@ export function gradeFromLevels(levels: TypeStat[], ladder: GradeRung[] = DEFAUL
   return ladder.length + 1;
 }
 
+/**
+ * 학원 기준 재수강 판정.
+ *
+ * "입학테스트 심화형 30문제 중 5~7문제를 틀리면 해당 학기를 다시 듣는다"는
+ * 학원의 실제 규칙을 그대로 옮긴 것이다. 진단평가는 여러 교재에서 문항을
+ * 가져왔으므로, 그중 입학 심화형에서 온 문항만 골라 정답률을 본다.
+ *
+ * 이 판정은 등급과 성격이 다르다. 등급은 전국에서 어디쯤인가이고, 이것은
+ * 이 학원이 "다음 학기로 보내도 되는가"를 정하는 내부 기준이다. 훨씬 엄격해서
+ * 섞으면 잘하는 학생에게 낮은 등급이 찍힌다. 그래서 리포트에는 넣지 않는다.
+ */
+export const DEFAULT_RETAKE_CUT = 77;
+
+/** 입학 심화형에서 온 문항인지. '입학 심화형 (중1-1)' 처럼 뒤에 붙는 말도 받는다. */
+export function isAdvanced(q: ExamQuestion): boolean {
+  return /입학\s*심화형/.test(q.source ?? '');
+}
+
+export interface RetakeCheck {
+  total: number; // 심화형 문항 수
+  correct: number; // 그중 만점
+  rate: number; // 0~1
+  pass: boolean;
+  /** 문항이 적으면 한 문제에 판정이 흔들린다. 그 사실을 같이 넘긴다. */
+  perQuestion: number; // 한 문제가 차지하는 비율(%)
+}
+
+/** 시험지에 입학 심화형 문항이 없으면 null. 판정을 지어내지 않는다. */
+export function retakeCheck(
+  exam: Exam,
+  marks: Mark[],
+  cut: number = DEFAULT_RETAKE_CUT
+): RetakeCheck | null {
+  const adv = exam.questions.filter(isAdvanced);
+  if (adv.length === 0) return null;
+  const nos = new Set(adv.map((q) => q.no));
+  const mine = marks.filter((m) => nos.has(m.no));
+  if (mine.length === 0) return null;
+  const correct = mine.filter(isFullMark).length;
+  const rate = correct / mine.length;
+  return {
+    total: mine.length,
+    correct,
+    rate,
+    pass: rate * 100 >= cut,
+    perQuestion: Math.round((100 / mine.length) * 10) / 10,
+  };
+}
+
 export interface AssessmentData {
   students: Student[];
   exams: Exam[];
@@ -170,6 +219,8 @@ export interface AssessmentData {
   dismissed?: string[];
   /** 예상 등급 사다리. 안 적었으면 DEFAULT_GRADE_LADDER 를 쓴다. */
   gradeLadder?: GradeRung[];
+  /** 재수강 판정 기준(심화형 정답률 %). 안 적었으면 DEFAULT_RETAKE_CUT. */
+  retakeCut?: number;
 }
 
 const KEY = 'sda.assess.v1';
@@ -188,6 +239,7 @@ export function loadAssessment(): AssessmentData {
       exams: Array.isArray(p.exams) ? p.exams : [],
       results: Array.isArray(p.results) ? p.results : [],
       dismissed: Array.isArray(p.dismissed) ? p.dismissed : [],
+      retakeCut: typeof p.retakeCut === 'number' ? p.retakeCut : undefined,
       gradeLadder:
         Array.isArray(p.gradeLadder) && p.gradeLadder.length === DEFAULT_GRADE_LADDER.length
           ? p.gradeLadder

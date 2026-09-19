@@ -785,6 +785,20 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .rp-score em { font-style: normal; font-size: 16px; font-weight: 500; color: var(--navy-pale); }
 .rp-sec-row { display: flex; align-items: baseline; justify-content: space-between; }
 
+/* 학원 기준 재수강 판정 — 채점 화면에만. 리포트에는 안 나간다. */
+.retake {
+  margin-top: 12px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 3px;
+}
+.retake.ok { border-color: var(--good-ink); background: #f4fbf4; }
+.retake.no { border-color: var(--bad); background: #fdf5f5; }
+.rt-head { font-size: 11.5px; color: var(--ink-3); }
+.rt-head em { font-style: normal; }
+.retake b { font-size: 16px; }
+.rt-verdict { font-size: 13px; font-weight: 700; }
+.retake.ok .rt-verdict { color: var(--good-ink); }
+.retake.no .rt-verdict { color: var(--bad-ink); }
+
 /* 예상 등급 — 정답률 상자 옆에 붙는다 */
 .rp-grade {
   width: 104px; background: var(--fill); border: 1px solid var(--line); border-radius: 6px;

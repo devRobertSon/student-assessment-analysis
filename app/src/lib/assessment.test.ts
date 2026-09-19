@@ -10,6 +10,7 @@ import {
   paperHref,
   DEFAULT_GRADE_LADDER,
   gradeFromLevels,
+  retakeCheck,
   parseGradingCsv,
   pointsOf,
   scoreOf,
@@ -230,6 +231,42 @@ describe('문제지 · 해설 · 출제표', () => {
     expect(paperHref('/papers/a.pdf', '/app/')).toBe('/app/papers/a.pdf');
     // 외부 주소는 손대지 않는다
     expect(paperHref('https://drive.example/x.pdf', '/app/')).toBe('https://drive.example/x.pdf');
+  });
+});
+
+describe('학원 기준 재수강 판정', () => {
+  const mk = (n: number, src: string) => ({ no: n, type: '계산', points: 1, source: src });
+  const exam: Exam = {
+    id: 'e', title: 't', subject: '수학', date: '',
+    questions: [
+      ...[1, 2, 3, 4].map((n) => mk(n, '입학 심화형')),
+      ...[5, 6].map((n) => mk(n, '응용')),
+    ],
+  };
+  const marks = (wrong: number[]) =>
+    exam.questions.map((q) => makeMark(q, wrong.includes(q.no) ? 0 : 1));
+
+  it('입학 심화형 문항만 세어 판정한다', () => {
+    // 4문항 중 1개 틀림 = 75% < 77% → 재수강
+    const r = retakeCheck(exam, marks([1]))!;
+    expect(r).toMatchObject({ total: 4, correct: 3, pass: false });
+    expect(r.rate).toBeCloseTo(0.75);
+    // 응용 문항을 틀린 것은 판정에 안 들어간다
+    expect(retakeCheck(exam, marks([5, 6]))!).toMatchObject({ total: 4, correct: 4, pass: true });
+  });
+
+  it('기준을 바꾸면 판정도 바뀐다', () => {
+    expect(retakeCheck(exam, marks([1]), 70)!.pass).toBe(true);
+    expect(retakeCheck(exam, marks([1]), 80)!.pass).toBe(false);
+  });
+
+  it('한 문제가 몇 퍼센트인지 알려 준다', () => {
+    expect(retakeCheck(exam, marks([]))!.perQuestion).toBe(25);
+  });
+
+  it('입학 심화형 문항이 없으면 판정하지 않는다', () => {
+    const plain: Exam = { ...exam, questions: [mk(1, '응용'), mk(2, '심화')] };
+    expect(retakeCheck(plain, [makeMark(plain.questions[0], 1)])).toBeNull();
   });
 });
 
