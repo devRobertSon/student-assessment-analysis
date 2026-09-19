@@ -73,22 +73,23 @@ function josa(text: string, withBatchim: string, without: string): string {
  */
 function autoSummary(stats: TypeStat[], correct: number, total: number): string {
   if (stats.length === 0 || total === 0) return '';
-  const name = (list: TypeStat[]) => list.slice(0, 3).map((s) => s.type).join(', ');
-  const weak = stats.filter((s) => s.rate < 0.5);
-  const strong = stats.filter((s) => s.rate >= 0.8);
+  const label = (list: TypeStat[]) => list.map((s) => s.type).join(', ');
+  // stats는 약한 순으로 들어온다. 약점은 앞에서, 강점은 뒤에서 세 개를 고른다.
+  const worst = stats.filter((s) => s.rate < 0.5).slice(0, 3);
+  const best = stats.filter((s) => s.rate >= 0.8).slice(-3).reverse();
   const wrong = total - correct;
-  const weakWrong = weak.reduce((a, s) => a + (s.total - s.correct), 0);
+  // 이름을 댄 유형만 센다. 그래야 문장 안에서 숫자와 유형이 어긋나지 않는다.
+  const worstWrong = worst.reduce((a, s) => a + (s.total - s.correct), 0);
 
   const parts: string[] = [];
-  if (weak.length > 0) {
-    const w = name(weak);
-    parts.push(`${w} 유형에서 실점이 많았습니다.`);
-    if (wrong > 0 && weakWrong > 0) parts.push(`오답 ${wrong}문항 중 ${weakWrong}문항이 이 유형입니다.`);
+  if (worst.length > 0) {
+    parts.push(`${label(worst)} 유형에서 실점이 많았습니다.`);
+    if (wrong > 0 && worstWrong > 0) parts.push(`오답 ${wrong}문항 중 ${worstWrong}문항이 이 유형입니다.`);
   } else {
     parts.push('크게 약한 유형 없이 고르게 맞혔습니다.');
   }
-  if (strong.length > 0) {
-    const g = name(strong);
+  if (best.length > 0) {
+    const g = label(best);
     parts.push(`${g}${josa(g, '은', '는')} 안정적입니다.`);
   }
   const text = parts.join(' ');
