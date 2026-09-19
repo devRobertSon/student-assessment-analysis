@@ -14,6 +14,7 @@ import { logoUrl, sealUrl } from '../lib/brand';
 import { notify } from '../lib/notice';
 import TypeRadar, { FAIR, STEADY } from './TypeRadar';
 import TypeBars from './TypeBars';
+import DatePicker from './DatePicker';
 
 // styles.css의 .report-capture min-height와 같은 값. A4 한 쪽(96dpi)이다.
 const PAGE_H = 1123;
@@ -108,6 +109,9 @@ interface Props {
   onBack: () => void;
 }
 
+/** 기간 고르는 방식. custom 일 때만 날짜 두 칸이 나온다. */
+type RangeMode = 'all' | 'm3' | 'm6' | 'year' | 'custom';
+
 // 인쇄물에만 쓰이고 저장하지 않는 입력들
 interface SessionFields {
   summary: string;
@@ -124,6 +128,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+  const [rangeMode, setRangeMode] = useState<RangeMode>('all');
   const [busy, setBusy] = useState(false);
   const page1Ref = useRef<HTMLDivElement>(null);
   const notesPageRef = useRef<HTMLDivElement>(null);
@@ -145,6 +150,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
   useEffect(() => {
     setFromDate('');
     setToDate('');
+    setRangeMode('all');
     setSelectedIds(new Set(studentResults.map((r) => r.id)));
   }, [studentId, studentResults.length]);
 
@@ -159,6 +165,22 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
     const inRange = studentResults.filter((r) => (!from || r.date >= from) && (!to || r.date <= to));
     setSelectedIds(new Set(inRange.map((r) => r.id)));
   };
+
+  /** 오늘에서 몇 달 뒤로 물러난 날. 'YYYY-MM-DD' 로 돌려준다. */
+  const monthsAgo = (n: number) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - n);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  // 기간은 거의 늘 '전체' 아니면 '최근 몇 개월' 이다. 단추 하나로 끝내고,
+  // 날짜를 꼭 짚어야 할 때만 [직접 고르기] 로 두 칸을 펼친다.
+  const PRESETS: { key: RangeMode; label: string; run: () => void }[] = [
+    { key: 'all', label: '전체', run: () => applyRange('', '') },
+    { key: 'm3', label: '최근 3개월', run: () => applyRange(monthsAgo(3), todayStr()) },
+    { key: 'm6', label: '최근 6개월', run: () => applyRange(monthsAgo(6), todayStr()) },
+    { key: 'year', label: '올해', run: () => applyRange(`${new Date().getFullYear()}-01-01`, todayStr()) },
+  ];
 
   const selectedResults = useMemo(
     () => studentResults.filter((r) => selectedIds.has(r.id)),
@@ -391,11 +413,35 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
               </span>
             </div>
             <div className="report-range">
-              <span className="report-range-label">기간으로 선택</span>
-              <input type="date" value={fromDate} onChange={(e) => applyRange(e.target.value, toDate)} aria-label="시작일" />
-              <span>~</span>
-              <input type="date" value={toDate} onChange={(e) => applyRange(fromDate, e.target.value)} aria-label="종료일" />
+              <span className="report-range-label">기간</span>
+              {PRESETS.map((p) => (
+                <button
+                  key={p.key}
+                  type="button"
+                  className={`chip ${rangeMode === p.key ? 'on' : ''}`}
+                  onClick={() => {
+                    setRangeMode(p.key);
+                    p.run();
+                  }}
+                >
+                  {p.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                className={`chip ${rangeMode === 'custom' ? 'on' : ''}`}
+                onClick={() => setRangeMode('custom')}
+              >
+                직접 고르기
+              </button>
             </div>
+            {rangeMode === 'custom' && (
+              <div className="report-range-pick">
+                <DatePicker label="시작일" value={fromDate} onChange={(v) => applyRange(v, toDate)} />
+                <span>~</span>
+                <DatePicker label="종료일" value={toDate} onChange={(v) => applyRange(fromDate, v)} />
+              </div>
+            )}
             <div className="report-exam-list">
               {studentResults.map((r) => {
                 const ex = examById.get(r.examId);
@@ -484,7 +530,11 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
                   <label className="assess-field">
                     상담일
                     {/* 상담일과 동의서 작성일은 같은 날이라 한 칸만 받아 두 곳에 쓴다. */}
-                    <input type="date" value={session.consultDate} onChange={(e) => set({ consultDate: e.target.value })} />
+                    <DatePicker
+                      label="상담일"
+                      value={session.consultDate}
+                      onChange={(v) => set({ consultDate: v })}
+                    />
                   </label>
                   <label className="assess-field">
                     성명

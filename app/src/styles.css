@@ -515,8 +515,18 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 /* ── 리포트: 시험 선택·의견 입력 ─────────────────────── */
 .report-pick-head { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
 .report-pick-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-.report-range { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.report-range-label { font-size: 13px; color: var(--ink-2); }
+.report-range { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.report-range-label { font-size: 13px; color: var(--ink-2); margin-right: 2px; }
+.report-range-pick { display: flex; align-items: center; gap: 8px; margin: -2px 0 10px; }
+.report-range-pick > span { color: var(--ink-3); }
+
+/* 눌러서 고르는 알약 단추. 고른 것 하나만 진하게 칠한다. */
+.chip {
+  padding: 7px 13px; font-size: 12.5px; font-weight: 500; color: var(--ink);
+  background: #fff; border: 1px solid var(--line); border-radius: 999px;
+}
+.chip:hover { border-color: var(--navy-soft); }
+.chip.on, .chip.on:hover { color: #fff; background: var(--navy); border-color: var(--navy); }
 .report-exam-list { display: flex; flex-direction: column; gap: 5px; }
 .report-exam-item {
   display: flex;
@@ -873,6 +883,49 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .sb-blank { margin-top: 3px; font-size: 13px; line-height: 1.5; color: var(--navy-soft); }
 .sb-blank b { color: var(--warn); font-weight: 700; }
 .sb-blank span { display: block; font-size: 12px; }
+
+/* 날짜 고르는 달력. <input type="date"> 의 달력은 브라우저가 그려 앱과 따로
+   놀고 CSS 로 손댈 수도 없어 직접 그린다. */
+.dp { position: relative; }
+.dp-field {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; min-width: 150px; padding: 9px 11px;
+  font-size: 14px; font-weight: 500; color: var(--ink); text-align: left;
+  background: #fff; border: 1px solid var(--line); border-radius: var(--r-sm);
+}
+.dp-field:hover { border-color: var(--navy-soft); }
+.dp-field.empty span { color: var(--ink-3); font-weight: 400; }
+.dp-field svg { flex: none; color: var(--ink-3); }
+
+.dp-pop {
+  position: absolute; z-index: 30; top: calc(100% + 6px); left: 0;
+  width: 252px; padding: 10px; background: #fff;
+  border: 1px solid var(--line); border-radius: var(--r-md);
+  box-shadow: 0 8px 24px rgba(22, 34, 78, 0.14);
+}
+.dp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.dp-head b { font-size: 13.5px; color: var(--navy); }
+.dp-move {
+  width: 26px; height: 26px; padding: 0; font-size: 17px; line-height: 1;
+  color: var(--ink-2); background: none; border: 1px solid var(--line); border-radius: 6px;
+}
+.dp-move:hover { color: var(--navy); border-color: var(--navy-soft); }
+
+.dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.dp-dow { font-size: 11px; font-weight: 600; color: var(--ink-3); text-align: center; padding-bottom: 4px; }
+.dp-blank { height: 30px; }
+/* 일요일은 빨강, 토요일은 파랑. 달력에서 늘 쓰는 색이라 설명이 필요 없다. */
+.dp-dow.sun, .dp-day.sun { color: #c2473f; }
+.dp-dow.sat, .dp-day.sat { color: #2f4a86; }
+.dp-day {
+  height: 30px; padding: 0; font-size: 13px; font-weight: 500; color: var(--ink);
+  background: none; border: 1px solid transparent; border-radius: 6px;
+}
+.dp-day:hover { background: var(--fill); }
+.dp-day.today { border-color: var(--navy-soft); }
+.dp-day.on, .dp-day.on:hover { color: #fff; background: var(--navy); border-color: var(--navy); }
+.dp-foot { display: flex; gap: 6px; margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--line-2); }
+.dp-foot button { flex: 1; }
 
 /* 학원 기준 판정 — 채점 화면에만. 리포트에는 안 나간다.
    불이 꺼져 있다가 기준에 닿으면 켜진다. 숫자는 적지 않는다. 바로 위 점수
