@@ -874,14 +874,18 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .rp-id-row > * {
   box-sizing: border-box; padding: 14px 16px;
   display: grid; grid-template-rows: 15px 42px 14px; row-gap: 2px; align-content: start;
+  /* 숫자 칸은 값이 라벨보다 짧다. 왼쪽에 붙이면 '예상 고교 등급' 아래 '2' 처럼
+     한쪽으로 쏠려 보이므로 라벨과 값을 한 축에 모은다. */
+  justify-items: center;
 }
 .rp-cap { font-size: 11.5px; letter-spacing: 0.05em; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rp-val { display: flex; align-items: flex-end; gap: 7px; min-width: 0; white-space: nowrap; }
 .rp-val b { line-height: 1; letter-spacing: -0.02em; }
 .rp-sub { font-style: normal; font-size: 11.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* 학생 칸만 가로로 늘어난다. 이름이 길면 말줄임으로 자른다. */
-.rp-id { flex-grow: 1; min-width: 0; border: 1px solid #e0e0dc; border-radius: 6px; }
+/* 학생 칸만 가로로 늘어난다. 이름이 길면 말줄임으로 자른다.
+   여기만 왼쪽으로 붙인다. 이름은 글이라 왼쪽에서 읽기 시작한다. */
+.rp-id { flex-grow: 1; min-width: 0; border: 1px solid #e0e0dc; border-radius: 6px; justify-items: start; }
 .rp-id .rp-val b { font-size: 22px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
 /* 학년은 '중1' 두 글자라 좁게 잡는다. 학생과 같은 흰 칸으로 둬서 둘이 한
    묶음(누구인가)이고 오른쪽 셋(얼마나 했는가)과는 다른 것을 보인다. */
@@ -990,7 +994,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .verdict.on { border-color: var(--bad); background: #fdf5f5; color: var(--bad-ink); }
 
 /* 예상 등급 — 정답률 상자 옆에 붙는다 */
-.rp-grade { width: 104px; background: var(--fill); border: 1px solid var(--line); border-radius: 6px; justify-items: center; }
+.rp-grade { width: 104px; background: var(--fill); border: 1px solid var(--line); border-radius: 6px; }
 .rp-grade .rp-val b { font-size: 34px; font-weight: 700; color: var(--navy); }
 
 /* ── 리포트: 2쪽 ─────────────────────────────────── */
@@ -1047,6 +1051,13 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .rp-wide .type-bars { margin-top: 8px; }
 .report-capture .report-sec { padding: 8px 18px; gap: 6px; }
 .report-capture .report-note-body { font-size: 14px; line-height: 1.62; }
+
+/* 마지막 쪽(상담 카드)은 카드가 작고 다섯이라, 그냥 두면 남는 자리가 전부
+   발 위로 몰려 동의서 아래만 허전하다. 1쪽과 같이 카드 사이로 고르게 나눈다. */
+.rp-spread { display: flex; flex-direction: column; flex-grow: 1; justify-content: space-evenly; gap: 9px; }
+/* 카드 안쪽 위아래도 넓힌다. 쪽에 남는 자리를 카드가 나눠 가져 여백이
+   한 곳에만 크게 남지 않는다. 1쪽은 레이더가 자리를 다 쓰므로 그대로 둔다. */
+.report-capture.rp-last .report-sec { padding-top: 12px; padding-bottom: 12px; }
 /* 응시 이력만 행을 얇게 잡는다. 2쪽의 진도 표는 손으로 적는 칸이라
    같이 줄이면 글씨를 못 쓴다. */
 .report-capture .rp-history th,

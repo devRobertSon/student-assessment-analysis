@@ -673,121 +673,125 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
             )}
 
             {/* ── 마지막 쪽: 상담 카드 ── */}
-            <div ref={page2Ref} className="report-capture">
+            <div ref={page2Ref} className="report-capture rp-last">
               <Letterhead title="상담 카드 · 추가 정보" page={`${pageCount} / ${pageCount}`} />
 
-              <section className="report-sec">
-                <span className="report-sec-h">학생 정보</span>
-                <div className="rp-fields">
-                  <div>
-                    <span>학생 성명</span>
-                    <div className="rp-line">{student?.name}</div>
-                  </div>
-                  <div>
-                    <span>학교 / 학년</span>
-                    <div className="rp-line">{[student?.school, student?.grade].filter(Boolean).join(' / ')}</div>
-                  </div>
-                  <div>
-                    <span>학생 연락처</span>
-                    <div className="rp-line">{student?.contact ?? ''}</div>
-                  </div>
-                  <div>
-                    <span>학부모 연락처</span>
-                    <div className="rp-line">{student?.parentContact ?? ''}</div>
-                  </div>
-                  <div>
-                    <span>형제 재원 여부</span>
-                    <div className="rp-line rp-line-checks">
-                      <span>{student?.sibling === '없음' ? '☑' : '☐'} 없음</span>
-                      <span>{student?.sibling === '있음' ? '☑' : '☐'} 있음</span>
+              {/* 카드가 작고 여럿이라 그냥 두면 남는 자리가 전부 발 위로 몰린다.
+                  1쪽과 같은 방식으로 카드 사이에 고르게 나눈다. */}
+              <div className="rp-spread">
+                <section className="report-sec">
+                  <span className="report-sec-h">학생 정보</span>
+                  <div className="rp-fields">
+                    <div>
+                      <span>학생 성명</span>
+                      <div className="rp-line">{student?.name}</div>
+                    </div>
+                    <div>
+                      <span>학교 / 학년</span>
+                      <div className="rp-line">{[student?.school, student?.grade].filter(Boolean).join(' / ')}</div>
+                    </div>
+                    <div>
+                      <span>학생 연락처</span>
+                      <div className="rp-line">{student?.contact ?? ''}</div>
+                    </div>
+                    <div>
+                      <span>학부모 연락처</span>
+                      <div className="rp-line">{student?.parentContact ?? ''}</div>
+                    </div>
+                    <div>
+                      <span>형제 재원 여부</span>
+                      <div className="rp-line rp-line-checks">
+                        <span>{student?.sibling === '없음' ? '☑' : '☐'} 없음</span>
+                        <span>{student?.sibling === '있음' ? '☑' : '☐'} 있음</span>
+                      </div>
+                    </div>
+                    <div>
+                      <span>상담일</span>
+                      <div className="rp-line">{session.consultDate || <DateBlank />}</div>
                     </div>
                   </div>
-                  <div>
-                    <span>상담일</span>
-                    <div className="rp-line">{session.consultDate || <DateBlank />}</div>
+                </section>
+
+                <section className="report-sec">
+                  <span className="report-sec-h">
+                    목표 고등학교 <span className="rp-muted">(복수 선택 가능)</span>
+                  </span>
+                  <div className="rp-checks">
+                    {TARGET_SCHOOLS.map((t) => (
+                      <span key={t} className="rp-check">
+                        {(student?.targetSchools ?? []).includes(t) ? '☑' : '☐'} {t}
+                      </span>
+                    ))}
                   </div>
-                </div>
-              </section>
+                </section>
 
-              <section className="report-sec">
-                <span className="report-sec-h">
-                  목표 고등학교 <span className="rp-muted">(복수 선택 가능)</span>
-                </span>
-                <div className="rp-checks">
-                  {TARGET_SCHOOLS.map((t) => (
-                    <span key={t} className="rp-check">
-                      {(student?.targetSchools ?? []).includes(t) ? '☑' : '☐'} {t}
-                    </span>
-                  ))}
-                </div>
-              </section>
+                <section className="report-sec">
+                  <span className="report-sec-h">현재 진도 · 학습 내용</span>
+                  <table className="report-info-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: 68 }}>과목</th>
+                        <th>
+                          현재 진도 <span className="rp-eg">(예: 중 3-2, 대수)</span>
+                        </th>
+                        <th>
+                          학습 내용 <span className="rp-eg">(예: 중등 - 쎈)</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th>수학</th>
+                        <td className="rp-blank">{student?.mathProgress ?? ''}</td>
+                        <td className="rp-blank">{student?.mathBooks ?? ''}</td>
+                      </tr>
+                      <tr>
+                        <th>과학</th>
+                        <td className="rp-blank">{student?.sciProgress ?? ''}</td>
+                        <td className="rp-blank">{student?.sciBooks ?? ''}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </section>
 
-              <section className="report-sec">
-                <span className="report-sec-h">현재 진도 · 학습 내용</span>
-                <table className="report-info-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: 68 }}>과목</th>
-                      <th>
-                        현재 진도 <span className="rp-eg">(예: 중 3-2, 대수)</span>
-                      </th>
-                      <th>
-                        학습 내용 <span className="rp-eg">(예: 중등 - 쎈)</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <th>수학</th>
-                      <td className="rp-blank">{student?.mathProgress ?? ''}</td>
-                      <td className="rp-blank">{student?.mathBooks ?? ''}</td>
-                    </tr>
-                    <tr>
-                      <th>과학</th>
-                      <td className="rp-blank">{student?.sciProgress ?? ''}</td>
-                      <td className="rp-blank">{student?.sciBooks ?? ''}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </section>
+                <section className="report-sec">
+                  <span className="report-sec-h">상담 메모 · 특이사항</span>
+                  <div className="rp-memo-box">{session.memo}</div>
+                </section>
 
-              <section className="report-sec">
-                <span className="report-sec-h">상담 메모 · 특이사항</span>
-                <div className="rp-memo-box">{session.memo}</div>
-              </section>
-
-              <section className="report-sec">
-                <span className="report-sec-h">개인정보 수집 · 이용 동의서</span>
-                <ol className="rp-privacy">
-                  <li>
-                    <b>수집·이용 목적</b> : 학원 수강 상담, 학습 정보 제공, 공지사항 및 소식지 전달
-                  </li>
-                  <li>
-                    <b>수집 항목</b> : 학생 성명, 학교/학년, 학생·학부모 휴대폰 번호, 성적 정보, 목표(희망) 고등학교, 형제
-                    재원 여부, 학습 이력(진도·교재)
-                  </li>
-                  <li>
-                    <b>보유·이용 기간</b> : 수집된 개인정보는 학원 등록 후 재원 기간 동안 보유하며 관계 법령에 따라 보존이
-                    필요한 경우 해당 기간 동안 별도 보관합니다. 개인정보 제공자가 동의한 내용 외에 다른 목적으로 활용하지
-                    않으며, 제공된 개인정보의 이용을 거부하고자 할 때에는 개인정보처리책임자를 통해 열람·정정·삭제를 요구할
-                    수 있습니다.
-                  </li>
-                </ol>
-                <p className="rp-agree">
-                  「개인정보 보호법」 등 관련 법규에 의거하여, 상기 본인은 위와 같이 개인정보 수집 및 이용에 동의합니다.
-                </p>
-                <div className="rp-sign">
-                  <div>
-                    <span>작성일</span>
-                    <div className="rp-line">{session.consultDate || <DateBlank />}</div>
+                <section className="report-sec">
+                  <span className="report-sec-h">개인정보 수집 · 이용 동의서</span>
+                  <ol className="rp-privacy">
+                    <li>
+                      <b>수집·이용 목적</b> : 학원 수강 상담, 학습 정보 제공, 공지사항 및 소식지 전달
+                    </li>
+                    <li>
+                      <b>수집 항목</b> : 학생 성명, 학교/학년, 학생·학부모 휴대폰 번호, 성적 정보, 목표(희망) 고등학교, 형제
+                      재원 여부, 학습 이력(진도·교재)
+                    </li>
+                    <li>
+                      <b>보유·이용 기간</b> : 수집된 개인정보는 학원 등록 후 재원 기간 동안 보유하며 관계 법령에 따라 보존이
+                      필요한 경우 해당 기간 동안 별도 보관합니다. 개인정보 제공자가 동의한 내용 외에 다른 목적으로 활용하지
+                      않으며, 제공된 개인정보의 이용을 거부하고자 할 때에는 개인정보처리책임자를 통해 열람·정정·삭제를 요구할
+                      수 있습니다.
+                    </li>
+                  </ol>
+                  <p className="rp-agree">
+                    「개인정보 보호법」 등 관련 법규에 의거하여, 상기 본인은 위와 같이 개인정보 수집 및 이용에 동의합니다.
+                  </p>
+                  <div className="rp-sign">
+                    <div>
+                      <span>작성일</span>
+                      <div className="rp-line">{session.consultDate || <DateBlank />}</div>
+                    </div>
+                    <div style={{ flexGrow: 1 }}>
+                      <span>성명 (서명/인)</span>
+                      <div className="rp-line">{session.signName}</div>
+                    </div>
+                    <b>알파학원 귀하</b>
                   </div>
-                  <div style={{ flexGrow: 1 }}>
-                    <span>성명 (서명/인)</span>
-                    <div className="rp-line">{session.signName}</div>
-                  </div>
-                  <b>알파학원 귀하</b>
-                </div>
-              </section>
+                </section>
+              </div>
 
               <div className="report-footer">
                 <div className="report-footer-left">
