@@ -190,6 +190,16 @@ export default function StudentManager({
               <button className="primary mini" onClick={add} disabled={!newName.trim()}>
                 추가
               </button>
+              {/* Esc 로도 닫히지만 그것만으로는 나가는 길이 보이지 않는다. */}
+              <button
+                className="mini ghost"
+                onClick={() => {
+                  setNewName('');
+                  setAdding(false);
+                }}
+              >
+                취소
+              </button>
             </div>
           ) : (
             <>
@@ -279,7 +289,7 @@ export default function StudentManager({
                       <b>{Math.round(total.rate * 100)}%</b>
                     </div>
                     <div>
-                      <span className="hint">약점 유형</span>
+                      <span className="hint">보완 유형</span>
                       <b>
                         {weakCount}/{stats.length}
                       </b>

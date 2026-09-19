@@ -2,7 +2,7 @@ import { TypeStat } from '../lib/assessment';
 
 // 정답률 구간. 색만으로 뜻을 전하면 색각 이상·흑백 인쇄에서 구분이 사라지므로
 // 화면에는 항상 rateTag()의 글자 라벨을 함께 붙인다.
-/** 이 위는 이미 자리 잡은 유형. 리포트 머리의 '안정 유형 N개'도 같은 선을 쓴다. */
+/** 이 위는 이미 자리 잡은 유형. 리포트 머리의 '강점 유형 N개'도 같은 선을 쓴다. */
 export const STEADY = 0.8;
 const FAIR = 0.5;
 
@@ -15,7 +15,8 @@ export function rateColor(rate: number): string {
 export function rateTag(rate: number): { label: string; cls: string } {
   if (rate >= STEADY) return { label: '강점', cls: 'tag-good' };
   if (rate >= FAIR) return { label: '보통', cls: 'tag-warn' };
-  return { label: '약점', cls: 'tag-bad' };
+  // '약점'은 아이를 재는 말이고 '보완'은 무엇을 할지 가리키는 말이다.
+  return { label: '보완', cls: 'tag-bad' };
 }
 
 // 리포트 한가운데에 크게 놓는 도형이다. 글자를 키운 만큼 라벨이 길어지므로
@@ -101,7 +102,7 @@ export default function TypeRadar({ stats }: { stats: TypeStat[] }) {
               {shorten(s.type)}
               <title>{s.type}</title>
             </text>
-            {/* 막대를 뺐으므로 강점/약점을 색으로만 알리게 된다.
+            {/* 막대를 뺐으므로 강점/보완을 색으로만 알리게 된다.
                 흑백 인쇄와 색각 이상에서도 읽히도록 글자 라벨을 % 옆에 붙인다. */}
             <text x={x} y={y + dy + 17} fontSize={13.5} fontWeight={700} fill={rateColor(s.rate)}>
               {Math.round(s.rate * 100)}%

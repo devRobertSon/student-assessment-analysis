@@ -1,7 +1,7 @@
 import { TypeStat } from '../lib/assessment';
 import { rateColor, rateTag } from './TypeRadar';
 
-// 유형별 정답률 막대. 색 옆에 항상 '약점/보통/강점' 글자를 붙여
+// 유형별 정답률 막대. 색 옆에 항상 '보완/보통/강점' 글자를 붙여
 // 색각 이상이나 흑백 인쇄에서도 구분이 남게 한다.
 export default function TypeBars({ stats }: { stats: TypeStat[] }) {
   if (stats.length === 0) return <p className="muted">표시할 데이터가 없습니다.</p>;

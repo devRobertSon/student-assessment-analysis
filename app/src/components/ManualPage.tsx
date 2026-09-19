@@ -31,7 +31,7 @@ export default function ManualPage() {
       <div className="screen-head">
         <div>
           <h1>사용법</h1>
-          <p className="muted">진단평가를 올리고 채점해 학생별 강점·약점 리포트를 만드는 순서입니다.</p>
+          <p className="muted">진단평가를 올리고 채점해 학생별 성취 리포트를 만드는 순서입니다.</p>
         </div>
       </div>
 
@@ -244,41 +244,41 @@ export default function ManualPage() {
         <p className="muted">
           한국교육과정평가원이 수능 수학 문항에 붙이는 <b>행동 영역</b>은 <b>계산 · 이해 · 추론 · 문제 해결</b> 넷입니다.
           넷만으로는 한 영역에 문항이 몰려 어디서 막혔는지 좁혀지지 않아, 각 영역을 <b>서로 다른 두 힘</b>으로 갈라
-          여덟으로 썼습니다. 중학교에서 쓰다가 고등·수능까지 그대로 이어집니다.
+          여덟으로 씁니다. 중학교에서 쓰다가 고등·수능까지 그대로 이어집니다.
         </p>
         <table className="assess-table manual-table">
           <thead>
             <tr>
               <th style={{ width: 92 }}>평가원 영역</th>
-              <th>무엇으로 갈랐나</th>
+              <th>가른 기준</th>
               <th style={{ width: 186 }}>두 유형</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td className="nowrap"><b>계산</b></td>
-              <td>손이 정확한가 ↔ 무엇을 쓸지 아는가</td>
+              <td>식을 정확히 다루는 힘과, 쓸 공식을 고르는 힘</td>
               <td className="nowrap">연산 처리 / 공식 활용</td>
             </tr>
             <tr>
               <td className="nowrap"><b>이해</b></td>
-              <td>개념 자체를 아는가 ↔ 적힌 것을 읽어내는가</td>
+              <td>정의를 아는 힘과, 적혀 있는 것을 읽는 힘</td>
               <td className="nowrap">개념 이해 / 표현 해석</td>
             </tr>
             <tr>
               <td className="nowrap"><b>추론</b></td>
-              <td>관찰해서 찾는가(귀납) ↔ 근거로 가리는가(연역)</td>
+              <td>관찰로 규칙을 찾는 힘(귀납)과, 근거로 가리는 힘(연역)</td>
               <td className="nowrap">규칙 발견 / 근거 제시</td>
             </tr>
             <tr>
               <td className="nowrap"><b>문제 해결</b></td>
-              <td>안에서 여러 단계를 엮는가 ↔ 밖의 상황을 옮겨 오는가</td>
+              <td>여러 단계를 엮는 힘과, 바깥 상황을 식으로 옮기는 힘</td>
               <td className="nowrap">단계별 해결 / 식 설정</td>
             </tr>
           </tbody>
         </table>
 
-        <h4 className="manual-h4">유형마다 무엇을 보고, 부족하면 어떻게 훈련하나</h4>
+        <h4 className="manual-h4">유형별 설명과 훈련법</h4>
         <ul className="bullets type-guide">
           <li>
             <b>연산 처리</b> <span className="tg-area">계산</span>
@@ -353,7 +353,7 @@ export default function ManualPage() {
         </ul>
         <p className="hint">
           진단평가 네 시험지는 유형마다 3문항 이상이 되도록 배분했습니다. 한 유형이 두 문항이면 하나를 실수로 틀렸을 때
-          정답률이 50%로 찍혀 약점처럼 보입니다.
+          정답률이 50%로 찍혀 보완할 곳처럼 보입니다.
         </p>
       </section>
 
@@ -388,7 +388,7 @@ export default function ManualPage() {
       </section>
 
       <section className="assess-card">
-        <h3>유형을 어떻게 나눌까</h3>
+        <h3>유형 나누기</h3>
         <p className="muted">
           유형 이름은 <b>글자가 정확히 같아야</b> 한 묶음이 됩니다. <code>자료 해석</code>과 <code>자료해석</code>은 다른
           유형으로 잡히니, 분류표를 하나 정해두고 CSV마다 복사해 쓰시는 편이 안전합니다.
@@ -396,7 +396,7 @@ export default function ManualPage() {
         <ul className="bullets">
           <li>
             <b>문항당 유형은 하나입니다.</b> 평가원도 수능 문항에 행동영역을 하나만 붙입니다. 둘을 붙이면 그 문항을
-            틀렸을 때 어디서 막혔는지 모른 채 두 유형이 함께 내려가, 약점이 실제보다 넓게 보입니다. 고르기 어려우면
+            틀렸을 때 어디서 막혔는지 모른 채 두 유형이 함께 내려가, 보완할 곳이 실제보다 넓게 보입니다. 고르기 어려우면
             &apos;이 문항을 틀린 학생은 무엇을 못한 것인가&apos;를 기준으로 하나만 고르세요.
           </li>
           <li>8개 유형으로 나누려면 문항이 <b>24개 이상</b>이어야 합니다. 유형당 3문항은 되어야 정답률이 의미를 가집니다.</li>
@@ -499,7 +499,7 @@ export default function ManualPage() {
           </li>
           <li>
             <b>1쪽</b>은 유형 레이더입니다. 여덟 유형의 정답률을 도형으로 보여주고, 각 꼭짓점에{' '}
-            <code>25% 약점</code>처럼 글자를 함께 적어 흑백으로 인쇄해도 읽힙니다. 난이도는 제목 줄 오른쪽에{' '}
+            <code>25% 보완</code>처럼 글자를 함께 적어 흑백으로 인쇄해도 읽힙니다. 난이도는 제목 줄 오른쪽에{' '}
             <code>표준 63% · 상 79% · 최상 57%</code>처럼 함께 나옵니다.
           </li>
           <li>
@@ -525,7 +525,7 @@ export default function ManualPage() {
         <Shot
           src="report.png"
           alt="리포트 1쪽"
-          cap="리포트 1쪽. 레이더 꼭짓점마다 정답률과 강점/약점이 글자로 함께 적혀 흑백으로 인쇄해도 읽힙니다."
+          cap="리포트 1쪽. 레이더 꼭짓점마다 정답률과 강점/보완이 글자로 함께 적혀 흑백으로 인쇄해도 읽힙니다."
           narrow={470}
         />
         <p className="hint" style={{ marginTop: 12 }}>
@@ -534,7 +534,7 @@ export default function ManualPage() {
       </section>
 
       <section className="assess-card">
-        <h3>데이터는 어디에 저장되나</h3>
+        <h3>데이터 저장 위치</h3>
         <ul className="bullets">
           <li>
             로그인하지 않아도 <b>이 브라우저에</b> 자동 저장됩니다. 다만 그 기기에서만 보입니다.

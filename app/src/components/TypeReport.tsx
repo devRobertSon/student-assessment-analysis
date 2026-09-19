@@ -77,7 +77,7 @@ function josa(text: string, withBatchim: string, without: string): string {
 function autoSummary(stats: TypeStat[], correct: number, total: number): string {
   if (stats.length === 0 || total === 0) return '';
   const label = (list: TypeStat[]) => list.map((s) => s.type).join(', ');
-  // stats는 약한 순으로 들어온다. 약점은 앞에서, 강점은 뒤에서 세 개를 고른다.
+  // stats는 약한 순으로 들어온다. 보완할 것은 앞에서, 강점은 뒤에서 세 개를 고른다.
   const worst = stats.filter((s) => s.rate < 0.5).slice(0, 3);
   const best = stats.filter((s) => s.rate >= 0.8).slice(-3).reverse();
   const wrong = total - correct;
@@ -178,7 +178,7 @@ export default function TypeReport({ data, setData, studentId, setStudentId, onB
   // 선생님이 손대기 전까지는 자동 문안을 따라간다.
   const ladder = data.gradeLadder ?? DEFAULT_GRADE_LADDER;
   const grade = gradeFromLevels(levels, ladder);
-  // 리포트 머리에는 '몇 개가 부족한가'가 아니라 '몇 개가 자리 잡았는가'를 적는다.
+  // 리포트 머리에는 '몇 개가 모자라는가'가 아니라 '몇 개가 자리 잡았는가'를 적는다.
   // 같은 사실이라도 학부모가 먼저 읽는 숫자는 딛고 설 곳이어야 한다.
   const steady = stats.filter((s) => s.rate >= STEADY).length;
 
@@ -587,7 +587,7 @@ export default function TypeReport({ data, setData, studentId, setStudentId, onB
                 </div>
                 {stats.length > 0 && (
                   <div className="rp-grade">
-                    <span>안정 유형</span>
+                    <span>강점 유형</span>
                     <b>{steady}</b>
                     <em>/ {stats.length}개</em>
                   </div>
@@ -603,7 +603,7 @@ export default function TypeReport({ data, setData, studentId, setStudentId, onB
 
               <section ref={analysisRef} className="report-sec">
                 <div className="rp-sec-row">
-                  <span className="report-sec-h">유형별 강점과 약점</span>
+                  <span className="report-sec-h">유형별 성취</span>
                   {/* 난이도는 줄을 더 쓰지 않도록 이 제목 줄에 함께 넣는다.
                       A4 한 쪽을 넘기지 않으려면 여기 말고 남는 가로 공간이 없다. */}
                   {levels.length > 0 ? (
