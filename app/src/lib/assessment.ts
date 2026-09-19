@@ -1,6 +1,6 @@
 // src/lib/assessment.ts: 진단평가 데이터(학생·시험지·채점) + CSV 임포트 + 집계
 // 저장: localStorage 단일 키 + JSON 백업
-// 채점 방식이 갈린다. 객관식은 O/X, 서술형은 0점~배점 사이의 부분점수를 준다.
+// 채점은 서술형도 O/X만 구분한다. 배점을 다 받으면 O, 아니면 X다.
 export type QFormat = '객관식' | '서술형';
 
 export interface ExamQuestion {
@@ -229,7 +229,7 @@ const HEADER_ALIASES: Record<string, string[]> = {
   blueprint: ['출제표', '출제표파일', 'blueprint'],
 };
 
-// 서술형/논술형/서답형만 부분점수 대상으로 보고 나머지(객관식·단답형)는 O/X로 채점한다.
+// 서술형/논술형/서답형은 형식만 다르게 표시한다. 채점은 객관식과 같은 O/X다.
 const ESSAY_WORDS = ['서술', '논술', '서답'];
 
 export function normalizeFormat(raw: string): QFormat {
@@ -427,12 +427,11 @@ export function resultToCsv(
   marks: Mark[]
 ): string {
   const byNo = new Map(marks.map((m) => [m.no, m]));
-  const lines = ['학생,시험지,응시일,문항번호,형식,배점,득점,OX'];
+  const lines = ['학생,시험지,응시일,문항번호,형식,배점,OX'];
   for (const q of questions) {
     const m = byNo.get(q.no);
-    // 서술형은 득점 칸을, 객관식은 OX 칸을 채운다. 미입력 문항은 둘 다 비워 둔다.
+    // 서술형도 O/X로만 매긴다. 미입력 문항은 비워 둔다.
     const ox = m === undefined ? '' : isFullMark(m) ? 'O' : 'X';
-    const earned = m === undefined ? '' : fmtPoints(m.earned);
     lines.push(
       [
         csvEscape(studentName),
@@ -441,7 +440,6 @@ export function resultToCsv(
         String(q.no),
         isEssay(q) ? '서술형' : '객관식',
         fmtPoints(pointsOf(q)),
-        earned,
         ox,
       ].join(',')
     );
@@ -449,11 +447,18 @@ export function resultToCsv(
   return '﻿' + lines.join('\r\n');
 }
 
-// 문항번호 → 득점. 서술형은 '득점' 열을, 객관식은 'OX' 열을 읽는다.
-// 둘 다 있으면 득점을 우선한다(부분점수가 더 구체적인 정보라서).
-/** 'full' = O 표시. 몇 점인지는 시험지의 배점이 정하므로 여기서 짐작하지 않는다. */
+/**
+ * 'full' = O, 0 = X. 맞았는지 틀렸는지만 담는다.
+ * 몇 점인지는 시험지의 배점이 정하므로 여기서 짐작하지 않는다.
+ */
 export type GradedCell = number | 'full';
 
+/**
+ * 채점표 CSV를 읽는다. OX 열이 기준이다.
+ *
+ * '득점' 열이 있는 예전 표도 읽어 준다. 다만 서술형도 O/X로만 매기므로
+ * 배점을 다 받았으면 O, 그 아래는 전부 X로 접는다.
+ */
 export function parseGradingCsv(text: string): {
   date?: string;
   earned: Record<number, GradedCell>;
@@ -466,9 +471,10 @@ export function parseGradingCsv(text: string): {
   const idxNo = findCol(header, ['문항번호', '번호', '문항', '문제번호', 'no']);
   const idxOx = findCol(header, ['ox', 'o/x', '정답여부', '채점', 'result', '맞음']);
   const idxEarned = findCol(header, ['득점', '획득점수', '점수', 'earned']);
+  const idxPoints = findCol(header, ['배점', 'points']);
   const idxDate = findCol(header, ['응시일', '날짜', 'date']);
   if (idxNo === -1 || (idxOx === -1 && idxEarned === -1)) {
-    errors.push('문항번호와 OX(또는 득점) 열을 찾지 못했습니다.');
+    errors.push('문항번호와 OX 열을 찾지 못했습니다.');
     return { earned: {}, errors };
   }
   const earned: Record<number, GradedCell> = {};
@@ -479,20 +485,26 @@ export function parseGradingCsv(text: string): {
     if (!no) continue;
     if (idxDate >= 0 && !date && (cells[idxDate] ?? '').trim()) date = cells[idxDate].trim();
 
-    const rawEarned = idxEarned >= 0 ? (cells[idxEarned] ?? '').trim() : '';
-    if (rawEarned !== '') {
-      const v = Number(rawEarned);
-      if (Number.isFinite(v) && v >= 0) {
-        earned[no] = v;
-        continue;
-      }
-      errors.push(`${r + 1}행: 득점이 숫자가 아닙니다 ("${rawEarned}").`);
+    const val = idxOx >= 0 ? (cells[idxOx] ?? '').trim().toUpperCase() : '';
+    if (['O', '1', '맞음', '정답', 'TRUE', '○'].includes(val)) {
+      earned[no] = 'full';
+      continue;
+    }
+    if (['X', '0', '틀림', '오답', 'FALSE', '×'].includes(val)) {
+      earned[no] = 0;
+      continue;
     }
 
-    const val = idxOx >= 0 ? (cells[idxOx] ?? '').trim().toUpperCase() : '';
-    if (['O', '1', '맞음', '정답', 'TRUE', '○'].includes(val)) earned[no] = 'full';
-    else if (['X', '0', '틀림', '오답', 'FALSE', '×'].includes(val)) earned[no] = 0;
-    // 그 외(빈칸 등)는 미입력으로 둔다
+    const rawEarned = idxEarned >= 0 ? (cells[idxEarned] ?? '').trim() : '';
+    if (rawEarned === '') continue; // 둘 다 비었으면 미입력
+    const v = Number(rawEarned);
+    if (!Number.isFinite(v) || v < 0) {
+      errors.push(`${r + 1}행: 득점이 숫자가 아닙니다 ("${rawEarned}").`);
+      continue;
+    }
+    const max = idxPoints >= 0 ? Number((cells[idxPoints] ?? '').trim()) : NaN;
+    // 배점을 다 받았으면 O. 부분점수는 만점이 아니므로 X로 본다.
+    earned[no] = Number.isFinite(max) && max > 0 ? (v >= max ? 'full' : 0) : v > 0 ? 'full' : 0;
   }
   return { date, earned, errors };
 }
@@ -513,7 +525,7 @@ export interface TypeStat {
   correct: number; // 만점 문항 수
   points: number; // 배점 합
   earned: number; // 득점 합
-  rate: number; // 득점률 0~1 (배점·서술형 부분점수가 없으면 정답률과 같다)
+  rate: number; // 득점률 0~1 (배점이 다 같으면 정답률과 같다)
 }
 
 interface TypeAcc {

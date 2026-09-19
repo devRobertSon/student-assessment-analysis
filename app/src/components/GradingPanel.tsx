@@ -73,13 +73,6 @@ export default function GradingPanel({ data, setData }: Props) {
 
   // 같은 값을 다시 누르면 미입력으로 되돌린다(O를 잘못 눌렀을 때 지우는 길).
   const setCell = (no: number, v: number) => setCells((c) => ({ ...c, [no]: c[no] === v ? null : v }));
-  const setScore = (no: number, raw: string, max: number) =>
-    setCells((c) => {
-      if (raw.trim() === '') return { ...c, [no]: null };
-      const v = Number(raw);
-      if (!Number.isFinite(v)) return c;
-      return { ...c, [no]: Math.max(0, Math.min(max, v)) };
-    });
   // 팝업에서 쓰는 setter. 표의 setCell은 같은 값을 다시 누르면 지우는 토글이지만
   // 여기서는 누른 값을 그대로 넣는다(넘어간 뒤 되돌아와도 값이 바뀌지 않게).
   const putCell = (no: number, v: Cell) => setCells((c) => ({ ...c, [no]: v }));
@@ -163,8 +156,7 @@ export default function GradingPanel({ data, setData }: Props) {
         <div>
           <h1>채점 입력</h1>
           <p className="muted">
-            객관식은 O/X만 누르면 됩니다. 서술형은 가운데 칸에 부분점수를 적고, 만점·0점은 O·X로
-            바로 넣습니다.
+            문항마다 O나 X만 누르면 됩니다. 서술형도 같습니다. 배점을 다 받으면 O, 답이 틀렸으면 X입니다.
           </p>
         </div>
       </div>
@@ -275,34 +267,18 @@ export default function GradingPanel({ data, setData }: Props) {
                           {essay && <span className="q-fmt">서술형</span>}
                         </span>
                         <span className="ox-btns">
-                          {/* 서술형은 O/X 사이에 부분점수 칸을 둔다. O는 만점, X는 0점. */}
                           <button
                             className={`ox-o ${v === pts ? 'on' : ''}`}
                             onClick={() => setCell(q.no, pts)}
-                            aria-label={`${q.no}번 ${essay ? '만점' : '맞음'}`}
+                            aria-label={`${q.no}번 맞음`}
                             aria-pressed={v === pts}
                           >
                             O
                           </button>
-                          {essay && (
-                            <>
-                              <input
-                                className="ox-score"
-                                type="number"
-                                min={0}
-                                max={pts}
-                                step={0.5}
-                                value={v === null || v === undefined ? '' : v}
-                                onChange={(e) => setScore(q.no, e.target.value, pts)}
-                                aria-label={`${q.no}번 득점 (만점 ${fmtPoints(pts)}점)`}
-                              />
-                              <span className="ox-max">/{fmtPoints(pts)}</span>
-                            </>
-                          )}
                           <button
                             className={`ox-x ${v === 0 ? 'on' : ''}`}
                             onClick={() => setCell(q.no, 0)}
-                            aria-label={`${q.no}번 ${essay ? '0점' : '틀림'}`}
+                            aria-label={`${q.no}번 틀림`}
                             aria-pressed={v === 0}
                           >
                             X

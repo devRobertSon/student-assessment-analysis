@@ -8,7 +8,7 @@ type Cell = number | null;
  *
  * 아래 표에서도 채점할 수 있지만 30문항을 보려면 화면을 내려야 한다.
  * 여기서는 O / X 를 누르면 바로 다음 문항으로 넘어가므로 화면을 움직이지
- * 않아도 된다. 키보드로도 같다. O·X·숫자·Enter.
+ * 않아도 된다. 키보드로도 같다. O·X·Enter.
  */
 export default function GradeDialog({
   exam,
@@ -28,7 +28,6 @@ export default function GradeDialog({
     return at === -1 ? 0 : at;
   });
   const boxRef = useRef<HTMLDivElement>(null);
-  const scoreRef = useRef<HTMLInputElement>(null);
 
   const q: ExamQuestion | undefined = qs[i];
   const pts = q ? pointsOf(q) : 0;
@@ -39,18 +38,15 @@ export default function GradeDialog({
   const mark = (value: number) => {
     if (!q) return;
     onSet(q.no, value);
-    // 서술형은 점수를 고쳐 적는 일이 많아 자동으로 넘기지 않는다.
-    if (!essay) setTimeout(() => go(1), 90);
+    setTimeout(() => go(1), 90);
   };
 
   // 창이 열려 있는 동안 키를 받는다. 점수 칸에 숫자를 칠 때는 넘기지 않는다.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') return onClose();
-      const typing = document.activeElement === scoreRef.current;
       if (e.key === 'ArrowLeft') return go(-1);
       if (e.key === 'ArrowRight' || e.key === 'Enter') return go(1);
-      if (typing) return;
       const k = e.key.toLowerCase();
       if (k === 'o' || k === 'ㅐ' || e.key === '1') return mark(pts);
       if (k === 'x' || k === 'ㅌ' || e.key === '0') return mark(0);
@@ -106,30 +102,10 @@ export default function GradeDialog({
 
         <div className="gd-btns">
           <button className={`gd-o ${v === pts ? 'on' : ''}`} onClick={() => mark(pts)}>
-            O<em>{essay ? '만점' : '맞음'}</em>
+            O<em>맞음</em>
           </button>
-          {essay && (
-            <label className="gd-score">
-              <input
-                ref={scoreRef}
-                type="number"
-                min={0}
-                max={pts}
-                step={0.5}
-                value={v === null || v === undefined ? '' : v}
-                placeholder="—"
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  if (raw.trim() === '') return onSet(q.no, null);
-                  const n = Number(raw);
-                  if (Number.isFinite(n)) onSet(q.no, Math.max(0, Math.min(pts, n)));
-                }}
-              />
-              <span>/ {fmtPoints(pts)}점</span>
-            </label>
-          )}
           <button className={`gd-x ${v === 0 ? 'on' : ''}`} onClick={() => mark(0)}>
-            X<em>{essay ? '0점' : '틀림'}</em>
+            X<em>틀림</em>
           </button>
         </div>
 

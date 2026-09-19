@@ -127,7 +127,7 @@ describe('statsForResult', () => {
   });
 });
 
-describe('서술형 부분점수', () => {
+describe('서술형', () => {
   const exam: Exam = {
     id: 'e3',
     title: '중1-1 진단평가',
@@ -139,14 +139,21 @@ describe('서술형 부분점수', () => {
     ],
   };
 
-  it('부분점수가 유형별 득점률에 반영된다', () => {
+  it('서술형도 O/X만 구분한다. 배점을 다 받아야 맞은 것이다', () => {
     const stats = statsForResult(exam, [
       makeMark(exam.questions[0], 3),
-      makeMark(exam.questions[1], 2),
+      makeMark(exam.questions[1], 5),
     ]);
-    // 문항 수는 2, 만점 문항은 1, 점수는 5/8
-    expect(stats[0]).toMatchObject({ type: '규칙 발견', total: 2, correct: 1, earned: 5, points: 8 });
-    expect(stats[0].rate).toBeCloseTo(5 / 8);
+    expect(stats[0]).toMatchObject({ type: '규칙 발견', total: 2, correct: 2, earned: 8, points: 8 });
+  });
+
+  it('틀리면 배점이 커도 0점이다', () => {
+    const stats = statsForResult(exam, [
+      makeMark(exam.questions[0], 3),
+      makeMark(exam.questions[1], 0),
+    ]);
+    expect(stats[0]).toMatchObject({ total: 2, correct: 1, earned: 3, points: 8 });
+    expect(stats[0].rate).toBeCloseTo(3 / 8);
   });
 
   it('CSV의 형식 열을 읽어 서술형을 구분한다', () => {
@@ -167,21 +174,28 @@ describe('서술형 부분점수', () => {
 });
 
 describe('parseGradingCsv', () => {
-  it('득점 열을 우선 읽고, O는 몇 점인지 짐작하지 않고 그대로 넘긴다', () => {
+  it('OX 열을 읽는다. O는 맞음, X는 틀림, 빈칸은 미입력', () => {
     const { earned, date } = parseGradingCsv(
-      '응시일,문항번호,배점,득점,OX\n2026-09-19,1,3,,O\n2026-09-19,2,5,2,X\n2026-09-19,3,3,,X\n2026-09-19,4,3,,'
+      '응시일,문항번호,배점,OX\n2026-09-19,1,3,O\n2026-09-19,2,5,X\n2026-09-19,3,3,'
     );
     expect(date).toBe('2026-09-19');
-    // O는 'full'이다. 몇 점인지는 시험지의 배점이 정한다. 4번은 미입력이라 빠진다.
-    expect(earned).toEqual({ 1: 'full', 2: 2, 3: 0 });
+    // O가 몇 점인지는 시험지의 배점이 정한다. 3번은 미입력이라 빠진다.
+    expect(earned).toEqual({ 1: 'full', 2: 0 });
   });
 
-  it('배점 열이 없어도 O는 그 문항의 배점을 다 받는다', () => {
+  it("'O'는 그 문항의 배점을 다 받는다", () => {
     const q = { no: 1, type: '계산', points: 3 };
     const { earned } = parseGradingCsv('문항번호,OX\n1,O');
     expect(earned[1]).toBe('full');
     const v = earned[1] === 'full' ? pointsOf(q) : earned[1];
     expect(makeMark(q, v)).toEqual({ no: 1, earned: 3, points: 3 });
+  });
+
+  it('득점 열이 있는 예전 표는 배점을 다 받았을 때만 O로 접는다', () => {
+    const { earned } = parseGradingCsv(
+      '문항번호,배점,득점,OX\n1,5,5,\n2,5,3,\n3,5,0,'
+    );
+    expect(earned).toEqual({ 1: 'full', 2: 0, 3: 0 });
   });
 });
 
