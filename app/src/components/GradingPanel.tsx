@@ -299,16 +299,16 @@ ${listNos(left)}`
             <aside className="grade-side">
               <div className="assess-scorebar">
                 <div className="lbl">입력 중인 점수</div>
-                {/* 퍼센트와 분수는 둘 다 '입력한 문항'을 기준으로 한다.
-                    전체 만점은 아랫줄에 따로 적어 두 수가 서로 어긋나 보이지 않게 한다. */}
-                <div className="assess-row" style={{ alignItems: 'baseline', gap: 8 }}>
-                  <span className="big">{Math.round(score.rate * 100)}</span>
+                {/* 큰 숫자는 시험지 만점을 기준으로 한 득점이다. 퍼센트는 적지 않는다.
+                    아직 안 누른 문항이 있으면 그만큼 낮게 나오는데, 아래 '남음' 줄이 그것을 말해 준다. */}
+                <div className="assess-row" style={{ alignItems: 'baseline', gap: 6 }}>
+                  <span className="big">{fmtPoints(score.earned)}</span>
                   <span style={{ fontSize: 17, fontWeight: 500, color: 'var(--navy-pale)' }}>
-                    % · {fmtPoints(score.earned)}/{fmtPoints(score.points)}점
+                    / {fmtPoints(fullPoints)}점
                   </span>
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--navy-soft)', marginTop: 5 }}>
-                  맞은 문제 수 {score.correct}/{exam.questions.length} · 전체 {fmtPoints(fullPoints)}점
+                  맞은 문제 수 {score.correct}/{exam.questions.length}
                 </div>
                 {blankNos.length === 0 ? (
                   <div style={{ fontSize: 13, color: 'var(--navy-soft)', marginTop: 3 }}>
