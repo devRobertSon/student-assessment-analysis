@@ -8,28 +8,28 @@
           "label": "시험지 CSV",
           "file": "중1-1_진단평가_시험지.csv",
           "ext": "csv",
-          "size": 3459
+          "size": 3499
         },
         {
           "kind": "문제지",
           "label": "문제지 PDF",
           "file": "중1-1_진단평가_문제지.pdf",
           "ext": "pdf",
-          "size": 989826
+          "size": 911552
         },
         {
           "kind": "해설",
           "label": "해설 PDF",
           "file": "중1-1_진단평가_해설.pdf",
           "ext": "pdf",
-          "size": 145569
+          "size": 145720
         },
         {
           "kind": "출제표",
           "label": "출제표 CSV",
           "file": "중1-1_진단평가_출제표.csv",
           "ext": "csv",
-          "size": 2413
+          "size": 2453
         },
         {
           "kind": "채점표",
@@ -48,28 +48,28 @@
           "label": "시험지 CSV",
           "file": "중1-2_진단평가_시험지.csv",
           "ext": "csv",
-          "size": 3680
+          "size": 3787
         },
         {
           "kind": "문제지",
           "label": "문제지 PDF",
           "file": "중1-2_진단평가_문제지.pdf",
           "ext": "pdf",
-          "size": 1938678
+          "size": 1974319
         },
         {
           "kind": "해설",
           "label": "해설 PDF",
           "file": "중1-2_진단평가_해설.pdf",
           "ext": "pdf",
-          "size": 144953
+          "size": 145779
         },
         {
           "kind": "출제표",
           "label": "출제표 CSV",
           "file": "중1-2_진단평가_출제표.csv",
           "ext": "csv",
-          "size": 2634
+          "size": 2741
         },
         {
           "kind": "채점표",
@@ -88,28 +88,28 @@
           "label": "시험지 CSV",
           "file": "중2-1_진단평가_시험지.csv",
           "ext": "csv",
-          "size": 3249
+          "size": 3368
         },
         {
           "kind": "문제지",
           "label": "문제지 PDF",
           "file": "중2-1_진단평가_문제지.pdf",
           "ext": "pdf",
-          "size": 788170
+          "size": 723786
         },
         {
           "kind": "해설",
           "label": "해설 PDF",
           "file": "중2-1_진단평가_해설.pdf",
           "ext": "pdf",
-          "size": 138173
+          "size": 140016
         },
         {
           "kind": "출제표",
           "label": "출제표 CSV",
           "file": "중2-1_진단평가_출제표.csv",
           "ext": "csv",
-          "size": 2203
+          "size": 2322
         },
         {
           "kind": "채점표",
