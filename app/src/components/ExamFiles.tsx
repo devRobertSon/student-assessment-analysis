@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { ATTACH_KINDS, ATTACH_LABEL, AttachKind, Exam, paperHref } from '../lib/assessment';
 import PaperPicker from './PaperPicker';
+import CsvViewer from './CsvViewer';
 
-/** 브라우저가 그려서 보여줄 수 있는 파일인지. CSV는 받는 수밖에 없다. */
-const viewable = (name: string) => /\.(pdf|png|jpe?g|gif|webp|svg)(\?|#|$)/i.test(name.trim());
+/** 브라우저가 새 탭에서 그려 주는 파일인지. */
+const inlineable = (name: string) => /\.(pdf|png|jpe?g|gif|webp|svg)(\?|#|$)/i.test(name.trim());
+/** CSV는 브라우저가 내려받아 버리므로 앱이 직접 표로 그린다. */
+const isCsv = (name: string) => /\.csv(\?|#|$)/i.test(name.trim());
 
 /**
  * 시험지 한 줄의 인쇄물 칸. 문제지 · 해설 · 출제표.
@@ -23,6 +26,7 @@ export default function ExamFiles({
   onChange: (files: Exam['files']) => void;
 }) {
   const [picking, setPicking] = useState<AttachKind | null>(null);
+  const [viewingCsv, setViewingCsv] = useState<AttachKind | null>(null);
 
   const pick = (kind: AttachKind, file: string) => {
     onChange({ ...exam.files, [kind]: file });
@@ -57,10 +61,15 @@ export default function ExamFiles({
               {ATTACH_LABEL[kind]}
             </button>
             <span className="file-acts">
-              {viewable(name) && (
+              {inlineable(name) && (
                 <a className="file-act" href={href} target="_blank" rel="noopener" title={`${name} 보기`}>
                   보기
                 </a>
+              )}
+              {isCsv(name) && (
+                <button className="file-act" onClick={() => setViewingCsv(kind)} title={`${name} 보기`}>
+                  보기
+                </button>
               )}
               <a className="file-act" href={href} download={name} title={`${name} 내려받기`}>
                 다운로드
@@ -69,6 +78,15 @@ export default function ExamFiles({
           </span>
         );
       })}
+
+      {viewingCsv && exam.files?.[viewingCsv] && (
+        <CsvViewer
+          title={ATTACH_LABEL[viewingCsv]}
+          name={exam.files[viewingCsv] as string}
+          href={paperHref(exam.files[viewingCsv] as string)}
+          onClose={() => setViewingCsv(null)}
+        />
+      )}
 
       {picking && (
         <PaperPicker
