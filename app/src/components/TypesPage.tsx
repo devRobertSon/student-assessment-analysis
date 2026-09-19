@@ -63,7 +63,7 @@ export default function TypesPage() {
             <b>연산 처리</b> <span className="tg-area">계산</span>
             <p>연산 법칙과 성질을 써서 식을 정확히 계산하는 능력입니다. 방법은 알면서 계산에서 틀리는 경우입니다.</p>
             <p className="tg-train">
-              <b>훈련</b> 틀린 문제를 다시 풀리지 말고 <b>어느 줄에서 틀렸는지 찾게</b> 하세요. 부호인지 분배인지
+              <b className="tg-tag">훈련</b> 틀린 문제를 다시 풀리지 말고 <b>어느 줄에서 틀렸는지 찾게</b> 하세요. 부호인지 분배인지
               통분인지를 학생이 짚어야 합니다. 열 문항을 빨리 푸는 것보다 다섯 문항을 검산까지 하는 편이 낫습니다.
             </p>
           </li>
@@ -71,7 +71,7 @@ export default function TypesPage() {
             <b>공식 활용</b> <span className="tg-area">계산</span>
             <p>어떤 공식이나 풀이 절차를 쓸지 고르고, 그대로 적용하는 능력입니다.</p>
             <p className="tg-train">
-              <b>훈련</b> 공식을 외우게 하지 말고 <b>언제 쓰는지</b>를 묻습니다. 단원이 끝나면 공식을 적고 그 옆에
+              <b className="tg-tag">훈련</b> 공식을 외우게 하지 말고 <b>언제 쓰는지</b>를 묻습니다. 단원이 끝나면 공식을 적고 그 옆에
               &apos;이런 말이 나오면 이걸 쓴다&apos;를 한 줄씩 붙이게 하세요.
             </p>
           </li>
@@ -79,7 +79,7 @@ export default function TypesPage() {
             <b>개념 이해</b> <span className="tg-area">이해</span>
             <p>정의와 성질을 알면 바로 풀리는 문항입니다. 교과서 기본 예제 수준입니다.</p>
             <p className="tg-train">
-              <b>훈련</b> 정의를 <b>말로 설명하게</b> 합니다. &apos;소수가 뭐야?&apos;에 &apos;1과 자기 자신만 약수인
+              <b className="tg-tag">훈련</b> 정의를 <b>말로 설명하게</b> 합니다. &apos;소수가 뭐야?&apos;에 &apos;1과 자기 자신만 약수인
               수&apos;까지 나와야 합니다. 반례를 하나 들어 보라고 하면 이해했는지 외웠는지 구분됩니다.
             </p>
           </li>
@@ -90,7 +90,7 @@ export default function TypesPage() {
               상황을 식으로 옮기는 것은 여기가 아니라 <b>식 설정</b>입니다.
             </p>
             <p className="tg-train">
-              <b>훈련</b> 풀기 전에 <b>그림에서 읽히는 것을 말로 적게</b> 하세요. 축이 무엇인지, 한 칸이 얼마인지부터
+              <b className="tg-tag">훈련</b> 풀기 전에 <b>그림에서 읽히는 것을 말로 적게</b> 하세요. 축이 무엇인지, 한 칸이 얼마인지부터
               적습니다. 새 기호가 나오면 문제에 딸린 예시에 넣어 검산해 보는 것이 먼저입니다.
             </p>
           </li>
@@ -98,7 +98,7 @@ export default function TypesPage() {
             <b>규칙 발견</b> <span className="tg-area">추론</span>
             <p>나열하고 관찰해서 규칙을 찾아야 풀리는 문항입니다.</p>
             <p className="tg-train">
-              <b>훈련</b> 답을 알려주지 말고 <b>작은 수부터 직접 써 보게</b> 합니다. 1, 2, 3을 손으로 적어 표를 만들면
+              <b className="tg-tag">훈련</b> 답을 알려주지 말고 <b>작은 수부터 직접 써 보게</b> 합니다. 1, 2, 3을 손으로 적어 표를 만들면
               규칙이 보입니다. 이 과정을 건너뛰면 식을 세우지 못합니다.
             </p>
           </li>
@@ -106,7 +106,7 @@ export default function TypesPage() {
             <b>근거 제시</b> <span className="tg-area">추론</span>
             <p>참·거짓을 판단하고 그 근거를 대는 능력입니다. 반례 찾기, 증명을 읽고 결론 내기가 여기 속합니다.</p>
             <p className="tg-train">
-              <b>훈련</b> 답이 맞아도 <b>&apos;왜?&apos;를 한 번 더</b> 묻습니다. 틀린 선지에는 반례를 하나씩 들게
+              <b className="tg-tag">훈련</b> 답이 맞아도 <b>&apos;왜?&apos;를 한 번 더</b> 묻습니다. 틀린 선지에는 반례를 하나씩 들게
               하세요. 반례를 대지 못하면 답이 맞았어도 근거 없이 고른 것입니다.
             </p>
           </li>
@@ -114,7 +114,7 @@ export default function TypesPage() {
             <b>단계별 해결</b> <span className="tg-area">문제 해결</span>
             <p>두 단계 이상을 거치거나 두 개념 이상을 엮어야 끝나는 문항입니다.</p>
             <p className="tg-train">
-              <b>훈련</b> 풀기 전에 <b>&apos;무엇을 먼저 구해야 하나&apos;를 적게</b> 합니다. 중간에 멈추는 학생은
+              <b className="tg-tag">훈련</b> 풀기 전에 <b>&apos;무엇을 먼저 구해야 하나&apos;를 적게</b> 합니다. 중간에 멈추는 학생은
               대개 첫 단계가 아니라 두 번째 단계를 떠올리지 못합니다. 풀이를 단계로 나누어 번호를 붙이게 하면 도움이 됩니다.
             </p>
           </li>
@@ -125,7 +125,7 @@ export default function TypesPage() {
               문제가 여기 속합니다.
             </p>
             <p className="tg-train">
-              <b>훈련</b> 답까지 가지 말고 <b>식만 세우는 연습</b>을 따로 합니다. 문장제 다섯 개를 주고 &apos;x를
+              <b className="tg-tag">훈련</b> 답까지 가지 말고 <b>식만 세우는 연습</b>을 따로 합니다. 문장제 다섯 개를 주고 &apos;x를
               무엇으로 둘지&apos;와 &apos;식 한 줄&apos;까지만 쓰게 하세요. 계산은 빼도 됩니다.
             </p>
           </li>
@@ -139,8 +139,7 @@ export default function TypesPage() {
       <section className="assess-card">
         <h3>과학 유형 8가지</h3>
         <p className="muted">
-          2022 개정 교육과정 통합과학 기준 <b>평가 목표의 행동 영역</b>이 그대로 8개입니다. 따로 묶거나 쪼갤 필요가
-          없습니다.
+          2022 개정 교육과정 통합과학 기준 <b>평가 목표의 행동 영역</b>이 그대로 8개입니다.
         </p>
         <table className="assess-table manual-table">
           <thead>

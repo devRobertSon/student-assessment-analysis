@@ -8,7 +8,14 @@
     <link rel="apple-touch-icon" href="/student-assessment-analysis/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" />
+    <!-- crossorigin 이 없으면 이 시트는 스크립트에서 못 읽는 시트가 된다.
+         리포트를 PDF 로 뽑을 때 html-to-image 가 @font-face 를 찾지 못해
+         글꼴이 안 실리고, 폭이 다른 대체 글꼴로 그려져 제목과 이름이 잘린다. -->
+    <link
+      rel="stylesheet"
+      crossorigin="anonymous"
+      href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap"
+    />
     <title>진단평가 분석 · 알파학원</title>
     <script type="module" crossorigin src="/student-assessment-analysis/assets/index.js"></script>
     <link rel="stylesheet" crossorigin href="/student-assessment-analysis/assets/index.css">
