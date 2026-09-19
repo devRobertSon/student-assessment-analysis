@@ -543,63 +543,6 @@ function csvEscape(v: string): string {
   return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
 }
 
-// ── 학생 목록 CSV ────────────────────────────────────────
-export function studentsToCsv(students: Student[]): string {
-  const lines = ['이름,학년'];
-  for (const s of students) {
-    lines.push([csvEscape(s.name), csvEscape(s.grade)].join(','));
-  }
-  return '﻿' + lines.join('\r\n');
-}
-
-export interface StudentDraft {
-  name: string;
-  grade: string;
-}
-
-export function parseStudentsCsv(text: string): { drafts: StudentDraft[]; errors: string[] } {
-  const rows = parseCsv(text);
-  const errors: string[] = [];
-  if (rows.length < 2) return { drafts: [], errors: ['CSV에 데이터 행이 없습니다.'] };
-  const header = rows[0];
-  const idxName = findCol(header, ['이름', '학생', '학생이름', 'name']);
-  const idxGrade = findCol(header, ['학년', 'grade']);
-  if (idxName === -1) {
-    errors.push('이름 열을 찾지 못했습니다. (헤더에 "이름" 필요)');
-    return { drafts: [], errors };
-  }
-  const drafts: StudentDraft[] = [];
-  for (let r = 1; r < rows.length; r++) {
-    const cells = rows[r];
-    const name = (cells[idxName] ?? '').trim();
-    if (!name) continue;
-    const grade = (idxGrade >= 0 ? (cells[idxGrade] ?? '').trim() : '') || '중1';
-    drafts.push({ name, grade });
-  }
-  return { drafts, errors };
-}
-
-// 이름 기준 업서트(있으면 갱신, 없으면 추가). 채점 결과는 보존한다
-export function upsertStudents(
-  data: AssessmentData,
-  drafts: StudentDraft[]
-): { data: AssessmentData; added: number; updated: number } {
-  const students = [...data.students];
-  let added = 0;
-  let updated = 0;
-  for (const d of drafts) {
-    const idx = students.findIndex((s) => s.name === d.name);
-    if (idx >= 0) {
-      students[idx] = { ...students[idx], grade: d.grade };
-      updated += 1;
-    } else {
-      students.push({ id: newId('stu'), name: d.name, grade: d.grade });
-      added += 1;
-    }
-  }
-  return { data: { ...data, students }, added, updated };
-}
-
 // ── 채점(O/X) CSV ────────────────────────────────────────
 export function resultToCsv(
   studentName: string,

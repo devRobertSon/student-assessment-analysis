@@ -1,17 +1,12 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   AssessmentData,
   Sibling,
   Student,
   TARGET_SCHOOLS,
-  downloadText,
   newId,
-  parseStudentsCsv,
   scoreOf,
   statsCumulative,
-  studentsToCsv,
-  todayStr,
-  upsertStudents,
 } from '../lib/assessment';
 import { rateTag, STEADY } from './TypeRadar';
 import TypeRadar from './TypeRadar';
@@ -46,7 +41,6 @@ export default function StudentManager({
   const [pending, setPending] = useState<
     { kind: 'student' } | { kind: 'result'; id: string; label: string } | null
   >(null);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const student = data.students.find((s) => s.id === selectedId);
 
@@ -122,15 +116,6 @@ export default function StudentManager({
     setPending(null);
   };
 
-  const importCsv = async (file: File) => {
-    const { drafts, errors } = parseStudentsCsv(await file.text());
-    if (errors.length) alert(errors.join('\n'));
-    if (!drafts.length) return;
-    const { data: next, added, updated } = upsertStudents(data, drafts);
-    setData(next);
-    alert(`추가 ${added}명 · 갱신 ${updated}명`);
-  };
-
   return (
     <div className="split">
       {pending && (
@@ -204,35 +189,11 @@ export default function StudentManager({
               </button>
             </div>
           ) : (
-            <>
-              <div className="assess-row">
-                <button className="mini wide" onClick={() => setAdding(true)}>
-                  ＋ 학생 추가
-                </button>
-                <button className="mini wide" onClick={() => fileRef.current?.click()}>
-                  CSV 가져오기
-                </button>
-                {data.students.length > 0 && (
-                  <button
-                    className="mini wide"
-                    onClick={() => downloadText(`학생목록_${todayStr()}.csv`, studentsToCsv(data.students))}
-                  >
-                    내려받기
-                  </button>
-                )}
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".csv,text/csv"
-                  style={{ display: 'none' }}
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) importCsv(f);
-                    e.target.value = '';
-                  }}
-                />
-              </div>
-            </>
+            <div className="assess-row">
+              <button className="mini wide" onClick={() => setAdding(true)}>
+                ＋ 학생 추가
+              </button>
+            </div>
           )}
         </div>
 
