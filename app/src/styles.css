@@ -204,25 +204,31 @@ button.del { font-size: 15px; color: #a0a5af; background: none; border: none; pa
 button.del:hover { color: var(--bad-ink); background: none; }
 button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; }
 
-/* 시험지 목록의 인쇄물 칸. 붙어 있으면 내려받기, 없으면 올리기. */
-/* 세 칩이 한 줄에 들어갈 만큼은 늘 확보한다. 표가 좁아 접히면 줄이 두 겹이 된다. */
-.ex-files { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; min-width: 236px; }
-.file-chip { display: inline-flex; align-items: stretch; }
-.file-link, .file-add {
-  font-size: 12px; white-space: nowrap; border-radius: 6px; padding: 3px 7px;
-  background: none; cursor: pointer;
+/* 시험지 목록의 인쇄물 칸. 이름 아래에 [보기] [다운로드]를 둔다.
+   지우는 단추는 두지 않는다. 옆에 있으면 누르려다 잘못 눌린다. */
+/* 세 칩이 한 줄에 들어갈 만큼은 확보한다. 표가 좁으면 접힌다. */
+.ex-files { display: flex; gap: 6px; align-items: flex-start; flex-wrap: wrap; min-width: 312px; }
+.file-chip {
+  display: flex; flex-direction: column; align-items: stretch; gap: 3px;
+  min-width: 74px; padding: 5px 7px; border: 1px solid var(--line); border-radius: 7px;
 }
-.file-link { color: var(--navy); border: 1px solid var(--line); border-right: 0; border-radius: 6px 0 0 6px; }
-.file-link::before { content: '⤓'; margin-right: 3px; }
-.file-link:hover { background: var(--fill); }
-.file-del {
-  font-size: 10px; color: var(--ink-3); border: 1px solid var(--line);
-  border-radius: 0 6px 6px 0; padding: 3px 5px;
+.file-name {
+  font-size: 12px; font-weight: 600; color: var(--ink); text-align: center;
+  padding: 0; border: 0; background: none; cursor: pointer; white-space: nowrap;
 }
-.file-del:hover { color: var(--bad-ink); background: var(--fill); }
-.file-add { color: var(--ink-3); border: 1px dashed var(--line); }
+.file-name:hover { color: var(--navy); text-decoration: underline; }
+.file-acts { display: flex; gap: 4px; }
+.file-act {
+  flex: 1; font-size: 11px; color: var(--ink-2); text-align: center; text-decoration: none;
+  white-space: nowrap; padding: 2px 6px; border: 1px solid var(--line); border-radius: 5px;
+  background: #fff;
+}
+.file-act:hover { color: var(--navy); border-color: var(--navy); background: var(--fill); }
+.file-add {
+  align-self: center; font-size: 12px; color: var(--ink-3); white-space: nowrap;
+  padding: 5px 8px; border: 1px dashed var(--line); border-radius: 7px; background: none; cursor: pointer;
+}
 .file-add:hover { color: var(--navy); border-color: var(--navy); background: var(--fill); }
-.file-link { display: inline-flex; align-items: center; text-decoration: none; }
 
 /* 인쇄물 고르는 창 */
 .pick-back {
@@ -301,6 +307,9 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .gd-foot b { font-size: 15px; color: var(--ink); }
 
 /* ── 표 ──────────────────────────────────────────── */
+/* 표가 화면보다 넓을 때 카드 안에서 가로로 넘긴다. 없으면 휴대폰에서
+   칸이 카드 밖으로 그려진다. */
+.table-scroll { overflow-x: auto; }
 .assess-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .assess-table th {
   text-align: left;
@@ -641,6 +650,9 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 }
 
 @media (max-width: 860px) {
+  /* 손가락으로 누를 단추라 조금 키운다. */
+  .file-act { padding: 5px 8px; font-size: 12px; }
+  .file-name { padding: 3px 0; font-size: 12.5px; }
   .split { grid-template-columns: minmax(0, 1fr); }
   .side { position: static; }
   .side-list { max-height: 240px; }

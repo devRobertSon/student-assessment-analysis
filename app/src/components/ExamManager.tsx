@@ -80,6 +80,8 @@ export default function ExamManager({ data, setData }: Props) {
               선택 삭제{selected.size > 0 ? ` (${selected.size})` : ''}
             </button>
           </div>
+          {/* 표가 화면보다 넓다. 휴대폰에서 칸이 카드 밖으로 삐져나오지 않게 감싼다. */}
+          <div className="table-scroll">
           <table className="assess-table">
             <thead>
               <tr>
@@ -88,11 +90,11 @@ export default function ExamManager({ data, setData }: Props) {
                 </th>
                 <th>시험지</th>
                 <th style={{ width: 66 }}>과목</th>
-                <th style={{ width: 104 }}>등록일</th>
+                <th style={{ width: 96 }}>등록일</th>
                 <th style={{ width: 56, textAlign: 'center' }}>문항</th>
                 <th style={{ width: 52 }}>유형</th>
                 <th style={{ width: 52 }}>단원</th>
-                <th style={{ width: 240 }}>인쇄물</th>
+                <th style={{ width: 312 }}>인쇄물</th>
                 <th style={{ width: 92 }}></th>
                 <th style={{ width: 44 }}></th>
               </tr>
@@ -172,6 +174,7 @@ export default function ExamManager({ data, setData }: Props) {
               ))}
             </tbody>
           </table>
+          </div>
         </>
       )}
     </div>
