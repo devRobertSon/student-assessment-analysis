@@ -19,9 +19,9 @@ import Select from './Select';
 // styles.css의 .report-capture min-height와 같은 값. A4 한 쪽(96dpi)이다.
 const PAGE_H = 1123;
 
-const SUMMARY_MAX = 130;
-// 인쇄에 두 줄로 들어가는 길이다. 더 받아 두면 화면에는 보이고 인쇄에서만
-// 잘려 무엇이 나갔는지 알 수 없다.
+// 둘 다 인쇄에 두 줄로 들어가는 길이다. 재어 보면 102자에서 세 줄로 넘어가므로
+// 100자에서 끊는다. 넘치면 화면에도 인쇄에도 두 줄까지만 보인다.
+const SUMMARY_MAX = 100;
 const NOTE_MAX = 100;
 const MEMO_MAX = 200;
 
@@ -342,41 +342,58 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
     </div>
   );
 
+  /*
+   * 응시 이력을 몇 벌로 세울지. 셋부터 두 벌로 갈라 오른쪽에 붙인다.
+   * 한 벌에 두 줄씩 넷이면 표 높이가 두 줄로 끝나 1쪽 안에 들어간다.
+   * 다섯 이상이면 두 벌에 고르게 나눠 담는다. 그래도 넘치면 쪽이 나뉜다.
+   */
+  const historyCols = useMemo(() => {
+    if (selectedResults.length <= 2) return [selectedResults];
+    const half = Math.ceil(selectedResults.length / 2);
+    return [selectedResults.slice(0, half), selectedResults.slice(half)];
+  }, [selectedResults]);
+
   // 1쪽에 그대로 두거나, 자리가 없으면 통째로 다음 쪽으로 옮긴다.
   const movableBlocks = (
     <div ref={movedRef} className="rp-movable">
       <section className="report-sec">
         <span className="report-sec-h">응시 이력</span>
-        <table className="report-info-table rp-history">
-          <thead>
-            <tr>
-              <th>시험지</th>
-              <th style={{ width: 120 }}>응시일</th>
-              <th style={{ width: 150 }}>점수</th>
-            </tr>
-          </thead>
-          <tbody>
-            {selectedResults.map((r) => {
-              const ex = examById.get(r.examId);
-              const sc = scoreOf(r.marks);
-              return (
-                <tr key={r.id}>
-                  <td>{ex?.title ?? '—'}</td>
-                  <td>{r.date}</td>
-                  <td>
-                    {Math.round(sc.rate * 100)}점 · {sc.correct}/{sc.total}문항
-                  </td>
+        {/* 세 번째부터는 아래로 쌓지 않고 오른쪽에 한 벌을 더 세운다. 넷까지는
+            두 줄 높이로 끝나 1쪽 안에 들어간다. */}
+        <div className={`rp-history-wrap${historyCols.length > 1 ? ' two' : ''}`}>
+          {historyCols.map((col, i) => (
+            <table key={i} className="report-info-table rp-history">
+              <thead>
+                <tr>
+                  <th>시험지</th>
+                  <th className="rp-h-date">응시일</th>
+                  <th className="rp-h-score">점수</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {col.map((r) => {
+                  const ex = examById.get(r.examId);
+                  const sc = scoreOf(r.marks);
+                  return (
+                    <tr key={r.id}>
+                      <td>{ex?.title ?? '—'}</td>
+                      <td>{r.date}</td>
+                      <td>
+                        {Math.round(sc.rate * 100)}점 · {sc.correct}/{sc.total}문항
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          ))}
+        </div>
       </section>
 
       {summary.trim() && (
         <section className="report-sec">
           <span className="report-sec-h">종합 의견</span>
-          <p className="report-note-body">{summary}</p>
+          <p className="report-note-body rp-note-2">{summary}</p>
         </section>
       )}
       {/* 손으로 적기를 켜면 글 대신 빈 칸이 나가고, 그 칸이 쪽에 남는 자리를

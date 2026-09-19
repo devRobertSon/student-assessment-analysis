@@ -1083,6 +1083,16 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .report-capture .rp-history th,
 .report-capture .rp-history td { padding: 4px 9px; }
 
+/* 응시가 셋 이상이면 표를 두 벌로 세운다. 좁아진 만큼 날짜와 점수 칸을
+   줄여 시험지 이름이 눌리지 않게 한다. */
+.rp-history-wrap { display: flex; gap: 12px; }
+.rp-history-wrap > * { flex: 1 1 0; min-width: 0; }
+.rp-history .rp-h-date { width: 106px; }
+.rp-history .rp-h-score { width: 132px; }
+.rp-history-wrap.two .rp-h-date { width: 84px; }
+.rp-history-wrap.two .rp-h-score { width: 116px; }
+.rp-history-wrap.two .rp-history { font-size: 12px; }
+
 /* 선생님 의견은 100자까지만 받으므로 두 줄을 넘지 않는다. 글자가 더 넓게
    재어지는 경우에도 세 줄로 흘러 아래 카드를 밀지 않게 두 줄에서 잠근다. */
 .rp-note-2 {
