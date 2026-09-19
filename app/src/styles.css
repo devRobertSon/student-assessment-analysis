@@ -880,10 +880,13 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .rp-val b { line-height: 1; letter-spacing: -0.02em; }
 .rp-sub { font-style: normal; font-size: 11.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* 학생 칸만 가로로 늘어난다. 이름이 길면 학년이 밀리지 않게 이름만 줄인다. */
+/* 학생 칸만 가로로 늘어난다. 이름이 길면 말줄임으로 자른다. */
 .rp-id { flex-grow: 1; min-width: 0; border: 1px solid #e0e0dc; border-radius: 6px; }
 .rp-id .rp-val b { font-size: 22px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
-.rp-id .rp-val-sub { flex: none; font-size: 19px; color: var(--ink-2); }
+/* 학년은 '중1' 두 글자라 좁게 잡는다. 학생과 같은 흰 칸으로 둬서 둘이 한
+   묶음(누구인가)이고 오른쪽 셋(얼마나 했는가)과는 다른 것을 보인다. */
+.rp-year { flex: none; width: 86px; border: 1px solid #e0e0dc; border-radius: 6px; }
+.rp-year .rp-val b { font-size: 22px; font-weight: 600; }
 
 .rp-score { width: 194px; background: var(--navy); border-radius: 6px; }
 .rp-score .rp-cap { color: var(--navy-pale); }

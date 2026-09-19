@@ -589,12 +589,18 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
                 {/* 네 칸 모두 [라벨 · 큰 값 · 작은 값] 세 줄이다. 줄 높이를 못 박고
                     큰 값을 가운데 줄의 바닥에 붙여, 글자 크기가 달라도 한 선에 서게 한다. */}
                 <div className="rp-id">
-                  <span className="rp-cap">학생 · 학년</span>
+                  <span className="rp-cap">학생</span>
                   <div className="rp-val">
                     <b>{student?.name}</b>
-                    <b className="rp-val-sub">{student?.grade}</b>
                   </div>
                   <em className="rp-sub">{student?.school || ''}</em>
+                </div>
+                <div className="rp-year">
+                  <span className="rp-cap">학년</span>
+                  <div className="rp-val">
+                    <b>{student?.grade}</b>
+                  </div>
+                  <em className="rp-sub" />
                 </div>
                 <div className="rp-score">
                   <span className="rp-cap">{selectedResults.length > 1 ? '평균 점수' : '점수'}</span>
