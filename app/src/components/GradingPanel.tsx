@@ -19,6 +19,7 @@ import {
 } from '../lib/assessment';
 import { rateTag } from './TypeRadar';
 import GradeDialog from './GradeDialog';
+import ConfirmDialog from './ConfirmDialog';
 
 interface Props {
   data: AssessmentData;
@@ -45,6 +46,7 @@ export default function GradingPanel({ data, setData }: Props) {
   const [axis, setAxis] = useState<Axis>('type');
   const csvRef = useRef<HTMLInputElement>(null);
   const [dialog, setDialog] = useState(false);
+  const [askDelete, setAskDelete] = useState(false);
 
   const exam = data.exams.find((e) => e.id === examId);
   const student = data.students.find((s) => s.id === studentId);
@@ -113,12 +115,12 @@ export default function GradingPanel({ data, setData }: Props) {
   /** 불러온 채점 결과를 지운다. 화면의 입력칸도 같이 비워 다시 저장되지 않게 한다. */
   const removeSaved = () => {
     if (!existing || !exam) return;
-    if (!confirm(`${exam.title} · ${existing.date} 채점 결과를 삭제할까요?`)) return;
     setData({ ...data, results: data.results.filter((r) => r.id !== existing.id) });
     const map: Record<number, Cell> = {};
     exam.questions.forEach((q) => (map[q.no] = null));
     setCells(map);
     setDate(todayStr());
+    setAskDelete(false);
   };
 
   const exportGradingCsv = () => {
@@ -152,6 +154,15 @@ export default function GradingPanel({ data, setData }: Props) {
 
   return (
     <div className="assess-pane">
+      {askDelete && existing && exam && (
+        <ConfirmDialog
+          title="채점 결과 삭제"
+          message={`${exam.title} · ${existing.date} 채점 결과를 삭제할까요?`}
+          detail="화면의 입력칸도 같이 비워집니다. 되돌릴 수 없습니다."
+          onYes={removeSaved}
+          onNo={() => setAskDelete(false)}
+        />
+      )}
       <div className="screen-head">
         <div>
           <h1>채점 입력</h1>
@@ -206,7 +217,7 @@ export default function GradingPanel({ data, setData }: Props) {
               {existing && (
                 <span className="assess-row" style={{ alignSelf: 'flex-end', gap: 8 }}>
                   <span className="assess-badge">저장된 채점 불러옴</span>
-                  <button className="del-btn mini" onClick={removeSaved}>
+                  <button className="del-btn mini" onClick={() => setAskDelete(true)}>
                     채점 결과 삭제
                   </button>
                 </span>

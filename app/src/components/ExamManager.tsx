@@ -7,6 +7,7 @@ import {
   splitTypes,
 } from '../lib/assessment';
 import ExamFiles from './ExamFiles';
+import ConfirmDialog from './ConfirmDialog';
 
 interface Props {
   data: AssessmentData;
@@ -16,38 +17,33 @@ interface Props {
 export default function ExamManager({ data, setData }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // 지우기 전에 한 번 묻는다. 무엇을 지울지만 담아 두고 실제 삭제는 [예]에서 한다.
+  const [pending, setPending] = useState<{ ids: string[]; title: string } | null>(null);
 
-  const removeExam = (id: string) => {
-    const e = data.exams.find((x) => x.id === id);
-    const cnt = data.results.filter((r) => r.examId === id).length;
-    if (!confirm(`"${e?.title}" 시험지를 삭제할까요?${cnt ? ` (채점 결과 ${cnt}건도 함께 삭제)` : ''}`)) return;
+  const askRemove = (ids: string[], title: string) => {
+    if (ids.length > 0) setPending({ ids, title });
+  };
+
+  const doRemove = () => {
+    if (!pending) return;
+    const gone = new Set(pending.ids);
+    const titles = data.exams.filter((x) => gone.has(x.id)).map((x) => x.title);
     setData({
       ...data,
-      exams: data.exams.filter((x) => x.id !== id),
-      results: data.results.filter((r) => r.examId !== id),
+      exams: data.exams.filter((x) => !gone.has(x.id)),
+      results: data.results.filter((r) => !gone.has(r.examId)),
       // 저장소에 CSV가 남아 있어도 다시 들어오지 않게 이름을 적어 둔다.
-      dismissed: [...(data.dismissed ?? []), e?.title ?? ''].filter(Boolean),
+      dismissed: [...(data.dismissed ?? []), ...titles].filter(Boolean),
     });
     setSelected((prev) => {
       const n = new Set(prev);
-      n.delete(id);
+      gone.forEach((id) => n.delete(id));
       return n;
     });
+    setPending(null);
   };
 
-  const removeSelected = () => {
-    if (selected.size === 0) return;
-    const cnt = data.results.filter((r) => selected.has(r.examId)).length;
-    if (!confirm(`선택한 시험지 ${selected.size}개를 삭제할까요?${cnt ? ` (채점 결과 ${cnt}건도 함께 삭제)` : ''}`)) return;
-    const gone = data.exams.filter((x) => selected.has(x.id)).map((x) => x.title);
-    setData({
-      ...data,
-      exams: data.exams.filter((x) => !selected.has(x.id)),
-      results: data.results.filter((r) => !selected.has(r.examId)),
-      dismissed: [...(data.dismissed ?? []), ...gone].filter(Boolean),
-    });
-    setSelected(new Set());
-  };
+  const removeSelected = () => askRemove([...selected], `선택한 시험지 ${selected.size}개`);
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -66,6 +62,22 @@ export default function ExamManager({ data, setData }: Props) {
           <h1>시험지 관리</h1>
         </div>
       </div>
+
+      {pending && (
+        <ConfirmDialog
+          title="시험지 삭제"
+          message={`${pending.title} 시험지를 삭제할까요?`}
+          detail={(() => {
+            const gone = new Set(pending.ids);
+            const cnt = data.results.filter((r) => gone.has(r.examId)).length;
+            return cnt
+              ? `채점 결과 ${cnt}건도 함께 지워집니다. 되돌릴 수 없습니다.`
+              : '되돌릴 수 없습니다. 저장소에 CSV가 남아 있어도 다시 들어오지 않습니다.';
+          })()}
+          onYes={doRemove}
+          onNo={() => setPending(null)}
+        />
+      )}
 
       {data.exams.length === 0 ? (
         <p className="muted">등록된 시험지가 없습니다.</p>
@@ -139,7 +151,7 @@ export default function ExamManager({ data, setData }: Props) {
                       </button>
                     </td>
                     <td>
-                      <button className="del" onClick={() => removeExam(ex.id)} title="삭제">
+                      <button className="del" onClick={() => askRemove([ex.id], `"${ex.title}"`)} title="삭제">
                         ✕
                       </button>
                     </td>

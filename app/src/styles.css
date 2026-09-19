@@ -272,6 +272,18 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 }
 .csv-table tbody tr:hover { background: #fafbfc; }
 .csv-foot { margin: 0; }
+
+/* 지우기 전에 묻는 창 */
+.cf-box {
+  width: min(400px, 100%); background: #fff; border-radius: 10px; padding: 20px 22px 16px;
+  display: flex; flex-direction: column; gap: 8px; text-align: left; cursor: default;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+}
+.cf-title { font-size: 16px; }
+.cf-msg { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink); }
+.cf-detail { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--bad-ink); }
+.cf-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.cf-yes { font-weight: 600; }
 .csv-box .pick-head .hint { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 
 /* ── 채점: 한 문항씩 띄우는 직접 입력 창 ───────────── */

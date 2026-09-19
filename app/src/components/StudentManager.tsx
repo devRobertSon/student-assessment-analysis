@@ -16,6 +16,7 @@ import {
 import { rateTag } from './TypeRadar';
 import TypeRadar from './TypeRadar';
 import TypeBars from './TypeBars';
+import ConfirmDialog from './ConfirmDialog';
 
 const GRADES = ['초3', '초4', '초5', '초6', '중1', '중2', '중3', '고1', '고2', '고3'];
 const DEFAULT_GRADE = '중1';
@@ -41,6 +42,10 @@ export default function StudentManager({
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
   const [newGrade, setNewGrade] = useState(DEFAULT_GRADE);
+  // 지우기 전에 한 번 묻는다.
+  const [pending, setPending] = useState<
+    { kind: 'student' } | { kind: 'result'; id: string; label: string } | null
+  >(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const student = data.students.find((s) => s.id === selectedId);
@@ -99,24 +104,20 @@ export default function StudentManager({
   };
 
   /** 채점 한 건을 지운다. 시험지와 학생은 그대로 두고 그 응시만 없앤다. */
-  const removeResult = (resultId: string) => {
-    const r = data.results.find((x) => x.id === resultId);
-    if (!r) return;
-    const ex = data.exams.find((e) => e.id === r.examId);
-    if (!confirm(`${ex?.title ?? '시험'} · ${r.date} 채점 결과를 삭제할까요?`)) return;
+  const doRemoveResult = (resultId: string) => {
     setData({ ...data, results: data.results.filter((x) => x.id !== resultId) });
+    setPending(null);
   };
 
-  const remove = () => {
+  const doRemoveStudent = () => {
     if (!student) return;
-    const cnt = data.results.filter((r) => r.studentId === student.id).length;
-    if (!confirm(`${student.name} 학생을 삭제할까요?${cnt ? ` (채점 결과 ${cnt}건도 함께 삭제)` : ''}`)) return;
     setData({
       ...data,
       students: data.students.filter((s) => s.id !== student.id),
       results: data.results.filter((r) => r.studentId !== student.id),
     });
     setSelectedId('');
+    setPending(null);
   };
 
   const importCsv = async (file: File) => {
@@ -130,6 +131,28 @@ export default function StudentManager({
 
   return (
     <div className="split">
+      {pending && (
+        <ConfirmDialog
+          title={pending.kind === 'student' ? '학생 삭제' : '채점 결과 삭제'}
+          message={
+            pending.kind === 'student'
+              ? `${student?.name ?? ''} 학생을 삭제할까요?`
+              : `${pending.label} 채점 결과를 삭제할까요?`
+          }
+          detail={
+            pending.kind === 'student'
+              ? (() => {
+                  const cnt = data.results.filter((r) => r.studentId === student?.id).length;
+                  return cnt
+                    ? `채점 결과 ${cnt}건도 함께 지워집니다. 되돌릴 수 없습니다.`
+                    : '되돌릴 수 없습니다.';
+                })()
+              : '이 응시 하나만 지웁니다. 시험지와 학생은 그대로 남습니다.'
+          }
+          onYes={() => (pending.kind === 'student' ? doRemoveStudent() : doRemoveResult(pending.id))}
+          onNo={() => setPending(null)}
+        />
+      )}
       <aside className="side">
         <div className="side-head">
           <div className="side-title">
@@ -276,7 +299,7 @@ export default function StudentManager({
                 <button className="primary mini" onClick={onOpenReport} disabled={studentResults.length === 0}>
                   리포트 열기
                 </button>
-                <button className="del" onClick={remove} title="학생 삭제">
+                <button className="del" onClick={() => setPending({ kind: 'student' })} title="학생 삭제">
                   ✕
                 </button>
               </div>
@@ -425,7 +448,7 @@ export default function StudentManager({
                             {sc.correct}/{sc.total} · {Math.round(sc.rate * 100)}%
                           </td>
                           <td>
-                            <button className="del" onClick={() => removeResult(r.id)} title="이 채점 결과 삭제">
+                            <button className="del" onClick={() => setPending({ kind: 'result', id: r.id, label: `${ex?.title ?? '시험'} · ${r.date}` })} title="이 채점 결과 삭제">
                               ✕
                             </button>
                           </td>
