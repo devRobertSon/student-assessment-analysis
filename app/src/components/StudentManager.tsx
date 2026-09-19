@@ -12,6 +12,7 @@ import { STEADY } from './TypeRadar';
 import TypeRadar from './TypeRadar';
 import TypeBars from './TypeBars';
 import ConfirmDialog from './ConfirmDialog';
+import Select from './Select';
 import { ask } from '../lib/notice';
 
 const GRADES = ['초3', '초4', '초5', '초6', '중1', '중2', '중3', '고1', '고2', '고3'];
@@ -175,11 +176,12 @@ export default function StudentManager({
                   if (e.key === 'Escape') setAdding(false);
                 }}
               />
-              <select value={newGrade} onChange={(e) => setNewGrade(e.target.value)} aria-label="새 학생 학년">
-                {GRADES.map((g) => (
-                  <option key={g}>{g}</option>
-                ))}
-              </select>
+              <Select
+                label="새 학생 학년"
+                value={newGrade}
+                onChange={setNewGrade}
+                options={GRADES.map((g) => ({ value: g, label: g }))}
+              />
               <button className="primary mini" onClick={add} disabled={!newName.trim()}>
                 추가
               </button>
@@ -299,11 +301,12 @@ export default function StudentManager({
               <div className="field-grid">
                 <label className="fld">
                   <span>학년</span>
-                  <select value={student.grade} onChange={(e) => update({ grade: e.target.value })}>
-                    {GRADES.map((g) => (
-                      <option key={g}>{g}</option>
-                    ))}
-                  </select>
+                  <Select
+                    label="학년"
+                    value={student.grade}
+                    onChange={(v) => update({ grade: v })}
+                    options={GRADES.map((g) => ({ value: g, label: g }))}
+                  />
                 </label>
                 <label className="fld">
                   <span>학교</span>
@@ -324,11 +327,17 @@ export default function StudentManager({
                 </label>
                 <label className="fld">
                   <span>형제 재원 여부</span>
-                  <select value={student.sibling ?? ''} onChange={(e) => update({ sibling: e.target.value as Sibling })}>
-                    <option value="">선택 안 함</option>
-                    <option value="없음">없음</option>
-                    <option value="있음">있음</option>
-                  </select>
+                  <Select
+                    label="형제 재원 여부"
+                    value={student.sibling ?? ''}
+                    onChange={(v) => update({ sibling: v as Sibling })}
+                    placeholder="선택 안 함"
+                    options={[
+                      { value: '', label: '선택 안 함' },
+                      { value: '없음', label: '없음' },
+                      { value: '있음', label: '있음' },
+                    ]}
+                  />
                 </label>
                 <label className="fld">
                   <span>메모</span>

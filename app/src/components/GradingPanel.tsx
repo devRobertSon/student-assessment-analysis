@@ -20,6 +20,7 @@ import {
 } from '../lib/assessment';
 import { rateTag } from './TypeRadar';
 import ConfirmDialog from './ConfirmDialog';
+import Select from './Select';
 
 interface Props {
   data: AssessmentData;
@@ -197,31 +198,29 @@ ${listNos(left)}`
             <div className="assess-row wrap">
               <label className="assess-field">
                 학생
-                <select
+                <Select
+                  label="학생"
                   value={studentId}
-                  onChange={(e) => {
-                    setStudentId(e.target.value);
+                  onChange={(v) => {
+                    setStudentId(v);
                     setExamId('');
                   }}
-                >
-                  <option value="">선택</option>
-                  {data.students.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} ({s.grade})
-                    </option>
-                  ))}
-                </select>
+                  options={data.students.map((s) => ({ value: s.id, label: s.name, note: s.grade }))}
+                />
               </label>
               <label className="assess-field">
                 시험지
-                <select value={examId} onChange={(e) => setExamId(e.target.value)} disabled={!studentId}>
-                  <option value="">선택</option>
-                  {data.exams.map((ex) => (
-                    <option key={ex.id} value={ex.id}>
-                      {ex.title} ({ex.questions.length}문항)
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  label="시험지"
+                  value={examId}
+                  onChange={setExamId}
+                  disabled={!studentId}
+                  options={data.exams.map((ex) => ({
+                    value: ex.id,
+                    label: ex.title,
+                    note: `${ex.questions.length}문항`,
+                  }))}
+                />
               </label>
               <label className="assess-field">
                 응시일

@@ -15,6 +15,7 @@ import { notify } from '../lib/notice';
 import TypeRadar, { FAIR, STEADY } from './TypeRadar';
 import TypeBars from './TypeBars';
 import DatePicker from './DatePicker';
+import Select from './Select';
 
 // styles.css의 .report-capture min-height와 같은 값. A4 한 쪽(96dpi)이다.
 const PAGE_H = 1123;
@@ -371,17 +372,15 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
           <button className="mini ghost" onClick={onBack}>
             ← 학생
           </button>
-          <label className="assess-field">
-            학생
-            <select value={studentId} onChange={(e) => setStudentId(e.target.value)}>
-              <option value="">선택</option>
-              {data.students.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({s.grade})
-                </option>
-              ))}
-            </select>
-          </label>
+          {/* '학생' 이라는 라벨은 옆의 [← 학생] 단추와 겹치는 말이라 뺀다.
+              라벨이 없어지면 단추와 높이도 저절로 맞는다. */}
+          <Select
+            label="학생"
+            value={studentId}
+            onChange={setStudentId}
+            placeholder="학생 고르기"
+            options={data.students.map((s) => ({ value: s.id, label: s.name, note: s.grade }))}
+          />
         </div>
         {student && selectedResults.length > 0 && (
           <button className="primary" onClick={downloadPdf} disabled={busy}>
