@@ -1,11 +1,11 @@
 const SHOT = import.meta.env.BASE_URL + 'manual/';
 
-/** 사용법 캡쳐. 화면을 그대로 담은 것이라 글로만 읽을 때보다 찾아가기 쉽다. */
-function Shot({ src, alt, cap, narrow }: { src: string; alt: string; cap: string; narrow?: number }) {
+/** 사용법 캡쳐. 화면을 그대로 담은 것이라 글로만 읽을 때보다 찾아가기 쉽다.
+    설명은 바로 위 글에 이미 있으므로 그림 아래에 또 적지 않는다. */
+function Shot({ src, alt, narrow }: { src: string; alt: string; narrow?: number }) {
   return (
     <figure className="shot" style={narrow ? { maxWidth: narrow } : undefined}>
       <img src={SHOT + src} alt={alt} loading="lazy" />
-      <figcaption>{cap}</figcaption>
     </figure>
   );
 }
@@ -45,7 +45,7 @@ export default function ManualPage() {
             <span>[학생]에서 학생을 고르고 [리포트 열기] → 의견을 적고 PDF로 저장합니다.</span>
           </li>
         </ol>
-        <Shot src="home.png" alt="홈 화면" cap="홈 화면. 카드를 누르면 그 화면으로 바로 갑니다." />
+        <Shot src="home.png" alt="홈 화면" />
       </section>
 
       <section className="assess-card">
@@ -84,7 +84,6 @@ export default function ManualPage() {
         <Shot
           src="students.png"
           alt="학생 화면"
-          cap="왼쪽 목록에서 학생을 고른 모습. 학생 정보 · 응시 결과 · 유형별 정답률이 차례로 나옵니다."
         />
       </section>
 
@@ -125,7 +124,7 @@ export default function ManualPage() {
             내려받아 버리기 때문입니다.
           </li>
         </ul>
-        <Shot src="exams.png" alt="시험지 목록" cap="시험지 목록. 인쇄물 칸에서 바로 보거나 받습니다." />
+        <Shot src="exams.png" alt="시험지 목록" />
       </section>
 
       <section className="assess-card">
@@ -187,7 +186,6 @@ export default function ManualPage() {
         <Shot
           src="grading.png"
           alt="채점 화면"
-          cap="채점 화면. 왼쪽 격자에서 O나 X를 누르면 오른쪽 집계가 즉시 갱신됩니다."
         />
       </section>
 
@@ -230,7 +228,6 @@ export default function ManualPage() {
         <Shot
           src="report.png"
           alt="리포트 1쪽"
-          cap="리포트 1쪽. 레이더 꼭짓점마다 정답률과 강점/보완이 글자로 함께 적혀 흑백으로 인쇄해도 읽힙니다."
           narrow={470}
         />
         <p className="hint" style={{ marginTop: 12 }}>

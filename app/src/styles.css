@@ -977,7 +977,6 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
   display: block; width: 100%; height: auto;
   border: 1px solid var(--line); border-radius: 8px; background: #fff;
 }
-.shot figcaption { font-size: 12px; color: var(--ink-3); margin-top: 7px; }
 
 .flow { margin: 0; padding: 0; list-style: none; counter-reset: flow; display: flex; flex-direction: column; gap: 10px; }
 .flow li {
