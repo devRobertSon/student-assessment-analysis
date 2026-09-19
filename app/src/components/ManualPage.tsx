@@ -417,7 +417,7 @@ export default function ManualPage() {
       </section>
 
       <section className="assess-card">
-        <h3>자주 막히는 곳</h3>
+        <h3>오류 해결</h3>
         <table className="assess-table manual-table">
           <thead>
             <tr>
