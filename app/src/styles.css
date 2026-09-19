@@ -881,6 +881,12 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .rp-cap { font-size: 11.5px; letter-spacing: 0.05em; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rp-val { display: flex; align-items: flex-end; gap: 7px; min-width: 0; white-space: nowrap; }
 .rp-val b { line-height: 1; letter-spacing: -0.02em; }
+/* 값 줄은 글자 상자의 아래를 맞춘다. 그런데 글자가 상자 아래까지 내려가는
+   깊이는 크기에 비례해서, 상자를 맞추면 큰 글자일수록 기준선이 위로 뜬다.
+   재어 보면 22px 은 38px 보다 2px 아래에 앉는다. 작은 값만 그만큼 올려
+   다섯 칸의 기준선을 한 선에 세운다. 값 크기를 바꾸면 이 값도 다시 잰다. */
+.rp-id .rp-val b,
+.rp-year .rp-val b { margin-bottom: 2px; }
 .rp-sub { font-style: normal; font-size: 11.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* 학생 칸만 가로로 늘어난다. 이름이 길면 말줄임으로 자른다.
@@ -892,7 +898,9 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .rp-year { flex: none; width: 86px; border: 1px solid #e0e0dc; border-radius: 6px; }
 .rp-year .rp-val b { font-size: 22px; font-weight: 600; }
 
-.rp-score { width: 194px; background: var(--navy); border-radius: 6px; }
+/* 다른 넷은 1px 테두리가 있어 안쪽 내용이 그만큼 아래에서 시작한다.
+   여기만 테두리가 없으면 라벨과 곁줄이 혼자 1px 위로 뜬다. 색만 비운다. */
+.rp-score { width: 194px; background: var(--navy); border: 1px solid transparent; border-radius: 6px; }
 .rp-score .rp-cap { color: var(--navy-pale); }
 /* PDF는 이 DOM을 복제해 그리는데, 그때 웹폰트가 아직 안 붙어 글자가 더 넓게
    재어지면 숫자와 단위가 한 줄을 넘겨 상자 밖으로 밀려난다. 줄바꿈을 막는다. */
