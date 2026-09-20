@@ -501,7 +501,8 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .type-bar-track { flex-grow: 1; height: 16px; background: #f0f0ec; border-radius: 4px; }
 .type-bar-fill { height: 100%; border-radius: 4px; }
 .type-bar-val { width: 44px; font-size: 14px; font-weight: 700; text-align: right; }
-.type-bar-count { width: 32px; font-size: 12px; color: var(--ink-2); text-align: right; }
+/* '14/19점' 이 들어갈 만큼 넓힌다. */
+.type-bar-count { width: 58px; font-size: 12px; color: var(--ink-2); text-align: right; }
 .type-bar-tag { width: 42px; font-size: 11px; font-weight: 700; text-align: center; border-radius: 3px; padding: 2px 0; border: 1.2px solid; }
 .tag-good { color: var(--ink); border-color: var(--good-ink); }
 .tag-warn { color: var(--ink); border-color: #c08a12; }

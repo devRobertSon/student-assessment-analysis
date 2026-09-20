@@ -1,4 +1,4 @@
-import { TypeStat } from '../lib/assessment';
+import { TypeStat, fmtPoints } from '../lib/assessment';
 import { rateColor, rateTag } from './TypeRadar';
 
 /**
@@ -26,8 +26,10 @@ export default function TypeBars({ stats, showTag = true }: { stats: TypeStat[];
               />
             </div>
             <div className="type-bar-val">{Math.round(s.rate * 100)}%</div>
+            {/* 왼쪽 %는 문항 개수로 잰 정답률이고, 여기는 배점까지 반영한 득점이다.
+                어려운 문항을 틀렸는지가 이 칸에서 드러난다. */}
             <div className="type-bar-count">
-              {s.correct}/{s.total}
+              {fmtPoints(s.earned)}/{fmtPoints(s.points)}점
             </div>
             {showTag && <div className={`type-bar-tag ${tag.cls}`}>{tag.label}</div>}
           </div>

@@ -108,9 +108,6 @@ export default function GradingPanel({ data, setData }: Props) {
   // 재수강 판정과 별개로, 최상 난이도를 얼마나 놓쳤는지는 따로 알아야 한다.
   const gap = exam ? advancedGap(exam, marks) : null;
   const fullPoints = exam ? exam.questions.reduce((a, q) => a + pointsOf(q), 0) : 0;
-  const essayCount = exam ? exam.questions.filter(isEssay).length : 0;
-  // 배점이나 서술형이 있는 시험지인지. 둘 다 없으면 한 문항 1점이라 점수 = 문항 수다.
-  const scoredExam = !!exam && (essayCount > 0 || fullPoints !== exam.questions.length);
 
   const save = async () => {
     if (!studentId || !exam) {
@@ -346,11 +343,9 @@ ${listNos(left)}`
                     {stats.map((s) => (
                       <div key={s.type} className="tally-row">
                         <span className="t">{s.type}</span>
-                        {/* 배점이나 서술형이 있으면 점수로, 아니면 문항 수로 보여준다 */}
+                        {/* 옆의 %는 문항 개수로 잰 정답률, 여기는 배점까지 반영한 득점이다. */}
                         <span className="c">
-                          {scoredExam
-                            ? `${fmtPoints(s.earned)}/${fmtPoints(s.points)}점`
-                            : `${s.correct}/${s.total}`}
+                          {fmtPoints(s.earned)}/{fmtPoints(s.points)}점
                         </span>
                         <span className="p">{Math.round(s.rate * 100)}%</span>
                         <span className="g">{rateTag(s.rate).label}</span>

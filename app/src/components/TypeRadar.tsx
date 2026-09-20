@@ -183,7 +183,9 @@ export default function TypeRadar({ stats, plain }: { stats: TypeStat[]; plain?:
         const [x, y] = ptOf(i, R * s.rate);
         return (
           <circle key={`dot-${i}`} cx={x} cy={y} r={5} fill={rateColor(s.rate)} stroke="#fff" strokeWidth={1.6}>
-            <title>{`${s.type} ${Math.round(s.rate * 100)}% (${s.correct}/${s.total})`}</title>
+            <title>
+              {`${s.type} ${Math.round(s.rate * 100)}% · ${s.correct}/${s.total}문항 · ${s.earned}/${s.points}점`}
+            </title>
           </circle>
         );
       })}

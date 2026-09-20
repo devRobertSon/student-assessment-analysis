@@ -222,7 +222,8 @@ export default function StudentManager({
                   <span className="nm">
                     {s.name} <span className="gr">{s.grade}</span>
                   </span>
-                  <span className="rt">{r === null || r === undefined ? '—' : `${Math.round(r * 100)}%`}</span>
+                  {/* 점수로 적는다. 채점·리포트와 같은 값, 같은 단위다. */}
+                  <span className="rt">{r === null || r === undefined ? '—' : `${Math.round(r * 100)}점`}</span>
                 </button>
               );
             })
@@ -256,8 +257,10 @@ export default function StudentManager({
                   <div className="stu-div" />
                   <div className="stu-stats">
                     <div>
-                      <span className="hint">전체 정답률</span>
-                      <b>{Math.round(total.rate * 100)}%</b>
+                      {/* 응시가 여러 번이면 문항을 다 합쳐 낸 값이라 평균이라고 밝힌다.
+                          리포트 머리칸도 같은 말로 바뀐다. */}
+                      <span className="hint">{studentResults.length > 1 ? '평균 점수' : '점수'}</span>
+                      <b>{Math.round(total.rate * 100)}점</b>
                     </div>
                     <div>
                       <span className="hint">강점 유형</span>
@@ -439,7 +442,7 @@ export default function StudentManager({
                           <td>{ex?.title ?? '—'}</td>
                           <td>{r.date}</td>
                           <td>
-                            {sc.correct}/{sc.total} · {Math.round(sc.rate * 100)}%
+                            {Math.round(sc.rate * 100)}점 · {sc.correct}/{sc.total}문항
                           </td>
                           <td>
                             <button
