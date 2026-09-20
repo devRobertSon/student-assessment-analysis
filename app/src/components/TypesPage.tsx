@@ -26,6 +26,7 @@ export default function TypesPage() {
           넷만으로는 한 영역에 문항이 몰려 무엇을 못하는지 가려내기 어렵습니다. 각 영역을{' '}
           <b>서로 다른 두 능력</b>으로 나누어 여덟 가지로 씁니다. 중학교에서 쓰다가 고등·수능까지 그대로 이어집니다.
         </p>
+        <div className="table-scroll">
         <table className="assess-table manual-table">
           <thead>
             <tr>
@@ -57,6 +58,7 @@ export default function TypesPage() {
             </tr>
           </tbody>
         </table>
+        </div>
 
         <h4 className="manual-h4">유형별 설명과 훈련법</h4>
         <ul className="bullets type-guide">
@@ -132,8 +134,8 @@ export default function TypesPage() {
           </li>
         </ul>
         <p className="hint">
-          진단평가 네 시험지는 유형마다 3문항 이상이 되도록 배분했습니다. 한 유형이 두 문항이면 하나를 실수로 틀렸을 때
-          정답률이 50%가 되어 보완할 곳처럼 보입니다.
+          진단평가 네 시험지는 유형마다 3문항 이상이 되도록 배분했습니다. 한 유형이 두 문항뿐이면 하나만 실수해도
+          정답률이 절반 아래로 떨어져 보완할 곳처럼 보입니다.
         </p>
       </section>
 
@@ -150,6 +152,7 @@ export default function TypesPage() {
           60%를 맞힌 학생과 학교 시험에서 60%를 맞힌 학생은 같은 학생이 아닙니다. 그래서 문항마다 난이도 무게를
           주어 더하고, 원점수가 0이어도 바닥까지 떨어지지 않도록 <b>50~100점</b> 구간에 폅니다.
         </p>
+        <div className="table-scroll">
         <table className="assess-table manual-table">
           <thead>
             <tr>
@@ -165,12 +168,14 @@ export default function TypesPage() {
             <tr><td className="nowrap"><b>무게 만점</b></td><td colSpan={2}>62점</td></tr>
           </tbody>
         </table>
+        </div>
         <p className="hint">
           <b>환산점수 = 50 + 50 × (받은 무게 ÷ 무게 만점)</b>. 네 시험지의 무게 만점이 61~62점으로 같아
           시험지끼리 환산점수를 견주어도 됩니다.
         </p>
 
         <h4 className="manual-h4">등급 칸</h4>
+        <div className="table-scroll">
         <table className="assess-table manual-table">
           <thead>
             <tr>
@@ -191,6 +196,7 @@ export default function TypesPage() {
             <tr><td className="nowrap"><b>9등급</b></td><td>52점 미만</td><td>거의 다 틀림</td></tr>
           </tbody>
         </table>
+        </div>
         <p className="hint">
           오른쪽 칸이 겹치는 것은 <b>어느 문항을 틀렸는지</b>에 따라 환산점수가 달라지기 때문입니다. 최상을
           10문항 틀린 학생과 표준을 10문항 틀린 학생은 오답 수가 같아도 등급이 다릅니다.
@@ -215,6 +221,10 @@ export default function TypesPage() {
           </li>
         </ul>
         <p className="hint">
+          여기서 쓰는 표준 정답률은 <b>채점 화면 집계와 리포트 레이더에 보이는 그 값</b>입니다. 배점까지 반영한
+          값이라, 표준 문항을 같은 개수 맞혀도 배점이 큰 것을 틀리면 더 낮게 나옵니다.
+        </p>
+        <p className="hint">
           난이도를 적지 않은 시험지에서는 환산점수도 등급도 나오지 않습니다.
         </p>
       </section>
@@ -224,6 +234,7 @@ export default function TypesPage() {
         <p className="muted">
           2022 개정 교육과정 통합과학 기준 <b>평가 목표의 행동 영역</b>이 그대로 8개입니다.
         </p>
+        <div className="table-scroll">
         <table className="assess-table manual-table">
           <thead>
             <tr>
@@ -242,6 +253,7 @@ export default function TypesPage() {
             <tr><td className="nowrap"><b>의사소통</b></td><td>의사소통</td></tr>
           </tbody>
         </table>
+        </div>
         <p className="hint">
           차트에는 왼쪽의 짧은 이름으로 나옵니다. 오른쪽은 평가원이 쓰는 원래 이름입니다.
         </p>

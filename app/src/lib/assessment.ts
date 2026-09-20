@@ -183,6 +183,10 @@ export const GRADE_CUTS: { grade: number; min: number }[] = [
  * 환산점수만 보면 표준을 다 틀리고 최상을 다 맞힌 학생이 1등급이 된다. 무게가
  * 최상 쪽에 실려 있어서다. 기초가 서지 않은 채 어려운 문제만 맞히는 것을 위로
  * 쳐 주지 않는다.
+ *
+ * 여기서 쓰는 표준 정답률은 화면에 보이는 그 값(TypeStat.rate, 배점 기준)이다.
+ * 문항 개수로 따로 세면 화면에 55%라고 적힌 학생이 60% 선을 넘어가 버려서,
+ * 왜 등급이 막혔는지 화면만 봐서는 알 수 없다.
  */
 const BASE_CAPS: { under: number; worst: number }[] = [
   { under: 60, worst: 4 },
@@ -199,7 +203,7 @@ export function gradeFromLevels(levels: TypeStat[]): number | null {
   let grade = GRADE_CUTS.find((c) => score >= c.min)?.grade ?? GRADE_CUTS.length + 1;
   const std = levels.find((l) => l.type === '표준');
   if (std && std.total > 0) {
-    const rate = (std.correct / std.total) * 100;
+    const rate = std.rate * 100;
     for (const cap of BASE_CAPS) if (rate < cap.under) grade = Math.max(grade, cap.worst);
   }
   return grade;

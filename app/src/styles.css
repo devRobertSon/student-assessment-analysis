@@ -319,6 +319,10 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 /* 표가 화면보다 넓을 때 카드 안에서 가로로 넘긴다. 없으면 휴대폰에서
    칸이 카드 밖으로 그려진다. */
 .table-scroll { overflow-x: auto; }
+/* 유형 분석의 표는 설명 문장이 든 칸이 있어 좁아지면 한 단어씩 끊긴다.
+   줄지 않게 잡고 감싸개가 가로로 밀게 한다. */
+.manual-table { min-width: 560px; }
+
 /* 시험지 이름은 끊지 않는다. 표는 그만큼 넓어지고 감싸개가 가로로 민다. */
 .res-table { min-width: 430px; }
 .res-table th:first-child,

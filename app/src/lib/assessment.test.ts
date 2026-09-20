@@ -367,6 +367,22 @@ describe('예상 등급 (난이도 환산점수)', () => {
     expect(gradeFromLevels(lv(30, 100, 100))).toBe(6);
   });
 
+  it('표준 상한은 화면에 보이는 정답률(배점 기준)을 그대로 쓴다', () => {
+    // 10문항 중 6개를 맞혀도 배점이 큰 것을 틀리면 정답률은 60%에 못 미친다.
+    // 그때는 개수로 60%를 채웠어도 4등급 위로 올라가지 못한다.
+    const levels = [
+      { type: '표준', total: 10, correct: 6, points: 40, earned: 22, rate: 22 / 40 },
+      { type: '상', total: 10, correct: 10, points: 30, earned: 30, rate: 1 },
+      { type: '최상', total: 10, correct: 10, points: 30, earned: 30, rate: 1 },
+    ];
+    expect(levels[0].correct / levels[0].total).toBe(0.6);
+    expect(levels[0].rate).toBeLessThan(0.6);
+    expect(gradeFromLevels(levels)).toBe(4);
+    // 같은 개수라도 배점이 큰 것을 맞혀 정답률이 60%를 넘으면 막지 않는다
+    const ok = [{ ...levels[0], earned: 26, rate: 26 / 40 }, levels[1], levels[2]];
+    expect(gradeFromLevels(ok)).toBe(1);
+  });
+
   it('난이도를 안 적은 시험지는 등급을 지어내지 않는다', () => {
     expect(gradeFromLevels([])).toBeNull();
     expect(scaledScore([])).toBeNull();
