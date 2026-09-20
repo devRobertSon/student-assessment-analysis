@@ -5,7 +5,7 @@ export type QFormat = '객관식' | '서술형';
 
 export interface ExamQuestion {
   no: number;
-  type: string; // 유형. 어떤 능력에서 막히는지 (행동영역)
+  type: string; // 유형. 어떤 능력이 모자라 틀리는지 (행동영역)
   format?: QFormat; // 없으면 객관식
   answer?: string;
   points?: number;
@@ -186,7 +186,7 @@ export const GRADE_CUTS: { grade: number; min: number }[] = [
  *
  * 여기서 쓰는 표준 정답률은 화면에 보이는 그 값(TypeStat.rate, 배점 기준)이다.
  * 문항 개수로 따로 세면 화면에 55%라고 적힌 학생이 60% 선을 넘어가 버려서,
- * 왜 등급이 막혔는지 화면만 봐서는 알 수 없다.
+ * 왜 등급이 그 위로 못 올라갔는지 화면만 봐서는 알 수 없다.
  */
 const BASE_CAPS: { under: number; worst: number }[] = [
   { under: 60, worst: 4 },
@@ -614,7 +614,7 @@ function finishStats(acc: Map<string, TypeAcc>, order?: string[]): TypeStat[] {
 
 // ── 집계 축 ──────────────────────────────────────────────
 // 한 시험에서 세 가지를 읽는다.
-//   유형   어떤 능력에서 막히는지     약한 순
+//   유형   어떤 능력이 모자라 틀리는지  약한 순
 //   단원   어느 단원을 안 배웠는지   시험지에 나온 순(교육과정 순)
 //   난이도 어느 난이도부터 틀리는지 표준 → 상 → 최상
 export type Axis = 'type' | 'unit' | 'level';
