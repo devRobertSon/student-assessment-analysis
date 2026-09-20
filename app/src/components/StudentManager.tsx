@@ -468,10 +468,16 @@ export default function StudentManager({
 
             <div className="assess-card grow">
               {studentResults.length === 0 ? (
-                <p className="muted">채점된 시험이 없습니다. [채점 입력]에서 O/X를 누르면 여기에 결과가 나옵니다.</p>
+                /* 채점한 것이 없으면 위의 [응시 결과] 카드도 안 나온다. 그 자리를
+                   이 카드가 대신하므로 제목도 그 이름으로 단다. */
+                <>
+                  <h3>응시 결과</h3>
+                  <p className="muted">채점된 시험이 없습니다. [채점 입력]에서 O/X를 누르면 여기에 결과가 나옵니다.</p>
+                </>
               ) : (
                 <>
-                  <h3>유형별 정답률</h3>
+                  {/* 리포트의 같은 칸과 이름을 맞춘다. */}
+                  <h3>유형별 성취</h3>
                   <div className="type-bars-wrap">
                     <div className="type-radar-wrap">
                       <TypeRadar stats={stats} plain />
