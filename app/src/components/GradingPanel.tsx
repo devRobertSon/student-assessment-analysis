@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ask, notify } from '../lib/notice';
+import { setLeaveGuard } from '../lib/leaveGuard';
 import {
   AssessmentData,
   Axis,
@@ -81,8 +82,49 @@ export default function GradingPanel({ data, setData }: Props) {
   // 같은 값을 다시 누르면 미입력으로 되돌린다(O를 잘못 눌렀을 때 지우는 길).
   const setCell = (no: number, v: number) => setCells((c) => ({ ...c, [no]: c[no] === v ? null : v }));
 
-  const setAll = (v: 'full' | 'zero' | 'clear') => {
+  /** 저장된 채점(없으면 빈칸)을 지금 칸과 같은 모양으로 펼친 것. */
+  const savedCells = useMemo(() => {
+    const map: Record<number, Cell> = {};
+    if (!exam) return map;
+    exam.questions.forEach((q) => (map[q.no] = null));
+    existing?.marks.forEach((m) => (map[m.no] = m.earned));
+    return map;
+  }, [exam, existing]);
+
+  /** 저장한 것과 다른 입력이 있는가. 이것이 있으면 화면을 떠나기 전에 묻는다. */
+  const dirty = !!exam && exam.questions.some((q) => (cells[q.no] ?? null) !== (savedCells[q.no] ?? null));
+  const entered = exam ? exam.questions.filter((q) => cells[q.no] !== null && cells[q.no] !== undefined).length : 0;
+
+  /**
+   * 입력을 버려도 되는지 묻는다. 저장을 누르지 않으면 아무 데도 남지 않으므로
+   * 칸을 바꾸는 길, 지우는 단추, 화면을 떠나는 길 모두 여기를 지난다.
+   */
+  const okToDiscard = async () => {
+    if (!dirty) return true;
+    return ask('저장하지 않은 채점이 있습니다', `${entered}문항을 입력했고 아직 저장하지 않았습니다.`, {
+      detail: '지금 옮기면 입력한 것이 사라집니다. 남기려면 [아니요]를 누르고 [채점 저장]을 먼저 누르세요.',
+      yesLabel: '예, 버립니다',
+    });
+  };
+
+  // 위 메뉴로 다른 화면에 갈 때 App 이 이 함수를 먼저 부른다.
+  useEffect(() => {
+    setLeaveGuard(dirty ? okToDiscard : null);
+    return () => setLeaveGuard(null);
+  });
+
+  const setAll = async (v: 'full' | 'zero' | 'clear') => {
     if (!exam) return;
+    if (entered > 0) {
+      const ok = await ask(
+        v === 'clear' ? '입력한 채점을 지웁니다' : '입력한 채점을 덮어씁니다',
+        v === 'clear'
+          ? `${entered}문항을 지웁니다.`
+          : `${entered}문항에 넣은 것을 모두 ${v === 'full' ? 'O' : 'X'} 로 바꿉니다.`,
+        { yesLabel: '예' }
+      );
+      if (!ok) return;
+    }
     const map: Record<number, Cell> = {};
     exam.questions.forEach((q) => {
       map[q.no] = v === 'clear' ? null : v === 'full' ? pointsOf(q) : 0;
@@ -121,7 +163,7 @@ export default function GradingPanel({ data, setData }: Props) {
         detail: `비어 있는 문항
 ${listNos(blankNos)}
 
-빈 문항은 저장되지 않고, 입력한 문항만으로 정답률을 계산합니다.`,
+빈 문항은 저장되지 않고, 입력한 문항만으로 점수를 냅니다.`,
         yesLabel: '예, 저장합니다',
       });
       if (!ok) return;
@@ -199,7 +241,8 @@ ${listNos(left)}`
                 <Select
                   label="학생"
                   value={studentId}
-                  onChange={(v) => {
+                  onChange={async (v) => {
+                    if (!(await okToDiscard())) return;
                     setStudentId(v);
                     setExamId('');
                   }}
@@ -211,7 +254,9 @@ ${listNos(left)}`
                 <Select
                   label="시험지"
                   value={examId}
-                  onChange={setExamId}
+                  onChange={async (v) => {
+                    if (await okToDiscard()) setExamId(v);
+                  }}
                   disabled={!studentId}
                   options={data.exams.map((ex) => ({
                     value: ex.id,
@@ -226,7 +271,7 @@ ${listNos(left)}`
               </label>
               {existing && (
                 <span className="assess-row" style={{ alignSelf: 'flex-end', gap: 8 }}>
-                  <span className="assess-badge">저장된 채점 불러옴</span>
+                  <span className="assess-badge">저장된 채점</span>
                   <button className="del-btn mini" onClick={() => setAskDelete(true)}>
                     채점 결과 삭제
                   </button>
@@ -234,7 +279,13 @@ ${listNos(left)}`
               )}
             </div>
 
+            {/* 두 칸 다 고르기 전에는 어느 차례인지 말해 준다. */}
             {!studentId && <p className="muted" style={{ marginTop: 12 }}>먼저 학생을 선택하세요.</p>}
+            {studentId && !exam && (
+              <p className="muted" style={{ marginTop: 12 }}>
+                채점할 시험지를 선택하세요.
+              </p>
+            )}
 
             {exam && (
               <>
@@ -261,8 +312,10 @@ ${listNos(left)}`
                     return (
                       <div
                         key={q.no}
+                        /* 한 문항도 안 누른 처음에는 표시하지 않는다. 서른 개가
+                           모두 켜지면 '안 누른 것'을 짚어 주는 뜻이 사라진다. */
                         className={`ox-item ${isEssay(q) ? 'essay' : ''} ${
-                          v === null || v === undefined ? 'blank' : ''
+                          entered > 0 && (v === null || v === undefined) ? 'blank' : ''
                         }`}
                       >
                         <span className="ox-no">{q.no}</span>
@@ -297,25 +350,34 @@ ${listNos(left)}`
               <div className="assess-scorebar">
                 <div className="lbl">입력 중인 점수</div>
                 {/* 큰 숫자는 시험지 만점을 기준으로 한 득점이다. 퍼센트는 적지 않는다.
-                    아직 안 누른 문항이 있으면 그만큼 낮게 나오는데, 아래 '남음' 줄이 그것을 말해 준다. */}
+                    아직 안 누른 문항이 있으면 그만큼 낮게 나오는데, 아래 '남음' 줄이 그것을 말해 준다.
+                    한 문항도 안 눌렀을 때는 0 이 아니라 — 로 둔다. 0 은 다 틀렸다는 뜻으로 읽힌다. */}
                 <div className="assess-row" style={{ alignItems: 'baseline', gap: 6 }}>
-                  <span className="big">{fmtPoints(score.earned)}</span>
+                  <span className="big">{entered === 0 ? '—' : fmtPoints(score.earned)}</span>
                   <span style={{ fontSize: 17, fontWeight: 500, color: 'var(--navy-pale)' }}>
                     / {fmtPoints(fullPoints)}점
                   </span>
                 </div>
-                <div style={{ fontSize: 13, color: 'var(--navy-soft)', marginTop: 5 }}>
-                  맞은 문제 수 {score.correct}/{exam.questions.length}
-                </div>
-                {blankNos.length === 0 ? (
-                  <div style={{ fontSize: 13, color: 'var(--navy-soft)', marginTop: 3 }}>
-                    {exam.questions.length}문항 모두 입력 완료
+                {entered === 0 ? (
+                  <div style={{ fontSize: 13, color: 'var(--navy-soft)', marginTop: 5 }}>
+                    아직 입력한 문항이 없습니다
                   </div>
                 ) : (
-                  <div className="sb-blank">
-                    <b>{blankNos.length}문항 남음</b>
-                    <span>{listNos(blankNos, 12)}</span>
-                  </div>
+                  <>
+                    <div style={{ fontSize: 13, color: 'var(--navy-soft)', marginTop: 5 }}>
+                      맞은 문제 수 {score.correct}/{exam.questions.length}
+                    </div>
+                    {blankNos.length === 0 ? (
+                      <div style={{ fontSize: 13, color: 'var(--navy-soft)', marginTop: 3 }}>
+                        {exam.questions.length}문항 모두 입력 완료
+                      </div>
+                    ) : (
+                      <div className="sb-blank">
+                        <b>{blankNos.length}문항 남음</b>
+                        <span>{listNos(blankNos, 12)}</span>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 

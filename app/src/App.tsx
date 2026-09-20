@@ -12,6 +12,7 @@ import GradingPanel from './components/GradingPanel';
 import TypeReport from './components/TypeReport';
 import ManualPage from './components/ManualPage';
 import TypesPage from './components/TypesPage';
+import { canLeave } from './lib/leaveGuard';
 
 type View = 'home' | 'students' | 'exams' | 'grading' | 'report' | 'types' | 'manual';
 
@@ -57,7 +58,12 @@ export default function App() {
     }
   };
 
-  const goHome = (target: HomeTarget) => setView(target);
+  // 채점 화면에 저장 안 한 입력이 있으면 떠나기 전에 한 번 묻는다.
+  const go = async (target: View) => {
+    if (target === view) return;
+    if (await canLeave()) setView(target);
+  };
+  const goHome = (target: HomeTarget) => void go(target);
   const navActive = (key: View) => view === key;
 
   return (
@@ -65,14 +71,14 @@ export default function App() {
       <header className="app-header no-print">
         <div className="brand">
           <Logo size={32} />
-          <button className="brand-title" onClick={() => setView('home')}>
+          <button className="brand-title" onClick={() => void go('home')}>
             알파학원 진단평가 분석
           </button>
         </div>
 
         <nav className="assess-tabs">
           {NAV.map((t) => (
-            <button key={t.key} className={navActive(t.key) ? 'active' : ''} onClick={() => setView(t.key)}>
+            <button key={t.key} className={navActive(t.key) ? 'active' : ''} onClick={() => void go(t.key)}>
               {t.label}
             </button>
           ))}
