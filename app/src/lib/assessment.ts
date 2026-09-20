@@ -566,11 +566,12 @@ export interface TypeStat {
   points: number; // 배점 합
   earned: number; // 득점 합
   /**
-   * 정답률 0~1. 문항 개수로 잰다(correct / total).
+   * 정답률 0~1. 배점으로 잰다(earned / points).
    *
-   * 배점으로 재면 5문항 중 4개를 맞혀도 어느 문항을 틀렸느냐에 따라 74%가
-   * 되기도 80%가 되기도 해서, 옆에 적힌 문항 수와 어긋나 보인다. 배점은
-   * earned·points 에 그대로 남아 있고, 총점과 환산점수가 그것을 쓴다.
+   * 그래서 5문항 중 4개를 맞혀도 어느 문항을 틀렸느냐에 따라 74%가 되기도
+   * 80%가 되기도 한다. 어려운(배점이 큰) 문항을 틀린 것을 더 무겁게 보는
+   * 것이다. 화면에서는 이 값 옆에 득점(14/19점)을 같이 적어 어긋나 보이지
+   * 않게 한다.
    */
   rate: number;
 }
@@ -597,7 +598,7 @@ function finishStats(acc: Map<string, TypeAcc>, order?: string[]): TypeStat[] {
   const rows = [...acc.entries()].map(([type, a]) => ({
     ...a,
     type,
-    rate: a.total ? a.correct / a.total : 0,
+    rate: a.points ? a.earned / a.points : 0,
   }));
   if (!order) {
     // 유형은 약한 것부터. 리포트의 레이더·막대가 이 순서를 그대로 쓴다

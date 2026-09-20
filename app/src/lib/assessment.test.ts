@@ -150,9 +150,9 @@ describe('서술형', () => {
     expect(stats[0]).toMatchObject({ type: '규칙 발견', total: 2, correct: 2, earned: 8, points: 8 });
   });
 
-  it('배점이 달라도 같은 문항 수를 맞히면 정답률이 같다', () => {
-    // 5문항 중 4개를 맞혀도 어느 문항을 틀렸느냐에 따라 득점률은 74%와 80%로
-    // 갈린다. 옆에 적히는 문항 수와 어긋나 보이므로 정답률은 개수로 잰다.
+  it('같은 문항 수를 맞혀도 배점이 큰 문항을 틀리면 정답률이 더 낮다', () => {
+    // 정답률은 배점으로 잰다. 5문항 중 4개를 맞혀도 5점짜리를 틀렸으면 74%,
+    // 3점짜리를 틀렸으면 80%다. 화면에서는 옆에 득점을 같이 적어 밝힌다.
     const { questions } = examQuestionsFromCsv(
       [
         '시험지,과목,문항번호,유형,배점,정답',
@@ -163,12 +163,16 @@ describe('서술형', () => {
     const exam: Exam = { id: 'e', title: 't', subject: '수학', date: '2026-09-19', questions };
     // 무거움은 5점짜리를, 가벼움은 3점짜리를 하나씩 틀린다
     const marks = questions.map((q) => makeMark(q, q.no === 5 || q.no === 10 ? 0 : pointsOf(q)));
-    const [a, b] = statsForResult(exam, marks).filter((s) => s.type === '무거움' || s.type === '가벼움');
-    expect(a.correct / a.total).toBe(b.correct / b.total);
-    expect(a.rate).toBe(b.rate);
-    expect(a.rate).toBeCloseTo(0.8);
-    // 배점은 그대로 남아 있어 총점이 쓴다
-    expect([a.earned / a.points, b.earned / b.points]).not.toEqual([a.rate, b.rate]);
+    const rows = statsForResult(exam, marks);
+    const heavy = rows.find((s) => s.type === '무거움')!;
+    const light = rows.find((s) => s.type === '가벼움')!;
+    // 맞힌 문항 수는 둘 다 4/5
+    expect(heavy.correct / heavy.total).toBe(light.correct / light.total);
+    // 5점짜리를 틀린 쪽이 더 낮다
+    expect(heavy).toMatchObject({ earned: 12, points: 17 });
+    expect(light).toMatchObject({ earned: 12, points: 15 });
+    expect(heavy.rate).toBeLessThan(light.rate);
+    expect(light.rate).toBeCloseTo(0.8);
   });
 
   it('틀리면 배점이 커도 0점이다', () => {
@@ -177,8 +181,7 @@ describe('서술형', () => {
       makeMark(exam.questions[1], 0),
     ]);
     expect(stats[0]).toMatchObject({ total: 2, correct: 1, earned: 3, points: 8 });
-    // 배점은 earned·points 에 남고, rate 는 문항 개수로 잰다
-    expect(stats[0].rate).toBeCloseTo(1 / 2);
+    expect(stats[0].rate).toBeCloseTo(3 / 8);
   });
 
   it('CSV의 형식 열을 읽어 서술형을 구분한다', () => {
@@ -409,11 +412,7 @@ describe('단원·난이도 축', () => {
     expect(statsForResult(exam, marks, 'level').map((s) => s.type)).toEqual(['표준', '상', '최상']);
     const 식 = statsForResult(exam, marks, 'unit')[0];
     expect(식).toMatchObject({ total: 2, correct: 1, earned: 3, points: 6 });
-    // 최상은 서술형 한 문항인데 5점 중 2점이라 만점이 아니다. 정답률은 0,
-    // 받은 2점은 earned 에 남는다.
-    expect(statsForResult(exam, marks, 'level')[2]).toMatchObject({
-      total: 1, correct: 0, earned: 2, points: 5, rate: 0,
-    });
+    expect(statsForResult(exam, marks, 'level')[2].rate).toBeCloseTo(0.4); // 최상 2/5
   });
 
   it('단원을 안 적은 시험지는 그 축을 쓸 수 없다', () => {
