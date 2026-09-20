@@ -124,7 +124,7 @@ export default function App() {
       {view === 'exams' && (
         <main className="pane">
           <section className="assess-card">
-            <ExamManager data={data} setData={setData} />
+            <ExamManager data={data} />
           </section>
         </main>
       )}

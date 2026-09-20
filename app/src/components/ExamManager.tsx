@@ -5,7 +5,6 @@ import ExamComposition from './ExamComposition';
 
 interface Props {
   data: AssessmentData;
-  setData: (d: AssessmentData) => void;
 }
 
 /**
@@ -14,7 +13,7 @@ interface Props {
  * 시험지 등록과 삭제는 관리자가 papers/ 에서 한다. 선생님 화면에 지우는 버튼을
  * 두면 실수로 누른 한 번에 그 시험지의 채점 결과까지 사라진다.
  */
-export default function ExamManager({ data, setData }: Props) {
+export default function ExamManager({ data }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
 
   return (
@@ -67,15 +66,7 @@ export default function ExamManager({ data, setData }: Props) {
                       })()}
                     </td>
                     <td>
-                      <ExamFiles
-                        exam={ex}
-                        onChange={(files) =>
-                          setData({
-                            ...data,
-                            exams: data.exams.map((x) => (x.id === ex.id ? { ...x, files } : x)),
-                          })
-                        }
-                      />
+                      <ExamFiles exam={ex} />
                     </td>
                     <td>
                       <button className="mini ghost" onClick={() => setOpenId(openId === ex.id ? null : ex.id)}>
