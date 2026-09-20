@@ -151,12 +151,7 @@ export default function App() {
 
       {view === 'report' && (
         <main className="pane">
-          <TypeReport
-            data={data}
-            studentId={studentId}
-            setStudentId={setStudentId}
-            onBack={() => setView('students')}
-          />
+          <TypeReport data={data} studentId={studentId} setStudentId={setStudentId} />
         </main>
       )}
       <NoticeHost />

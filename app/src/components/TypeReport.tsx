@@ -11,7 +11,8 @@ import {
   statsCumulative,
 } from '../lib/assessment';
 import { logoUrl, sealUrl } from '../lib/brand';
-import { notify } from '../lib/notice';
+import { ask, notify } from '../lib/notice';
+import { setLeaveGuard } from '../lib/leaveGuard';
 import TypeRadar, { FAIR, STEADY } from './TypeRadar';
 import DatePicker from './DatePicker';
 import Select from './Select';
@@ -108,7 +109,6 @@ interface Props {
   data: AssessmentData;
   studentId: string;
   setStudentId: (id: string) => void;
-  onBack: () => void;
 }
 
 /** 기간 고르는 방식. custom 일 때만 날짜 두 칸이 나온다. */
@@ -133,7 +133,7 @@ const EMPTY_SESSION: SessionFields = {
   signName: '',
 };
 
-export default function TypeReport({ data, studentId, setStudentId, onBack }: Props) {
+export default function TypeReport({ data, studentId, setStudentId }: Props) {
   const [session, setSession] = useState<SessionFields>(EMPTY_SESSION);
   const [summaryTouched, setSummaryTouched] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -141,6 +141,8 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
   const [toDate, setToDate] = useState('');
   const [rangeMode, setRangeMode] = useState<RangeMode>('all');
   const [busy, setBusy] = useState(false);
+  /** PDF 를 한 번 내보냈는가. 내보낸 뒤에는 떠날 때 묻지 않는다. */
+  const [pdfSaved, setPdfSaved] = useState(false);
   const page1Ref = useRef<HTMLDivElement>(null);
   const notesPageRef = useRef<HTMLDivElement>(null);
   const page2Ref = useRef<HTMLDivElement>(null);
@@ -168,6 +170,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
   useEffect(() => {
     setSession(EMPTY_SESSION);
     setSummaryTouched(false);
+    setPdfSaved(false);
   }, [studentId]);
 
   const applyRange = (from: string, to: string) => {
@@ -219,7 +222,56 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
   const draftSummary = useMemo(() => autoSummary(stats, total.correct, total.total), [stats, total.correct, total.total]);
   const summary = summaryTouched ? session.summary : draftSummary;
 
-  const set = (patch: Partial<SessionFields>) => setSession((s) => ({ ...s, ...patch }));
+  const set = (patch: Partial<SessionFields>) => {
+    setSession((s) => ({ ...s, ...patch }));
+    // 고치면 다시 '안 내보낸 글' 이 된다. PDF 를 한 번 냈어도 마찬가지다.
+    setPdfSaved(false);
+  };
+
+  /**
+   * 손으로 적어 넣은 것이 있는가.
+   *
+   * 이 칸들은 아무 데도 저장되지 않는다. PDF 로 내보내야만 남는다. 그래서
+   * 학생을 바꾸거나 화면을 떠나기 전에 한 번 묻는다. 자동 문안은 손대기
+   * 전까지 세지 않는다. 고치지 않았으면 언제든 다시 만들어진다.
+   */
+  const typed =
+    !pdfSaved &&
+    (summaryTouched ||
+      session.note.trim() !== '' ||
+      session.noteBlank ||
+      session.memo.trim() !== '' ||
+      session.signName.trim() !== '' ||
+      session.consultDate !== '');
+
+  const okToDiscard = async () => {
+    if (!typed) return true;
+    return ask('적어 둔 내용이 사라집니다', '인쇄 전 입력은 저장되지 않습니다. PDF로 내보내야만 남습니다.', {
+      detail: '남기려면 [아니요]를 누르고 [PDF 저장]을 먼저 누르세요.',
+      yesLabel: '예, 버립니다',
+    });
+  };
+
+  // 위 메뉴로 다른 화면에 갈 때 App 이 이 함수를 먼저 부른다.
+  useEffect(() => {
+    setLeaveGuard(typed ? okToDiscard : null);
+    return () => setLeaveGuard(null);
+  });
+
+  // 새로고침과 탭 닫기도 막는다. 이 창은 브라우저가 그린다.
+  useEffect(() => {
+    if (!typed) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [typed]);
+
+  const pickStudent = async (id: string) => {
+    if (await okToDiscard()) setStudentId(id);
+  };
 
   const toggle = (id: string) =>
     setSelectedIds((prev) => {
@@ -312,6 +364,8 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
       if (notesPageRef.current) await addCapture(notesPageRef.current, true);
       if (page2Ref.current) await addCapture(page2Ref.current, true);
       pdf.save(`리포트_${student.name}_${today}.pdf`);
+      // 내보냈으니 더 붙잡지 않는다. 다시 고치면 또 붙잡는다.
+      setPdfSaved(true);
     } catch (e) {
       console.error(e);
       notify('PDF 저장', 'PDF 저장에 실패했습니다. 다시 시도해 주세요.');
@@ -418,15 +472,14 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
     <div className="assess-pane">
       <div className="screen-head no-print">
         <div className="assess-row">
-          <button className="mini ghost" onClick={onBack}>
-            ← 학생
-          </button>
-          {/* '학생' 이라는 라벨은 옆의 [← 학생] 단추와 겹치는 말이라 뺀다.
-              라벨이 없어지면 단추와 높이도 저절로 맞는다. */}
+          <h1>리포트</h1>
+          {/* '학생' 이라는 라벨은 적지 않는다. 고르는 칸에 이름이 그대로 들어가
+              무엇을 고르는 칸인지 드러난다. 돌아가는 단추도 두지 않는다.
+              위 메뉴에 [학생] 이 늘 있다. */}
           <Select
             label="학생"
             value={studentId}
-            onChange={setStudentId}
+            onChange={pickStudent}
             placeholder="학생 고르기"
             options={data.students.map((s) => ({ value: s.id, label: s.name, note: s.grade }))}
           />
@@ -629,6 +682,11 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
             </div>
           </div>
 
+          {selectedResults.length === 0 ? (
+            /* 고른 시험이 없으면 지면을 그리지 않는다. 그리면 0/100점, 0/0문항,
+               빈 응시 이력이 그대로 나와 망가진 리포트처럼 보인다. */
+            <p className="muted">리포트에 넣을 시험을 하나 이상 고르세요.</p>
+          ) : (
           <div className="print-preview">
             {/* ── 1쪽 ── */}
             <div ref={page1Ref} className={`report-capture${splitNotes ? ' rp-wide' : ''}`}>
@@ -859,6 +917,7 @@ export default function TypeReport({ data, studentId, setStudentId, onBack }: Pr
               </div>
             </div>
           </div>
+          )}
         </>
       )}
     </div>

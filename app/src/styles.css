@@ -496,7 +496,10 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .type-minor-table th, .type-minor-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line-2); }
 
 /* ── 리포트: 시험 선택·의견 입력 ─────────────────────── */
-.report-pick-head { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+/* 좁은 창에서 '리포트에 포함할 시험' 이 글자마다 끊기던 것을 막는다.
+   제목과 개수는 붙여 두고, 자리가 모자라면 단추가 다음 줄로 내려간다. */
+.report-pick-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 12px; }
+.report-pick-head h3, .report-pick-head > .hint { white-space: nowrap; }
 .report-pick-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .report-range { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 .report-range-label { font-size: 13px; color: var(--ink-2); margin-right: 2px; }
