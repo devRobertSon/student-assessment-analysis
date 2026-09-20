@@ -115,6 +115,9 @@ h1, h2, h3 { margin: 0; }
   line-height: 1.26;
   letter-spacing: -0.015em;
   max-width: 680px;
+  /* 한글은 낱말 가운데서도 끊긴다. 좁은 창에서 '시작됩 / 니다' 가 되므로
+     띄어쓰기에서만 줄을 바꾸게 한다. 홈 카드 글에도 같은 규칙을 걸어 뒀다. */
+  word-break: keep-all;
 }
 .home-stats { display: flex; gap: 44px; padding-bottom: 8px; }
 .home-stat { display: flex; flex-direction: column; gap: 6px; }
