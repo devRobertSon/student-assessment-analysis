@@ -754,8 +754,11 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .stu-name { display: flex; align-items: baseline; gap: 11px; }
 .stu-name h1 { font-size: 27px; font-weight: 700; letter-spacing: -0.02em; }
 .stu-div { width: 1px; height: 38px; background: var(--line-2); }
+/* 큰 값을 위로 올려 왼쪽의 이름과 한 줄에 세운다. 라벨을 위에 두면 큰
+   글자끼리(홍길동 · 69점) 줄이 어긋나 위아래로 왔다갔다 하는 것처럼 보인다.
+   아랫줄도 라벨과 시험 정보가 나란히 선다. */
 .stu-stats { display: flex; gap: 26px; }
-.stu-stats > div { display: flex; flex-direction: column; }
+.stu-stats > div { display: flex; flex-direction: column-reverse; }
 .stu-stats b { font-size: 20px; font-weight: 700; line-height: 1.25; }
 .stu-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 

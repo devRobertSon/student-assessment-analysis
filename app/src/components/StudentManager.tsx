@@ -321,9 +321,10 @@ export default function StudentManager({
                 </label>
                 <label className="fld">
                   <span>학부모 연락처</span>
+                  {/* 안내 문구는 두지 않는다. 카드 머리글이 이미 같은 말을 하고,
+                      여섯 칸 중 이 칸에만 붙어 있으면 값이 적힌 것처럼 보인다. */}
                   <input
                     type="tel"
-                    placeholder="비워두면 빈칸으로 인쇄"
                     value={student.parentContact ?? ''}
                     onChange={(e) => update({ parentContact: e.target.value })}
                   />
