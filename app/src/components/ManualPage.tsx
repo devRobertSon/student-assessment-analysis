@@ -330,6 +330,8 @@ export default function ManualPage() {
 
       <section className="assess-card">
         <h3>오류 해결</h3>
+        {/* 좁은 창에서 줄지 않게 잡고 가로로 밀어 본다(.manual-table). */}
+        <div className="table-scroll">
         <table className="assess-table manual-table">
           <thead>
             <tr>
@@ -368,6 +370,7 @@ export default function ManualPage() {
             </tr>
           </tbody>
         </table>
+        </div>
       </section>
     </div>
   );
