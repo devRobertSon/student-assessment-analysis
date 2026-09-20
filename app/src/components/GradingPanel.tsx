@@ -113,6 +113,23 @@ export default function GradingPanel({ data, setData }: Props) {
     return () => setLeaveGuard(null);
   });
 
+  /*
+   * 새로고침과 탭 닫기도 막는다.
+   *
+   * 이 창만은 앱이 그릴 수 없다. 브라우저가 직접 띄우고 글귀도 브라우저가
+   * 정해서, 우리가 적은 말은 나오지 않는다. 그래도 30문항이 말없이 날아가는
+   * 것보다는 낫다. 크롬은 preventDefault 와 returnValue 를 둘 다 봐야 띄운다.
+   */
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
+
   const setAll = async (v: 'full' | 'zero' | 'clear') => {
     if (!exam) return;
     if (entered > 0) {
