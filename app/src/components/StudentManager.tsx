@@ -365,6 +365,8 @@ export default function StudentManager({
 
               <div className="fld" style={{ marginTop: 12 }}>
                 <span>현재 진도 · 학습 내용</span>
+                {/* 좁은 창에서 표가 카드 밖으로 밀려 나간다. 감싸서 가로로 밀어 보게 한다. */}
+                <div className="table-scroll">
                 <table className="progress-table">
                   <thead>
                     <tr>
@@ -418,13 +420,16 @@ export default function StudentManager({
                     </tr>
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
 
             {studentResults.length > 0 && (
               <div className="assess-card">
                 <h3>응시 결과</h3>
-                <table className="assess-table">
+                {/* 시험지 이름이 좁은 창에서 글자마다 끊기지 않게 감싼다. */}
+                <div className="table-scroll">
+                <table className="assess-table res-table">
                   <thead>
                     <tr>
                       <th>시험지</th>
@@ -457,6 +462,7 @@ export default function StudentManager({
                     })}
                   </tbody>
                 </table>
+                </div>
               </div>
             )}
 

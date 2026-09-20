@@ -80,7 +80,9 @@ h1, h2, h3 { margin: 0; }
 .admin-toolbar { display: flex; align-items: center; gap: 9px; margin-left: auto; }
 
 /* ── 상단 메뉴 ────────────────────────────────────── */
-.assess-tabs { display: flex; gap: 2px; }
+/* 일곱 칸이라 휴대폰 너비에서는 한 줄에 못 들어간다. 줄을 바꿔 담는다.
+   가로로 밀어 보게 두면 뒤쪽 메뉴가 화면 밖에 숨어 있는 줄 모른다. */
+.assess-tabs { display: flex; flex-wrap: wrap; gap: 2px; }
 .assess-tabs button {
   font-family: inherit;
   font-size: 14px;
@@ -341,6 +343,10 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 /* 표가 화면보다 넓을 때 카드 안에서 가로로 넘긴다. 없으면 휴대폰에서
    칸이 카드 밖으로 그려진다. */
 .table-scroll { overflow-x: auto; }
+/* 시험지 이름은 끊지 않는다. 표는 그만큼 넓어지고 감싸개가 가로로 민다. */
+.res-table { min-width: 430px; }
+.res-table th:first-child,
+.res-table td:first-child { white-space: nowrap; }
 
 /* 시험지 목록은 이름 말고는 다 짧은 값이라 머리글과 값을 함께 가운데로 둔다.
    머리글만 가운데로 하면 값과 어긋나 보인다. 이름 열(2번째)은 왼쪽 그대로. */
@@ -753,8 +759,10 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .stu-stats b { font-size: 20px; font-weight: 700; line-height: 1.25; }
 .stu-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 
-.stu-info-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
-.stu-info-head h3 { margin: 0; }
+/* 좁은 창에서 '학생 정보'가 '학생 / 정보' 로 쪼개졌다. 제목은 붙여 두고
+   설명이 다음 줄로 내려가게 한다. */
+.stu-info-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 12px; }
+.stu-info-head h3 { margin: 0; white-space: nowrap; }
 .field-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px; }
 .fld { display: flex; flex-direction: column; gap: 5px; }
 .fld > span { font-size: 11px; font-weight: 600; color: var(--ink-3); }
@@ -783,7 +791,9 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 }
 
 /* ── 학생 정보: 진도 표 ──────────────────────────── */
-.progress-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+/* 감싸개(.table-scroll) 안에서 줄지 않고 가로로 밀린다. 손으로 적는 칸이라
+   이보다 좁아지면 글씨를 못 쓴다. */
+.progress-table { width: 100%; min-width: 420px; border-collapse: collapse; font-size: 13px; }
 .progress-table th {
   text-align: left;
   font-size: 12px;
