@@ -114,14 +114,14 @@
           "label": "문제지 PDF",
           "file": "중2-2_진단평가_문제지.pdf",
           "ext": "pdf",
-          "size": 1453923
+          "size": 1453909
         },
         {
           "kind": "해설",
           "label": "해설 PDF",
           "file": "중2-2_진단평가_해설.pdf",
           "ext": "pdf",
-          "size": 74231
+          "size": 74326
         },
         {
           "kind": "출제표",
