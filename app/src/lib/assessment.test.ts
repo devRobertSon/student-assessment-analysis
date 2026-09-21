@@ -130,7 +130,7 @@ describe('statsForResult', () => {
   });
 });
 
-describe('서술형', () => {
+describe('주관식', () => {
   const exam: Exam = {
     id: 'e3',
     title: '중1-1 진단평가',
@@ -138,11 +138,11 @@ describe('서술형', () => {
     date: '2026-09-19',
     questions: [
       { no: 1, type: '규칙 발견', format: '객관식', points: 3 },
-      { no: 2, type: '규칙 발견', format: '서술형', points: 5 },
+      { no: 2, type: '규칙 발견', format: '주관식', points: 5 },
     ],
   };
 
-  it('서술형도 O/X만 구분한다. 배점을 다 받아야 맞은 것이다', () => {
+  it('주관식도 O/X만 구분한다. 배점을 다 받아야 맞은 것이다', () => {
     const stats = statsForResult(exam, [
       makeMark(exam.questions[0], 3),
       makeMark(exam.questions[1], 5),
@@ -184,16 +184,24 @@ describe('서술형', () => {
     expect(stats[0].rate).toBeCloseTo(3 / 8);
   });
 
-  it('CSV의 형식 열을 읽어 서술형을 구분한다', () => {
+  it('CSV의 형식 열을 읽어 주관식을 구분한다', () => {
     const { questions } = examQuestionsFromCsv(
-      '문항번호,유형,형식,배점\n1,규칙 발견,객관식,3\n2,규칙 발견,서술형,5\n3,개념 이해,,4'
+      '문항번호,유형,형식,배점\n1,규칙 발견,객관식,3\n2,규칙 발견,주관식,5\n3,개념 이해,,4'
     );
-    expect(questions.map((q) => q.format)).toEqual(['객관식', '서술형', undefined]);
+    expect(questions.map((q) => q.format)).toEqual(['객관식', '주관식', undefined]);
     expect(questions[1].points).toBe(5);
   });
 
+  // 2026-09-21 에 이름을 '주관식' 으로 바꾸기 전에 받아 둔 CSV 가 남아 있다.
+  it('예전에 쓰던 서술형·논술형·서답형도 주관식으로 읽는다', () => {
+    const { questions } = examQuestionsFromCsv(
+      '문항번호,유형,형식,배점\n1,규칙 발견,서술형,5\n2,규칙 발견,논술형,5\n3,규칙 발견,서답형,5'
+    );
+    expect(questions.map((q) => q.format)).toEqual(['주관식', '주관식', '주관식']);
+  });
+
   it('득점은 0~배점 사이로 잘려서 기록된다', () => {
-    const q = exam.questions[1]; // 5점짜리 서술형
+    const q = exam.questions[1]; // 5점짜리 주관식
     expect(makeMark(q, 99)).toEqual({ no: 2, earned: 5, points: 5 });
     expect(makeMark(q, -3)).toEqual({ no: 2, earned: 0, points: 5 });
     expect(isFullMark(makeMark(q, 5))).toBe(true);
@@ -404,7 +412,7 @@ describe('단원·난이도 축', () => {
     '시험지,과목,문항번호,단원,유형,난이도,형식,배점,정답,출처,원문항',
     '중2-1 진단평가,수학,1,식의 계산,연산·식 정리,표준,객관식,3,③,심화,7',
     '중2-1 진단평가,수학,2,식의 계산,개념 이해,상,객관식,3,①,응용,12',
-    '중2-1 진단평가,수학,3,부등식,표현 해석,최상,서술형,5,-4,심화,30',
+    '중2-1 진단평가,수학,3,부등식,표현 해석,최상,주관식,5,-4,심화,30',
   ].join('\n');
 
   it('CSV의 단원·난이도·출처·원문항을 읽는다', () => {
@@ -413,7 +421,7 @@ describe('단원·난이도 축', () => {
     expect(questions[0]).toMatchObject({
       unit: '식의 계산', level: '표준', source: '심화', sourceNo: '7',
     });
-    expect(questions[2]).toMatchObject({ unit: '부등식', level: '최상', format: '서술형' });
+    expect(questions[2]).toMatchObject({ unit: '부등식', level: '최상', format: '주관식' });
   });
 
   it('단원은 시험지에 나온 순서, 난이도는 표준→상→최상 순으로 집계된다', () => {

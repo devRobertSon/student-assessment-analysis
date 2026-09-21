@@ -434,7 +434,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .ox-btns button { width: 34px; height: 30px; padding: 0; font-size: 14px; font-weight: 600; color: var(--ink-3); border-radius: 6px; }
 .ox-o.on { color: #fff; background: var(--navy); border-color: var(--navy); }
 .ox-x.on { color: #fff; background: var(--bad-ink); border-color: var(--bad-ink); }
-/* 서술형: 색만으로 구분하지 않도록 '서술형' 글자 배지를 함께 단다 */
+/* 주관식: 색만으로 구분하지 않도록 '주관식' 글자 배지를 함께 단다 */
 /* 시험지 구성 보기: 교차표와 문항 지도 두 가지.
    색은 거들 뿐이라 숫자와 이름을 항상 글자로 함께 적는다. */
 .xc { text-align: left; white-space: normal; }
@@ -471,7 +471,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 
 .q-lv { flex-shrink: 0; margin-left: 4px; padding: 1px 5px; font-size: 10px; font-weight: 700; color: #5F5E5A; background: #f1efe8; border-radius: 4px; }
 .q-fmt { flex-shrink: 0; padding: 2px 6px; font-size: 10px; font-weight: 700; color: var(--navy); background: #eaf0fb; border: 1px solid #d3deef; border-radius: 4px; }
-/* 서술형은 번호 색으로만 구분한다. 채점은 객관식과 같은 O/X다.
+/* 주관식은 번호 색으로만 구분한다. 채점은 객관식과 같은 O/X다.
    칸에 테두리를 두르면 둥근 모서리와 겹쳐 지저분해진다. */
 .ox-item.essay .ox-no { color: var(--navy); }
 

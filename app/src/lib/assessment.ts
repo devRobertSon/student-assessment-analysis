@@ -1,7 +1,7 @@
 // src/lib/assessment.ts: 진단평가 데이터(학생·시험지·채점) + CSV 임포트 + 집계
 // 저장: localStorage 단일 키 + JSON 백업
-// 채점은 서술형도 O/X만 구분한다. 배점을 다 받으면 O, 아니면 X다.
-export type QFormat = '객관식' | '서술형';
+// 채점은 주관식도 O/X만 구분한다. 배점을 다 받으면 O, 아니면 X다.
+export type QFormat = '객관식' | '주관식';
 
 export interface ExamQuestion {
   no: number;
@@ -17,7 +17,7 @@ export interface ExamQuestion {
 }
 
 export function isEssay(q: ExamQuestion): boolean {
-  return q.format === '서술형';
+  return q.format === '주관식';
 }
 
 // 배점을 안 적은 시험지는 한 문항 1점으로 본다. 그러면 득점률이 곧 정답률이 된다.
@@ -95,7 +95,7 @@ export interface Mark {
   points: number; // 배점
 }
 
-/** 만점을 받았는가. 객관식은 O, 서술형은 배점을 다 받은 경우. */
+/** 만점을 받았는가. 객관식은 O, 주관식은 배점을 다 받은 경우. */
 export function isFullMark(m: Mark): boolean {
   return m.earned >= m.points;
 }
@@ -435,12 +435,14 @@ const HEADER_ALIASES: Record<string, string[]> = {
   blueprint: ['출제표', '출제표파일', 'blueprint'],
 };
 
-// 서술형/논술형/서답형은 형식만 다르게 표시한다. 채점은 객관식과 같은 O/X다.
-const ESSAY_WORDS = ['서술', '논술', '서답'];
+// 주관식·서술형·논술형·서답형은 형식만 다르게 표시한다. 채점은 객관식과 같은
+// O/X다. 2026-09-21 에 이름을 '주관식' 으로 바꾸기 전에 받아 둔 자료가 있어
+// 예전 낱말도 그대로 받는다.
+const ESSAY_WORDS = ['주관', '서술', '논술', '서답'];
 
 export function normalizeFormat(raw: string): QFormat {
   const v = raw.trim();
-  return ESSAY_WORDS.some((w) => v.includes(w)) ? '서술형' : '객관식';
+  return ESSAY_WORDS.some((w) => v.includes(w)) ? '주관식' : '객관식';
 }
 
 function matchHeader(header: string): string | null {

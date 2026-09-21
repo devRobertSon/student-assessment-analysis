@@ -14,7 +14,7 @@ function paper(): PaperQuestion[] {
     ...Array<Level>(15).fill('상'),
     ...Array<Level>(10).fill('최상'),
   ];
-  // 서술형 자리는 정해 두지 않았다. 세 난이도에 걸치게 흩어 배점을 함께 본다.
+  // 주관식 자리는 정해 두지 않았다. 세 난이도에 걸치게 흩어 배점을 함께 본다.
   const essay = new Set([1, 9, 15, 23, 30]);
   // 유형은 8개가 다 나오고 3~5문항 사이. 4문항 여섯에 3문항 둘이면 30이 된다.
   const plan: [string, number][] = [
@@ -31,7 +31,7 @@ function paper(): PaperQuestion[] {
 
   return levels.map((level, i) => {
     const no = i + 1;
-    const format = essay.has(no) ? '서술형' : '객관식';
+    const format = essay.has(no) ? '주관식' : '객관식';
     return {
       no,
       unit: `${Math.floor(i / 6) + 1}단원`,
@@ -53,7 +53,7 @@ describe('PAPER_RULES', () => {
     const R = PAPER_RULES;
     expect(LEVELS.reduce((a, l) => a + R.levels[l].min, 0)).toBeLessThanOrEqual(R.count);
     expect(LEVELS.reduce((a, l) => a + R.levels[l].max, 0)).toBeGreaterThanOrEqual(R.count);
-    expect(R.formats.객관식 + R.formats.서술형).toBe(R.count);
+    expect(R.formats.객관식 + R.formats.주관식).toBe(R.count);
   });
 
   it('난이도 폭이 표준 대 상 대 최상 = 1 대 4 대 3 을 담는다', () => {
@@ -76,15 +76,15 @@ describe('PAPER_RULES', () => {
     const R = PAPER_RULES;
     for (const l of LEVELS) {
       expect(R.points.객관식[l]).toBeGreaterThan(0);
-      expect(R.points.서술형[l]).toBeGreaterThan(R.points.객관식[l]);
+      expect(R.points.주관식[l]).toBeGreaterThan(R.points.객관식[l]);
     }
     // 난이도가 오르면 배점도 오른다
     expect(R.points.객관식.표준).toBeLessThan(R.points.객관식.상);
     expect(R.points.객관식.상).toBeLessThan(R.points.객관식.최상);
   });
 
-  it('서술형은 같은 난이도 객관식보다 1점 더 받는다', () => {
-    for (const l of LEVELS) expect(pointsFor('서술형', l) - pointsFor('객관식', l)).toBe(1);
+  it('주관식은 같은 난이도 객관식보다 1점 더 받는다', () => {
+    for (const l of LEVELS) expect(pointsFor('주관식', l) - pointsFor('객관식', l)).toBe(1);
   });
 
   it('최상이 표준보다 5개 많으면 총점이 100이다', () => {
@@ -93,7 +93,7 @@ describe('PAPER_RULES', () => {
       const u = s + 5;
       const t2 = R.count - s - u;
       const base = s * R.points.객관식.표준 + t2 * R.points.객관식.상 + u * R.points.객관식.최상;
-      const premium = (R.points.서술형.표준 - R.points.객관식.표준) * R.formats.서술형;
+      const premium = (R.points.주관식.표준 - R.points.객관식.표준) * R.formats.주관식;
       expect(base + premium).toBe(R.total);
     }
   });
@@ -122,7 +122,7 @@ describe('checkPaper', () => {
     // 표준 다섯을 모두 상으로 바꾸면 표준 0, 상 20 으로 둘 다 폭 밖이다
     for (let i = 0; i < 5; i++) {
       qs[i].level = '상';
-      qs[i].points = pointsFor(qs[i].format as '서술형', '상');
+      qs[i].points = pointsFor(qs[i].format as '주관식', '상');
     }
     const v = checkPaper(qs);
     expect(v.filter((x) => x.rule === '난이도 구성')).toHaveLength(2);
@@ -131,7 +131,7 @@ describe('checkPaper', () => {
   it('난이도가 폭 안이면 난이도 구성으로는 안 걸린다', () => {
     const qs = paper();
     qs[0].level = '상'; // 표준 4, 상 16 으로 둘 다 폭 안이다
-    qs[0].points = pointsFor(qs[0].format as '서술형', '상');
+    qs[0].points = pointsFor(qs[0].format as '주관식', '상');
     expect(checkPaper(qs).some((x) => x.rule === '난이도 구성')).toBe(false);
   });
 
@@ -140,7 +140,7 @@ describe('checkPaper', () => {
     qs[0].format = '객관식';
     qs[0].points = pointsFor('객관식', '표준');
     const v = checkPaper(qs);
-    expect(v.filter((x) => x.rule === '형식 구성')).toHaveLength(2); // 객관식 26, 서술형 4
+    expect(v.filter((x) => x.rule === '형식 구성')).toHaveLength(2); // 객관식 26, 주관식 4
   });
 
   it('배점이 난이도·형식과 안 맞으면 잡는다', () => {

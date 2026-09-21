@@ -59,7 +59,7 @@ export default function ExamComposition({ exam }: { exam: Exam }) {
     <div className="xc">
       <div className="hint xc-top">
         {exam.title} · {total}문항 · 만점 {fmtPoints(fullPoints)}점
-        {essay > 0 ? ` · 서술형 ${essay}문항` : ''}
+        {essay > 0 ? ` · 주관식 ${essay}문항` : ''}
       </div>
 
       <div className="xc-grid">
@@ -127,7 +127,7 @@ export default function ExamComposition({ exam }: { exam: Exam }) {
                 <div
                   key={q.no}
                   className={`xc-cellq${isEssay(q) ? ' essay' : ''}`}
-                  title={`${q.no}번 · ${unitOf(q)} · ${levelOf(q)}${isEssay(q) ? ' · 서술형' : ''}`}
+                  title={`${q.no}번 · ${unitOf(q)} · ${levelOf(q)}${isEssay(q) ? ' · 주관식' : ''}`}
                 >
                   <span className="xc-ubar" style={{ background: unitHue.get(unitOf(q)) }} />
                   <span className="xc-no" style={{ background: bg, color: ink }}>
@@ -146,7 +146,7 @@ export default function ExamComposition({ exam }: { exam: Exam }) {
             ))}
             <span>
               <i className="essay" />
-              서술형
+              주관식
             </span>
           </div>
           <div className="xc-legend">
