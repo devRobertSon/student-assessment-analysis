@@ -55,10 +55,20 @@ const rank = (k) => {
   const i = ORDER.indexOf(k);
   return i === -1 ? ORDER.length : i;
 };
+// 가나다 순으로 놓으면 '공통수학' 이 '중' 보다 앞에 온다. 배우는 차례대로 놓는다.
+const GRADES = ['중1', '중2', '중3', '공통수학'];
+const grade = (name) => {
+  const i = GRADES.findIndex((g) => name.startsWith(g));
+  return i === -1 ? GRADES.length : i;
+};
+
 const list = [...groups.entries()]
   .map(([name, files]) => ({ name, files: files.sort((a, b) => rank(a.kind) - rank(b.kind)) }))
   // '기타'는 늘 마지막
-  .sort((a, b) => (a.name === '기타' ? 1 : b.name === '기타' ? -1 : a.name.localeCompare(b.name, 'ko')));
+  .sort((a, b) => {
+    if (a.name === '기타' || b.name === '기타') return a.name === '기타' ? 1 : -1;
+    return grade(a.name) - grade(b.name) || a.name.localeCompare(b.name, 'ko');
+  });
 
 writeFileSync(OUT, JSON.stringify({ groups: list }, null, 2) + '\n', 'utf8');
 console.log('[papers] %d묶음 %d개 파일 → public/papers/index.json', list.length, names.length);

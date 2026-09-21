@@ -131,6 +131,138 @@
           "size": 3233
         }
       ]
+    },
+    {
+      "name": "중3-1 진단평가",
+      "files": [
+        {
+          "kind": "시험지",
+          "label": "시험지 CSV",
+          "file": "중3-1_진단평가_시험지.csv",
+          "ext": "csv",
+          "size": 4426
+        },
+        {
+          "kind": "문제지",
+          "label": "문제지 PDF",
+          "file": "중3-1_진단평가_문제지.pdf",
+          "ext": "pdf",
+          "size": 619492
+        },
+        {
+          "kind": "해설",
+          "label": "해설 PDF",
+          "file": "중3-1_진단평가_해설.pdf",
+          "ext": "pdf",
+          "size": 75248
+        },
+        {
+          "kind": "출제표",
+          "label": "출제표 CSV",
+          "file": "중3-1_진단평가_출제표.csv",
+          "ext": "csv",
+          "size": 3380
+        }
+      ]
+    },
+    {
+      "name": "중3-2 진단평가",
+      "files": [
+        {
+          "kind": "시험지",
+          "label": "시험지 CSV",
+          "file": "중3-2_진단평가_시험지.csv",
+          "ext": "csv",
+          "size": 4189
+        },
+        {
+          "kind": "문제지",
+          "label": "문제지 PDF",
+          "file": "중3-2_진단평가_문제지.pdf",
+          "ext": "pdf",
+          "size": 1695601
+        },
+        {
+          "kind": "해설",
+          "label": "해설 PDF",
+          "file": "중3-2_진단평가_해설.pdf",
+          "ext": "pdf",
+          "size": 73700
+        },
+        {
+          "kind": "출제표",
+          "label": "출제표 CSV",
+          "file": "중3-2_진단평가_출제표.csv",
+          "ext": "csv",
+          "size": 3143
+        }
+      ]
+    },
+    {
+      "name": "공통수학1 진단평가",
+      "files": [
+        {
+          "kind": "시험지",
+          "label": "시험지 CSV",
+          "file": "공통수학1_진단평가_시험지.csv",
+          "ext": "csv",
+          "size": 4673
+        },
+        {
+          "kind": "문제지",
+          "label": "문제지 PDF",
+          "file": "공통수학1_진단평가_문제지.pdf",
+          "ext": "pdf",
+          "size": 863749
+        },
+        {
+          "kind": "해설",
+          "label": "해설 PDF",
+          "file": "공통수학1_진단평가_해설.pdf",
+          "ext": "pdf",
+          "size": 77795
+        },
+        {
+          "kind": "출제표",
+          "label": "출제표 CSV",
+          "file": "공통수학1_진단평가_출제표.csv",
+          "ext": "csv",
+          "size": 3396
+        }
+      ]
+    },
+    {
+      "name": "공통수학2 진단평가",
+      "files": [
+        {
+          "kind": "시험지",
+          "label": "시험지 CSV",
+          "file": "공통수학2_진단평가_시험지.csv",
+          "ext": "csv",
+          "size": 4908
+        },
+        {
+          "kind": "문제지",
+          "label": "문제지 PDF",
+          "file": "공통수학2_진단평가_문제지.pdf",
+          "ext": "pdf",
+          "size": 1076648
+        },
+        {
+          "kind": "해설",
+          "label": "해설 PDF",
+          "file": "공통수학2_진단평가_해설.pdf",
+          "ext": "pdf",
+          "size": 78779
+        },
+        {
+          "kind": "출제표",
+          "label": "출제표 CSV",
+          "file": "공통수학2_진단평가_출제표.csv",
+          "ext": "csv",
+          "size": 3631
+        }
+      ]
     }
   ]
 }
