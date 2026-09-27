@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/진단평가/생성기/hook_sync.py\" 2>/dev/null || true",
+            "timeout": 30,
+            "statusMessage": "진단평가를 저장소로 옮기는 중"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -19,6 +19,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas as pdfcanvas
 
 import head
+import 경로
 
 FONTDIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '글꼴')
 REG = os.path.join(FONTDIR, 'NotoSansKR-Regular.ttf')
@@ -74,7 +75,7 @@ def col_top(idx, top1, topn):
 
 def measure(q):
     """문항 한 덩어리의 높이. 그림은 단 폭에 맞춘 원래 비율 그대로다."""
-    w, h = PILImage.open(q['img']).size
+    w, h = PILImage.open(경로.그림(q['img'])).size
     imgh = INNER * h / w
     total = HEAD_H + 3 + imgh
     if q['essay']:
@@ -129,7 +130,7 @@ def draw_block(c, b, x, y, ucol):
     c.drawRightString(x + COLW, y - 10.5, '%d점' % q['points'])
     y -= HEAD_H + 3
 
-    c.drawImage(q['img'], tx, y - b['imgh'], width=INNER, height=b['imgh'],
+    c.drawImage(경로.그림(q['img']), tx, y - b['imgh'], width=INNER, height=b['imgh'],
                 mask='auto')
     y -= b['imgh']
 

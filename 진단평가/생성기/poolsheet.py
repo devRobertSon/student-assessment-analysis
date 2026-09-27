@@ -20,6 +20,8 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas as pdfcanvas
 
+import 경로
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 FONTDIR = os.path.join(HERE, '글꼴')
 pdfmetrics.registerFont(TTFont('KR', os.path.join(FONTDIR, 'NotoSansKR-Regular.ttf')))
@@ -88,7 +90,7 @@ def parse(path, src):
 
 
 def load_pool(grade):
-    adir = os.path.join(HERE, '..', '%s_문항분석' % grade)
+    adir = 경로.안('%s_문항분석' % grade)
     pool = []
     for f, src in FILES.items():
         p = os.path.join(adir, f)
@@ -98,8 +100,8 @@ def load_pool(grade):
 
 
 def img_of(grade, r):
-    return os.path.join(HERE, '..', '문항',
-                        '%s_%s_%02d.png' % (grade, LETTER[r['src']], r['no']))
+    return 경로.안('문항', '%s_%s_%02d.png'
+                  % (grade, LETTER[r['src']], r['no']))
 
 
 def measure(r, grade):
