@@ -287,7 +287,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
   const questionCount = selectedResults.reduce((a, r) => a + r.marks.length, 0);
 
   /*
-   * 1쪽이 A4를 넘으면 응시 이력과 의견을 통째로 다음 쪽으로 보낸다.
+   * 1쪽이 A4를 넘으면 응시 이력과 의견을 함께 다음 쪽으로 보낸다.
    *
    * 나뉘고 나면 1쪽은 분석 전용이 되어 레이더가 커진다.
    * 그 상태를 그대로 재면 합쳤을 때 들어가는지 알 수 없으므로,
@@ -407,7 +407,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
     return [selectedResults.slice(0, half), selectedResults.slice(half)];
   }, [selectedResults]);
 
-  // 1쪽에 그대로 두거나, 자리가 없으면 통째로 다음 쪽으로 옮긴다.
+  // 1쪽에 두거나, 남는 자리가 없으면 함께 다음 쪽으로 옮긴다.
   const movableBlocks = (
     <div ref={movedRef} className="rp-movable">
       <section className="report-sec">
