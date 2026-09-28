@@ -205,7 +205,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
     [studentId, data.exams, selectedResults]
   );
   const total = scoreOf(selectedResults.flatMap((r) => r.marks));
-  // 난이도를 적어 둔 시험지에서만 나온다. 기초가 무너진 것인지 응용에서만 멈추는지 갈린다.
+  // 난이도를 적어 둔 시험지에서만 나온다. 기초가 부족한 것인지 응용에서만 틀리는지 알 수 있다.
   const levels = useMemo(
     () => (studentId ? statsCumulative(data.exams, selectedResults, 'level') : []),
     [studentId, data.exams, selectedResults]
