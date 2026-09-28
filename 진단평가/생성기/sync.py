@@ -41,6 +41,32 @@ REPO_GUESS = [
 # 우리가 쓴 글이라 걸려도 되는 자리. 이 스크립트 자신은 위 낱말을 담고 있다.
 봐주는곳 = {'_남은세학기_진행.md', '_네학기더_진행.md', os.path.basename(__file__)}
 
+# 위의 낱말 세기는 어림이라 한두 줄만 베낀 것은 놓친다. 2026년 9월 29일에
+# mk_m12_csv.py 가 문항 한 줄을 담은 채 저장소에 들어가 있는 것을 찾았다.
+# 그래서 분석 문서의 문항 글을 그대로 가져다 대어 본다. 한 조각만 걸려도 멈춘다.
+토막길이 = 20
+
+
+def 다듬는다(s):
+    return ' '.join(s.replace('`', '').split())
+
+
+def 문항토막(src):
+    """분석 문서의 문항 글에서 앞 토막을 모은다."""
+    토막 = set()
+    for g in sorted(os.listdir(src)):
+        if not g.endswith('_문항분석') or not os.path.isdir(os.path.join(src, g)):
+            continue
+        for f in sorted(os.listdir(os.path.join(src, g))):
+            if not f.endswith('.md') or f.startswith('_'):
+                continue
+            t = io.open(os.path.join(src, g, f), encoding='utf-8').read()
+            for m in re.finditer(r'\*\*문항\*\*\s*(.+)', t):
+                글 = 다듬는다(m.group(1))
+                if len(글) >= 토막길이:
+                    토막.add(글[:토막길이])
+    return 토막
+
 
 def 저장소():
     p = os.environ.get(REPO_ENV)
@@ -74,6 +100,7 @@ def 옮길것(src):
 def 훑는다(src, rels):
     """옮기기 전에 교재 본문이 섞였는지 본다. 걸린 곳을 돌려준다."""
     걸림 = []
+    토막 = 문항토막(src)
     for rel in rels:
         if os.path.basename(rel) in 봐주는곳:
             continue
@@ -83,7 +110,13 @@ def 훑는다(src, rels):
         n = len(본문.findall(t))
         # 풀이 단계에 '옳은 것은 ㄱ, ㄷ' 처럼 한두 번 나오는 것은 본문이 아니다
         if n > 3:
-            걸림.append((rel, n))
+            걸림.append((rel, '흔한 말 %d군데' % n))
+            continue
+        납작 = 다듬는다(t)
+        걸린토막 = [x for x in 토막 if x in 납작]
+        if 걸린토막:
+            걸림.append((rel, '문항 %d조각 · %r'
+                       % (len(걸린토막), sorted(걸린토막)[0])))
     return 걸림
 
 
@@ -96,8 +129,8 @@ def main(argv):
     걸림 = 훑는다(src, rels)
     if 걸림:
         print('교재 본문이 섞인 것 같아 멈춘다. 옮긴 것은 없다.')
-        for rel, n in 걸림:
-            print('  %-50s %d군데' % (rel, n))
+        for rel, 까닭 in 걸림:
+            print('  %-42s %s' % (rel, 까닭))
         return 1
 
     새것, 바뀐것 = [], []
