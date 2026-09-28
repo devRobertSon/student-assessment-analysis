@@ -188,13 +188,16 @@ export default function TypesPage() {
             <tr><td className="nowrap"><b>3등급</b></td><td>60점 이상</td><td>8~12문항</td><td></td></tr>
             <tr><td className="nowrap"><b>4등급</b></td><td>40점 이상</td><td>13~18문항</td><td></td></tr>
             <tr><td className="nowrap"><b>5등급</b></td><td>20점 이상</td><td>19~24문항</td><td></td></tr>
-            <tr><td className="nowrap"><b>6등급</b></td><td>20점 미만</td><td>25~30문항</td><td>가장 낮은 등급</td></tr>
+            <tr><td className="nowrap"><b>6등급</b></td><td>15점 이상</td><td>25문항</td><td></td></tr>
+            <tr><td className="nowrap"><b>7등급</b></td><td>10점 이상</td><td>26~27문항</td><td></td></tr>
+            <tr><td className="nowrap"><b>8등급</b></td><td>5점 이상</td><td>28문항</td><td></td></tr>
+            <tr><td className="nowrap"><b>9등급</b></td><td>5점 미만</td><td>29~30문항</td><td>가장 낮은 등급</td></tr>
           </tbody>
         </table>
         </div>
         <p className="hint">
-          <b>7·8·9등급은 나오지 않습니다.</b> 진단평가는 학교 시험보다 훨씬 어려워서, 다 틀려도 6등급에서
-          멈추도록 정했습니다.
+          6등급 아래는 <b>15 · 10 · 5점</b>으로 칸이 촘촘합니다. 거의 다 틀린 학생들끼리도 나누어 보기
+          위해서입니다.
         </p>
         <p className="hint">
           오답 수는 고르게 틀렸을 때입니다. 한 문항이 평균 3.33점이라 한 개 틀릴 때마다 3점 남짓 깎입니다.
@@ -212,7 +215,10 @@ export default function TypesPage() {
             않습니다.
           </li>
           <li>
-            <b>한 개 이하</b>를 맞혔으면 <b>5등급</b> 위로 올라가지 않습니다.
+            <b>한 개 이하</b>를 맞혔으면 <b>4등급</b> 위로 올라가지 않습니다.
+          </li>
+          <li>
+            <b>하나도 못 맞혔으면</b> <b>5등급</b> 위로 올라가지 않습니다.
           </li>
         </ul>
         <p className="hint">

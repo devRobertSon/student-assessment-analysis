@@ -400,9 +400,16 @@ describe('예상 등급 (시험지 점수)', () => {
     expect(paperScore(표준틀림(5))).toBe(90); // 표준 10점만 잃었다
   });
 
-  it('칸은 85 · 75 · 60 · 40 · 20 이고 그 아래는 6등급이다', () => {
-    expect(GRADE_CUTS.map((c) => c.min)).toEqual([85, 75, 60, 40, 20]);
-    expect(LOWEST_GRADE).toBe(6);
+  /** 표준까지 틀려 점수가 10점 아래인 경우. 보정선은 등급을 더 낮추기만 한다. */
+  const low = (score: number) => [
+    { type: '표준', total: 5, correct: 0, points: 10, earned: 0, rate: 0 },
+    { type: '상', total: 15, correct: 0, points: 45, earned: score, rate: 0 },
+    { type: '최상', total: 10, correct: 0, points: 45, earned: 0, rate: 0 },
+  ];
+
+  it('칸은 85 · 75 · 60 · 40 · 20 · 15 · 10 · 5 이고 그 아래는 9등급이다', () => {
+    expect(GRADE_CUTS.map((c) => c.min)).toEqual([85, 75, 60, 40, 20, 15, 10, 5]);
+    expect(LOWEST_GRADE).toBe(9);
   });
 
   it('위에서부터 내려오며 처음 걸리는 칸이 등급이다', () => {
@@ -417,25 +424,31 @@ describe('예상 등급 (시험지 점수)', () => {
     expect(gradeFromLevels(at(39))).toBe(5);
     expect(gradeFromLevels(at(20))).toBe(5);
     expect(gradeFromLevels(at(19))).toBe(6);
+    expect(gradeFromLevels(at(15))).toBe(6);
+    expect(gradeFromLevels(at(14))).toBe(7);
+    expect(gradeFromLevels(at(10))).toBe(7);
+    expect(gradeFromLevels(low(9))).toBe(8);
+    expect(gradeFromLevels(low(5))).toBe(8);
+    expect(gradeFromLevels(low(4))).toBe(9);
   });
 
-  it('다 틀려도 6등급에서 멈춘다. 7·8·9등급은 없다', () => {
+  it('다 틀리면 0점이고 9등급이다', () => {
     const 전부틀림 = statsForResult(
       exam,
       exam.questions.map((q) => makeMark(q, 0)),
       'level'
     );
     expect(paperScore(전부틀림)).toBe(0);
-    expect(gradeFromLevels(전부틀림)).toBe(6);
+    expect(gradeFromLevels(전부틀림)).toBe(9);
   });
 
   it('표준을 못 맞히면 점수가 높아도 위로 못 올라간다', () => {
     // 표준만 틀리면 점수는 94~90점이라 그대로 두면 1등급이 된다
     expect(paperScore(표준틀림(3))).toBe(94);
-    expect(gradeFromLevels(표준틀림(2))).toBe(1); // 다섯 중 셋 맞힘 = 60%
-    expect(gradeFromLevels(표준틀림(3))).toBe(3); // 둘 맞힘 = 40%
-    expect(gradeFromLevels(표준틀림(4))).toBe(5); // 하나 맞힘 = 20%
-    expect(gradeFromLevels(표준틀림(5))).toBe(5);
+    expect(gradeFromLevels(표준틀림(2))).toBe(1); // 다섯 중 셋 맞힘
+    expect(gradeFromLevels(표준틀림(3))).toBe(3); // 둘 맞힘
+    expect(gradeFromLevels(표준틀림(4))).toBe(4); // 하나 맞힘
+    expect(gradeFromLevels(표준틀림(5))).toBe(5); // 하나도 못 맞힘
   });
 
   it('보정선은 배점이 아니라 개수로 잰다', () => {
