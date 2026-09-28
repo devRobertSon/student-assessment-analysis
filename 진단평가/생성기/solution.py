@@ -197,9 +197,10 @@ def mathed(text, base, bold=False, room=INNER):
     더 낫다. mathtext 의 큰 근호가 노토에 없어 `√49` 의 갈고리와 덧줄이
     어긋나는데, 우리 `roots()` 는 그 자리를 정확히 맞춘다.
 
-    **근호가 든 칸은 분수가 있어도 글자 조판으로 간다.** 둘이 같이 있으면
-    mathtext 로 가서 근호가 깨졌다. 분수가 한 줄로 눕는 것보다 근호가 성한
-    편이 낫다. 2026년 9월 28일에 공통수학2 28번 정답 줄에서 보고 고쳤다.
+    **근호가 들어 있어도 분수가 있으면 그림으로 간다.** 2026년 9월 28일에
+    근호가 깨지는 줄 알고 글자로 돌렸다가, 실제로 그려 보니 갈고리와 덧줄이
+    제대로 맞물려 되돌렸다. mathtext 가 `\\__radicalbig__` 를 못 찾는다고
+    적는 것은 경고일 뿐이고, 근호 한 벌을 늘려 그려 모양이 멀쩡하다.
     """
     if '`' not in text:
         return marks(roots(esc(text), base), base)
@@ -207,7 +208,7 @@ def mathed(text, base, bold=False, room=INNER):
     for n, part in enumerate(text.split('`')):
         if not part:
             continue
-        if n % 2 == 0 or '/' not in part or '√' in part or mathtex is None:
+        if n % 2 == 0 or '/' not in part or mathtex is None:
             out.append(marks(roots(esc(part), base), base))
             continue
         got = _fit(part, base, bold, room)
