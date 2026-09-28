@@ -123,14 +123,20 @@ def marks(text, base):
 
     `f^-1` 처럼 음의 부호가 붙은 것도 올려 그린다. 위 첨자 마이너스 글자가
     글꼴에 없어 역함수를 달리 적을 길이 없다.
+
+    `2^(2a)` 처럼 괄호로 묶은 것도 받는다. 안 받으면 캐럿이 그대로 인쇄된다.
+    2026년 9월 28일에 중2-1 6번에서 보고 고쳤다.
     """
     def pick(m):
-        return m.group(1) if m.group(1) is not None else m.group(2)
+        for g in m.groups():
+            if g is not None:
+                return g
+        return ''
 
-    text = re.sub(r'\^(?:\{([^}]*)\}|(-?[0-9A-Za-z]+))',
+    text = re.sub(r'\^(?:\{([^}]*)\}|\(([^)]*)\)|(-?[0-9A-Za-z]+))',
                   lambda m: '<super rise="%.2f" size="%.2f">%s</super>'
                   % (base * SUP_RISE, base * SUP_SIZE, pick(m)), text)
-    return re.sub(r'_(?:\{([^}]*)\}|(-?[0-9A-Za-z]+))',
+    return re.sub(r'_(?:\{([^}]*)\}|\(([^)]*)\)|(-?[0-9A-Za-z]+))',
                   lambda m: '<sub rise="%.2f" size="%.2f">%s</sub>'
                   % (base * SUB_RISE, base * SUP_SIZE, pick(m)), text)
 
@@ -189,6 +195,20 @@ def _fit(src, base, bold, room):
     return ''.join(out)
 
 
+손글씨기호 = [('<=', '≤'), ('>=', '≥'), ('!=', '≠')]
+
+
+def 기호고침(text):
+    """글로 적은 셈 기호를 인쇄 기호로 바꾼다.
+
+    `<=` 는 글자 조판에서도 mathtex 에서도 그대로 두 글자로 인쇄된다. 스펙에
+    `≤` 로 적는 것이 맞지만, 놓친 것이 있어도 여기서 걸러 준다.
+    """
+    for a, b in 손글씨기호:
+        text = text.replace(a, b)
+    return text
+
+
 def mathed(text, base, bold=False, room=INNER):
     """백틱 안은 수식 그림으로, 밖은 지금까지 하던 글자 조판으로 만든다.
 
@@ -202,6 +222,7 @@ def mathed(text, base, bold=False, room=INNER):
     제대로 맞물려 되돌렸다. mathtext 가 `\\__radicalbig__` 를 못 찾는다고
     적는 것은 경고일 뿐이고, 근호 한 벌을 늘려 그려 모양이 멀쩡하다.
     """
+    text = 기호고침(text)
     if '`' not in text:
         return marks(roots(esc(text), base), base)
     out = []
