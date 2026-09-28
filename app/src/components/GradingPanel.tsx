@@ -12,8 +12,9 @@ import {
   makeMark,
   newId,
   pointsOf,
-  DEFAULT_RETAKE_CUT,
+  DEFAULT_RETAKE_SCALE,
   advancedGap,
+  basicGap,
   retakeCheck,
   scoreOf,
   statsForResult,
@@ -162,9 +163,10 @@ export default function GradingPanel({ data, setData }: Props) {
   const score = scoreOf(marks);
   const stats = exam ? statsForResult(exam, marks, axis) : [];
   // 학원 기준 판정. 리포트에는 안 들어가고 이 화면에서만 본다.
-  const retakeCut = data.retakeCut ?? DEFAULT_RETAKE_CUT;
-  const retake = exam ? retakeCheck(exam, marks, retakeCut) : null;
-  // 재수강 판정과 별개로, 최상 난이도를 얼마나 놓쳤는지는 따로 알아야 한다.
+  const retakeScale = data.retakeScale ?? DEFAULT_RETAKE_SCALE;
+  const retake = exam ? retakeCheck(exam, marks, retakeScale) : null;
+  // 재수강 판정은 난이도를 둘로만 가른다. 양 끝을 얼마나 놓쳤는지는 따로 본다.
+  const basic = exam ? basicGap(exam, marks) : null;
   const gap = exam ? advancedGap(exam, marks) : null;
   const fullPoints = exam ? exam.questions.reduce((a, q) => a + pointsOf(q), 0) : 0;
 
@@ -434,10 +436,11 @@ ${listNos(left)}`
                 )}
                 {/* 판정은 켜짐·꺼짐만 보여준다. 점수를 적어 두면 바로 위 점수 상자의
                     점수와 서로 다른 값이라 어느 쪽이 학생 점수인지 헷갈린다. */}
-                {(retake || gap) && (
+                {(retake || basic || gap) && (
                   <div className="verdicts">
                     {retake && <span className={`verdict ${!retake.pass ? 'on' : ''}`}>재수강 권장</span>}
-                    {gap && <span className={`verdict ${gap.short ? 'on' : ''}`}>심화 미달</span>}
+                    {basic && <span className={`verdict ${basic.short ? 'on' : ''}`}>기초 미흡</span>}
+                    {gap && <span className={`verdict ${gap.short ? 'on' : ''}`}>심화 미흡</span>}
                   </div>
                 )}
               </div>

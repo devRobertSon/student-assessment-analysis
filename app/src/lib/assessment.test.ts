@@ -13,7 +13,8 @@ import {
   gradeFromLevels,
   GRADE_CUTS,
   LOWEST_GRADE,
-  DEFAULT_RETAKE_CUT,
+  DEFAULT_BASIC_CUT,
+  basicGap,
   advancedGap,
   retakeCheck,
   scoreOf,
@@ -266,42 +267,48 @@ describe('학원 기준 재수강 판정', () => {
   const marks = (wrong: number[]) =>
     exam.questions.map((q) => makeMark(q, wrong.includes(q.no) ? 0 : pointsOf(q)));
 
-  it('시험지 배점이 100점이다', () => {
-    expect(exam.questions.reduce((s, q) => s + pointsOf(q), 0)).toBe(100);
-    expect(exam.questions).toHaveLength(30);
+  // 기본 눈금은 표준·상 8점 · 최상 5점 · 40점부터 재수강
+  it('표준·상은 5개부터 재수강', () => {
+    expect(retakeCheck(exam, marks([1, 2, 3, 4]))!).toMatchObject({ points: 32, pass: true });
+    expect(retakeCheck(exam, marks([1, 2, 3, 4, 5]))!).toMatchObject({ points: 40, pass: false });
   });
 
-  it('75점이면 통과, 그 아래면 재수강. 2등급 선과 같다', () => {
-    expect(DEFAULT_RETAKE_CUT).toBe(75);
-    // 25점어치를 틀리면 딱 75점이라 통과
-    expect(retakeCheck(exam, marks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))!)
-      .toMatchObject({ score: 75, wrong: 10, pass: true });
-    // 3점짜리 하나가 더 틀리면 72점이라 재수강
-    expect(retakeCheck(exam, marks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]))!)
-      .toMatchObject({ score: 72, wrong: 11, pass: false });
+  it('최상은 8개부터 재수강. 일곱 개까지는 봐 준다', () => {
+    expect(retakeCheck(exam, marks([21, 22, 23, 24, 25, 26, 27]))!)
+      .toMatchObject({ wrongTop: 7, points: 35, pass: true });
+    expect(retakeCheck(exam, marks([21, 22, 23, 24, 25, 26, 27, 28]))!)
+      .toMatchObject({ wrongTop: 8, points: 40, pass: false });
   });
 
-  it('어려운 것만 틀리면 다섯 개부터 판정이 가까워진다', () => {
-    // 최상 5점 3개 + 4점 2개 = 23점 → 77점, 통과
-    expect(retakeCheck(exam, marks([28, 29, 30, 21, 22]))!)
-      .toMatchObject({ score: 77, pass: true });
-    // 4점 하나가 더 틀리면 27점 → 73점, 재수강
-    expect(retakeCheck(exam, marks([28, 29, 30, 21, 22, 23]))!)
-      .toMatchObject({ score: 73, pass: false });
+  it('섞여 틀리면 점수를 더해서 본다. 개수가 적어도 쉬운 쪽이 무겁다', () => {
+    // 6개를 틀렸어도 넷이 최상이면 36점이라 통과
+    expect(retakeCheck(exam, marks([1, 2, 21, 22, 23, 24]))!)
+      .toMatchObject({ wrongBase: 2, wrongTop: 4, points: 36, pass: true });
+    // 표준·상이 하나 더 늘면 44점이라 재수강
+    expect(retakeCheck(exam, marks([1, 2, 3, 21, 22, 23, 24]))!)
+      .toMatchObject({ points: 44, pass: false });
   });
 
-  it('선을 바꾸면 판정도 바뀐다', () => {
-    expect(retakeCheck(exam, marks([28, 29, 30, 21, 22]), 80)!.pass).toBe(false);
-    expect(retakeCheck(exam, marks([28, 29, 30, 21, 22]), 70)!.pass).toBe(true);
+  it('배점으로 재지 않는다. 싼 것만 틀려도 개수가 차면 재수강이다', () => {
+    // 표준 다섯(10점) + 상 다섯(15점) = 25점이라 시험지 점수는 75점이지만,
+    // 표준·상을 열 개나 틀렸으므로 재수강이다. 점수로 재던 것을 되돌린 자리다.
+    const m = marks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(retakeCheck(exam, m)!).toMatchObject({ wrongBase: 10, points: 80, pass: false });
   });
 
-  it('난이도를 안 적은 시험지도 점수만으로 판정한다', () => {
+  it('눈금을 바꾸면 판정도 바뀐다', () => {
+    const tight = { base: 8, top: 5, cut: 32 };
+    expect(retakeCheck(exam, marks([1, 2, 3, 4]), tight)!.pass).toBe(false);
+    expect(retakeCheck(exam, marks([1, 2, 3]), tight)!.pass).toBe(true);
+  });
+
+  it('난이도를 안 적은 문항은 표준·상 쪽으로 센다', () => {
     const plain: Exam = {
       ...exam,
-      questions: [1, 2, 3, 4, 5].map((no) => ({ no, type: '계산', points: 20 })),
+      questions: [1, 2, 3, 4, 5].map((no) => ({ no, type: '계산', points: 1 })),
     };
     const all = plain.questions.map((q) => makeMark(q, 0));
-    expect(retakeCheck(plain, all)!).toMatchObject({ score: 0, wrong: 5, pass: false });
+    expect(retakeCheck(plain, all)!).toMatchObject({ wrongBase: 5, wrongTop: 0, pass: false });
   });
 
   it('채점한 문항이 없으면 판정하지 않는다', () => {
@@ -309,30 +316,59 @@ describe('학원 기준 재수강 판정', () => {
   });
 });
 
-describe('심화 미달', () => {
+describe('기초 미흡', () => {
+  const exam = lvExam();
+  const marks = (wrong: number[]) =>
+    exam.questions.map((q) => makeMark(q, wrong.includes(q.no) ? 0 : pointsOf(q)));
+
+  it('표준 다섯 중 세 개부터 미흡으로 본다', () => {
+    expect(DEFAULT_BASIC_CUT).toBe(3);
+    expect(basicGap(exam, marks([1, 2]))).toMatchObject({ wrong: 2, total: 5, short: false });
+    expect(basicGap(exam, marks([1, 2, 3]))).toMatchObject({ wrong: 3, short: true });
+  });
+
+  it('예상 고교 등급이 막히는 자리와 같다', () => {
+    const levels = (wrong: number[]) => statsForResult(exam, marks(wrong), 'level');
+    expect(basicGap(exam, marks([1, 2]))!.short).toBe(false);
+    expect(gradeFromLevels(levels([1, 2]))).toBe(1);
+    expect(basicGap(exam, marks([1, 2, 3]))!.short).toBe(true);
+    expect(gradeFromLevels(levels([1, 2, 3]))).toBe(3);
+  });
+
+  it('상·최상을 아무리 틀려도 기초 미흡으로는 안 잡힌다', () => {
+    expect(basicGap(exam, marks([6, 7, 8, 9, 10, 21, 22, 23])))
+      .toMatchObject({ wrong: 0, short: false });
+  });
+
+  it('표준 문항을 채점하지 않았으면 null', () => {
+    const noBase: Exam = { ...exam, questions: exam.questions.filter((q) => q.level !== '표준') };
+    expect(basicGap(noBase, marks([6]))).toBeNull();
+  });
+});
+
+describe('심화 미흡', () => {
   const exam = lvExam();
   const marks = (wrong: number[]) =>
     exam.questions.map((q) => makeMark(q, wrong.includes(q.no) ? 0 : pointsOf(q)));
 
   it('최상을 5개부터 미달로 본다', () => {
-    expect(advancedGap(exam, marks([23, 24, 25, 26]))).toMatchObject({ wrong: 4, short: false });
-    expect(advancedGap(exam, marks([23, 24, 25, 26, 27]))).toMatchObject({ wrong: 5, short: true });
+    expect(advancedGap(exam, marks([21, 22, 23, 24]))).toMatchObject({ wrong: 4, short: false });
+    expect(advancedGap(exam, marks([21, 22, 23, 24, 25]))).toMatchObject({ wrong: 5, short: true });
   });
 
-  it('표준·상을 아무리 틀려도 심화 미달로는 안 잡힌다', () => {
-    // 기초 쪽은 재수강 판정이 먼저 걸리므로 여기서 다시 세지 않는다.
+  it('표준·상을 아무리 틀려도 심화 미흡으로는 안 잡힌다', () => {
     expect(advancedGap(exam, marks([1, 2, 3, 4, 5, 6, 7, 8]))).toMatchObject({ wrong: 0, short: false });
   });
 
-  it('재수강이 아니어도 심화 미달은 따로 뜬다', () => {
-    // 최상 4점 5개 = 20점이라 80점이고 재수강은 아니지만 심화는 비어 있다
-    const m = marks([23, 24, 25, 26, 27]);
+  it('재수강이 아니어도 심화 미흡은 따로 뜬다', () => {
+    // 최상 5개 = 25점이라 재수강은 아니지만 심화는 비어 있다
+    const m = marks([21, 22, 23, 24, 25]);
     expect(retakeCheck(exam, m)!.pass).toBe(true);
     expect(advancedGap(exam, m)!.short).toBe(true);
   });
 
   it('기준을 바꾸면 미달선도 바뀐다', () => {
-    expect(advancedGap(exam, marks([23, 24, 25]), 3)!.short).toBe(true);
+    expect(advancedGap(exam, marks([21, 22, 23]), 3)!.short).toBe(true);
   });
 
   it('최상 문항을 채점하지 않았으면 null', () => {

@@ -213,76 +213,114 @@ export function gradeFromLevels(levels: TypeStat[]): number | null {
 }
 
 /**
- * 학원 기준 재수강 판정. 시험지 점수가 2등급 선 아래면 재수강으로 본다.
+ * 학원 기준 재수강 판정. 난이도마다 봐 주는 개수를 따로 두고 점수로 합친다.
  *
- * 2026-09-29 까지는 틀린 문항마다 난이도로 점수를 붙여(표준·상 8점, 최상 5점)
- * 40점에 닿으면 재수강으로 봤다. 등급과 다른 잣대를 하나 더 들고 있는 셈이라
- * 선생님이 두 벌을 외워야 했고, 둘이 같은 방향을 가리키는지도 눈으로 맞춰
- * 봐야 했다. 배점으로 등급을 매기기로 하면서 이 판정도 같은 잣대로 모았다.
+ * 쉬운 문제를 틀리는 것과 어려운 문제를 못 푸는 것은 뜻이 다르다. 그래서
+ * 틀린 문항마다 난이도에 따라 점수를 붙이고, 그 합이 기준에 닿으면 재수강으로
+ * 본다. 표준·상은 8점, 최상은 5점, 기준은 40점이다.
+ *   표준·상 5개 = 40점            → 재수강
+ *   최상 8개    = 40점            → 재수강
+ *   표준·상 2 + 최상 3 = 16 + 15  → 31점, 통과
+ *   표준·상 3 + 최상 4 = 24 + 20  → 44점, 재수강
+ * 쉬운 문제 하나가 어려운 문제 1.6개만큼 무겁다.
  *
- * 75점은 2등급의 아래 선이다. 곧 **1~2등급이면 통과, 3등급부터 재수강**이다.
- * 고르게 틀리면 오답 7개까지 통과이고 8개부터 재수강이다. 예전 방식의 통과
- * 상한이 4~8개(평균 6.0)였으니 거의 같은 자리다.
+ * **시험지 점수로 재지 않는 이유.** 2026-09-29 에 등급을 점수로 옮기면서 이
+ * 판정도 점수(75점)로 모아 봤다. 그러자 쉬운 문제는 배점이 작아 오히려 가볍게
+ * 세어졌다. 표준을 다섯 개 다 틀리고 싼 상을 다섯 개 더 틀려도 75점이라 통과가
+ * 됐다. 기초가 빈 학생을 다음 학기로 보내는 셈이라 같은 날 되돌렸다.
  *
  * 이 판정은 등급과 성격이 다르다. 등급은 전국에서 어디쯤인가이고, 이것은
- * 이 학원이 "다음 학기로 보내도 되는가"를 정하는 내부 기준이다. 그래서 값은
- * 같아도 리포트에는 넣지 않고 채점 화면에만 둔다.
+ * 이 학원이 "다음 학기로 보내도 되는가"를 정하는 내부 기준이다. 훨씬 엄격해서
+ * 섞으면 잘하는 학생에게 낮은 등급이 찍힌다. 그래서 리포트에는 넣지 않는다.
  */
-export const DEFAULT_RETAKE_CUT = 75;
+export interface RetakeScale {
+  base: number; // 표준·상 한 문항을 틀릴 때 붙는 점수
+  top: number; // 최상 한 문항을 틀릴 때 붙는 점수
+  cut: number; // 이 점수에 닿으면 재수강
+}
+
+export const DEFAULT_RETAKE_SCALE: RetakeScale = { base: 8, top: 5, cut: 40 };
 
 export interface RetakeCheck {
   total: number; // 채점한 문항 수
-  wrong: number; // 오답 수
-  score: number; // 시험지 점수. 100점 만점으로 본다
-  cut: number; // 이 점수 아래면 재수강
+  wrongBase: number; // 표준·상 오답
+  wrongTop: number; // 최상 오답
+  points: number; // 쌓인 점수
+  scale: RetakeScale;
   pass: boolean;
 }
 
-/** 난이도를 최상과 그 나머지 둘로만 가른다. 심화 미달을 셀 때 쓴다. */
+/**
+ * 난이도를 최상과 그 나머지 둘로만 가른다.
+ *
+ * 표준과 상을 굳이 나누지 않은 것은 판정이 기대는 경계를 하나로 줄이기
+ * 위해서다. 표준인지 상인지는 사람마다 갈리지만 최상인지 아닌지는 덜 갈린다.
+ * 난이도를 안 적은 문항은 표준·상 쪽으로 센다. 난이도가 아예 없는 시험지도
+ * 그러면 "다섯 개부터 재수강"이라는 단순한 규칙으로 자연스럽게 내려앉는다.
+ */
 const isTop = (q: ExamQuestion) => q.level?.trim() === '최상';
 
 /** 아직 채점한 문항이 없으면 null. 판정을 지어내지 않는다. */
 export function retakeCheck(
   exam: Exam,
   marks: Mark[],
-  cut: number = DEFAULT_RETAKE_CUT
+  scale: RetakeScale = DEFAULT_RETAKE_SCALE
 ): RetakeCheck | null {
+  const top = new Set(exam.questions.filter(isTop).map((q) => q.no));
   const nos = new Set(exam.questions.map((q) => q.no));
   const mine = marks.filter((m) => nos.has(m.no));
   if (mine.length === 0) return null;
-  let earned = 0;
-  let points = 0;
-  for (const m of mine) {
-    earned += m.earned;
-    points += m.points;
-  }
-  const score = points === 0 ? 0 : (100 * earned) / points;
-  const wrong = mine.filter((m) => !isFullMark(m)).length;
-  return { total: mine.length, wrong, score, cut, pass: score >= cut };
+  const wrong = mine.filter((m) => !isFullMark(m));
+  const wrongTop = wrong.filter((m) => top.has(m.no)).length;
+  const wrongBase = wrong.length - wrongTop;
+  const points = wrongBase * scale.base + wrongTop * scale.top;
+  return { total: mine.length, wrongBase, wrongTop, points, scale, pass: points < scale.cut };
 }
 
 /**
- * 심화 미달. 최상 난이도를 몇 개나 놓쳤는지만 따로 본다.
+ * 기초 미흡·심화 미흡. 양 끝 난이도를 몇 개나 놓쳤는지 따로 본다.
  *
- * 기초 쪽은 따로 두지 않는다. 표준을 세 개 이상 틀리면 등급이 3등급 위로
- * 못 올라가게 막는 선에 먼저 걸린다. 같은 말을 두 줄로 적으면 화면만
- * 복잡해진다.
+ * 재수강 판정은 난이도를 표준·상과 최상 둘로만 가른다. 그래서 표준만 골라
+ * 틀린 학생과 상만 골라 틀린 학생이 같은 판정을 받는다. 어느 쪽인지는 따로
+ * 알아야 가르칠 것을 정할 수 있다.
  *
- * 반대로 최상은 한 문항이 4~5점이라 다섯 개를 놓쳐도 점수로는 통과선 안에
- * 남는다. 그래서 통과한 학생 중에도 최상을 여러 개 놓친 경우가 생기고, 그것은
- * 따로 알아야 한다. 재수강 여부와 상관없이 늘 나온다.
+ * 기초는 **표준 다섯 문항 중 세 개 이상**을 틀리면 켠다. 예상 고교 등급에서
+ * 3등급 위로 못 올라가게 막는 선과 같은 자리라, 켜지면 등급도 함께 막힌다.
  *
- * 정답률이 아니라 개수로 잡는다. 최상이 열 문항이라 다섯 개가 곧 절반이지만,
- * 개수로 적어 두면 선생님이 화면을 보고 바로 셀 수 있다.
+ * 심화는 **최상 열 문항 중 다섯 개 이상**을 틀리면 켠다. 최상은 한 문항이
+ * 5점이라 여덟 개를 놓쳐야 재수강에 닿는다. 통과한 학생 중에도 심화가 빈
+ * 경우가 생기고, 그것은 따로 알아야 한다.
+ *
+ * 둘 다 정답률이 아니라 개수로 잡는다. 선생님이 화면을 보고 바로 셀 수 있다.
  */
+export const DEFAULT_BASIC_CUT = 3;
 export const DEFAULT_ADVANCED_CUT = 5;
 
 export interface LevelGap {
   level: string;
   total: number;
   wrong: number;
-  cut: number; // 몇 개부터 미달인가
-  short: boolean; // 미달인가
+  cut: number; // 몇 개부터 미흡인가
+  short: boolean; // 미흡인가
+}
+
+function levelGap(exam: Exam, marks: Mark[], level: string, cut: number): LevelGap | null {
+  const nos = new Set(
+    exam.questions.filter((q) => q.level?.trim() === level).map((q) => q.no)
+  );
+  const mine = marks.filter((m) => nos.has(m.no));
+  if (mine.length === 0) return null;
+  const wrong = mine.filter((m) => !isFullMark(m)).length;
+  return { level, total: mine.length, wrong, cut, short: wrong >= cut };
+}
+
+/** 표준 문항을 아직 채점하지 않았으면 null. */
+export function basicGap(
+  exam: Exam,
+  marks: Mark[],
+  cut: number = DEFAULT_BASIC_CUT
+): LevelGap | null {
+  return levelGap(exam, marks, '표준', cut);
 }
 
 /** 최상 문항을 아직 채점하지 않았으면 null. */
@@ -291,11 +329,7 @@ export function advancedGap(
   marks: Mark[],
   cut: number = DEFAULT_ADVANCED_CUT
 ): LevelGap | null {
-  const nos = new Set(exam.questions.filter(isTop).map((q) => q.no));
-  const mine = marks.filter((m) => nos.has(m.no));
-  if (mine.length === 0) return null;
-  const wrong = mine.filter((m) => !isFullMark(m)).length;
-  return { level: '최상', total: mine.length, wrong, cut, short: wrong >= cut };
+  return levelGap(exam, marks, '최상', cut);
 }
 
 export interface AssessmentData {
@@ -303,7 +337,7 @@ export interface AssessmentData {
   exams: Exam[];
   results: Result[];
   /** 재수강 판정에서 봐 주는 개수. 안 적었으면 DEFAULT_RETAKE_BUDGET. */
-  retakeCut?: number;
+  retakeScale?: RetakeScale;
 }
 
 const KEY = 'sda.assess.v1';
@@ -321,10 +355,15 @@ export function loadAssessment(): AssessmentData {
       students: Array.isArray(p.students) ? p.students : [],
       exams: Array.isArray(p.exams) ? p.exams : [],
       results: Array.isArray(p.results) ? p.results : [],
-      // 판정 기준이 정답률 % → 오답 개수 → 난이도별 허용 개수 → 시험지 점수로
-      // 세 번 바뀌었다. 예전에 저장된 값을 그대로 읽으면 엉뚱한 기준이 되므로
-      // 지금 모양일 때만 쓴다. 아니면 기본값으로 돌아간다.
-      retakeCut: typeof p.retakeCut === 'number' && p.retakeCut > 0 ? p.retakeCut : undefined,
+      // 판정 기준이 여러 번 바뀌었다. 예전에 저장된 값을 그대로 읽으면 엉뚱한
+      // 기준이 되므로 지금 모양일 때만 쓴다. 아니면 기본값으로 돌아간다.
+      retakeScale:
+        p.retakeScale &&
+        typeof p.retakeScale.base === 'number' &&
+        typeof p.retakeScale.top === 'number' &&
+        typeof p.retakeScale.cut === 'number'
+          ? p.retakeScale
+          : undefined,
     };
   } catch {
     return emptyAssessment();
