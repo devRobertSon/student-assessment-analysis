@@ -24,7 +24,7 @@ export default function TypesPage() {
           한국교육과정평가원이 수능 수학 문항에 붙이는 <b>행동 영역</b>은 <b>계산 · 이해 · 추론 · 문제 해결</b> 넷입니다.
           리포트의 레이더도 이 넷으로 사분면을 나눠 바탕색을 달리합니다.
           넷만으로는 한 영역에 문항이 몰려 무엇을 못하는지 가려내기 어렵습니다. 각 영역을{' '}
-          <b>서로 다른 두 능력</b>으로 나누어 여덟 가지로 씁니다. 중학교에서 쓰다가 고등·수능까지 그대로 이어집니다.
+          <b>서로 다른 두 능력</b>으로 나누어 여덟 가지로 씁니다. 중학교에서 쓰다가 고등·수능까지 이어집니다.
         </p>
         <div className="table-scroll">
         <table className="assess-table manual-table">
@@ -72,7 +72,7 @@ export default function TypesPage() {
           </li>
           <li>
             <b>공식 활용</b> <span className="tg-area">계산</span>
-            <p>어떤 공식이나 풀이 절차를 쓸지 고르고, 그대로 적용하는 능력입니다.</p>
+            <p>어떤 공식이나 풀이 절차를 쓸지 고르고 적용하는 능력입니다.</p>
             <p className="tg-train">
               <b className="tg-tag">훈련</b> 공식을 외우게 하지 말고 <b>언제 쓰는지</b>를 묻습니다. 단원이 끝나면 공식을 적고 그 옆에
               &apos;이런 말이 나오면 이걸 쓴다&apos;를 한 줄씩 붙이게 하세요.
@@ -227,7 +227,7 @@ export default function TypesPage() {
       <section className="assess-card">
         <h3>과학 유형 8가지</h3>
         <p className="muted">
-          2022 개정 교육과정 통합과학 기준 <b>평가 목표의 행동 영역</b>이 그대로 8개입니다.
+          2022 개정 교육과정 통합과학 기준 <b>평가 목표의 행동 영역</b>이 8개입니다.
         </p>
         <div className="table-scroll">
         <table className="assess-table manual-table">

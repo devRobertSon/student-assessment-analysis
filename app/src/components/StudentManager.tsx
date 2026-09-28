@@ -141,7 +141,7 @@ export default function StudentManager({
                     ? `채점 결과 ${cnt}건도 함께 지워집니다. 되돌릴 수 없습니다.`
                     : '되돌릴 수 없습니다.';
                 })()
-              : '이 응시 하나만 지웁니다. 시험지와 학생은 그대로 남습니다.'
+              : '이 응시 하나만 지웁니다. 시험지와 학생은 남습니다.'
           }
           onYes={() => (pending.kind === 'student' ? doRemoveStudent() : doRemoveResult(pending.id))}
           onNo={() => setPending(null)}

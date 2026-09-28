@@ -473,7 +473,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
       <div className="screen-head no-print">
         <div className="assess-row">
           <h1>리포트</h1>
-          {/* '학생' 이라는 라벨은 적지 않는다. 고르는 칸에 이름이 그대로 들어가
+          {/* '학생' 이라는 라벨은 적지 않는다. 고르는 칸에 이름이 들어가
               무엇을 고르는 칸인지 드러난다. 돌아가는 단추도 두지 않는다.
               위 메뉴에 [학생] 이 늘 있다. */}
           <Select
@@ -564,8 +564,8 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
           <div className="assess-card no-print report-note-edit">
             <h3>인쇄 전 입력</h3>
             <p className="hint" style={{ marginBottom: 12 }}>
-              여기에 적은 내용이 아래 미리보기와 PDF에 그대로 들어갑니다. 학생 정보·목표 고등학교·진도는 [학생]
-              화면에 적어둔 값이 그대로 들어갑니다. 이 칸들은 저장되지 않는 임시 입력이라 학생을 바꾸면 비워집니다.
+              여기에 적은 내용이 아래 미리보기와 PDF에 들어갑니다. 학생 정보·목표 고등학교·진도는 [학생]
+              화면에 적어둔 값이 들어갑니다. 이 칸들은 저장되지 않는 임시 입력이라 학생을 바꾸면 비워집니다.
             </p>
 
             {/* 칸마다 테두리를 둘러 카드로 만든다. 한 줄에 놓이는 두 카드는 높이를
@@ -684,7 +684,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
 
           {selectedResults.length === 0 ? (
             /* 고른 시험이 없으면 지면을 그리지 않는다. 그리면 0/100점, 0/0문항,
-               빈 응시 이력이 그대로 나와 망가진 리포트처럼 보인다. */
+               빈 응시 이력이 나와 망가진 리포트처럼 보인다. */
             <p className="muted">리포트에 넣을 시험을 하나 이상 고르세요.</p>
           ) : (
           <div className="print-preview">

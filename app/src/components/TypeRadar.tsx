@@ -35,7 +35,7 @@ const AREAS: { name: string; types: [string, string]; bg: string; ink: string }[
 const MATH_ORDER = AREAS.flatMap((a) => a.types);
 
 /**
- * 과학 8유형. 평가원 평가 목표의 행동 영역이 그대로 여덟이라 둘씩 묶이지
+ * 과학 8유형. 평가원 평가 목표의 행동 영역이 여덟이라 둘씩 묶이지
  * 않는다. 바탕은 칠하지 않고 차례만 고정한다.
  */
 const SCIENCE_ORDER = [
