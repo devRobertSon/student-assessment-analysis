@@ -213,14 +213,14 @@
           "label": "문제지 PDF",
           "file": "공통수학1_진단평가_문제지.pdf",
           "ext": "pdf",
-          "size": 861725
+          "size": 861722
         },
         {
           "kind": "해설",
           "label": "해설 PDF",
           "file": "공통수학1_진단평가_해설.pdf",
           "ext": "pdf",
-          "size": 381493
+          "size": 381510
         },
         {
           "kind": "출제표",
@@ -239,7 +239,7 @@
           "label": "시험지 CSV",
           "file": "공통수학2_진단평가_시험지.csv",
           "ext": "csv",
-          "size": 4921
+          "size": 4920
         },
         {
           "kind": "문제지",
@@ -253,14 +253,14 @@
           "label": "해설 PDF",
           "file": "공통수학2_진단평가_해설.pdf",
           "ext": "pdf",
-          "size": 328977
+          "size": 328905
         },
         {
           "kind": "출제표",
           "label": "출제표 CSV",
           "file": "공통수학2_진단평가_출제표.csv",
           "ext": "csv",
-          "size": 3644
+          "size": 3643
         }
       ]
     }
