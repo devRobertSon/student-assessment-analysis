@@ -111,12 +111,16 @@ def _scan(s, i, close, bars=False):
             i += 1
         elif ch == '(':
             inner, i = _scan(s, i + 1, ')', bars)
+            # 괄호는 분자·분모나 근호 안에서 벗겨도 뜻이 같다. 절댓값 막대만
+            # 벗기면 뜻이 달라지므로 그쪽에는 이 표를 달지 않는다.
             items.append({'k': 'atom', 'tex': '(%s)' % _join(inner),
-                          'bare': _join(inner)})
+                          'bare': _join(inner), 'shed': True})
         elif ch == '{':
+            # 중괄호는 우리 글에서 묶음 괄호로 쓴다. 분자·분모나 근호 전체를
+            # 감쌌으면 벗긴다. 안 벗기면 집합 기호로 인쇄돼 뜻이 달라진다.
             inner, i = _scan(s, i + 1, '}', bars)
             items.append({'k': 'atom', 'tex': r'\{%s\}' % _join(inner),
-                          'bare': _join(inner)})
+                          'bare': _join(inner), 'shed': True})
         elif ch == '|' and bars:
             inner, i = _scan(s, i + 1, '|', bars)
             body = _join(inner)
@@ -212,7 +216,7 @@ def _join(items):
             continue
         a, b = _take_right(items, k + 1)
         body = ''.join(x['tex'] for x in items[a:b] if x['k'] != 'sp')
-        if b - a == 1 and items[a]['k'] == 'atom':
+        if b - a == 1 and items[a]['k'] == 'atom' and items[a].get('shed'):
             body = items[a]['bare']
         items[k:b] = [{'k': 'atom', 'tex': r'\sqrt{%s}' % body, 'bare': r'\sqrt{%s}' % body}]
         k += 1
@@ -224,11 +228,11 @@ def _join(items):
         la, lb = _take_left(items, k)
         ra, rb = _take_right(items, k + 1)
         def bare(lo, hi):
-            if hi - lo == 1 and items[lo]['k'] == 'atom':
+            if hi - lo == 1 and items[lo]['k'] == 'atom' and items[lo].get('shed'):
                 return items[lo]['bare']
             return ''.join(x['tex'] for x in items[lo:hi] if x['k'] != 'sp')
         frac = r'\frac{%s}{%s}' % (bare(la, lb), bare(ra, rb))
-        items[la:rb] = [{'k': 'atom', 'tex': frac, 'bare': frac}]
+        items[la:rb] = [{'k': 'atom', 'tex': frac, 'bare': frac, 'shed': True}]
         k = la + 1
     out = []
     for n, it in enumerate(items):
