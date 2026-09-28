@@ -88,7 +88,7 @@ export default function TypeRadar({ stats, plain }: { stats: TypeStat[]; plain?:
 
   // 자리를 고정하지 않을 때는 각 유형이 차지하는 각도를 문제 수에 비례하게
   // 잡되, 균등 배치와 섞어(BLEND) 한 유형이 각을 독차지해 도형이 지나치게
-  // 찌그러지는 것을 막는다.
+  // 찌그러지지 않게 한다.
   const totalQ = stats.reduce((sum, s) => sum + s.total, 0) || 1;
   const BLEND = 0.5;
   const share = stats.map((s) => (1 - BLEND) / stats.length + BLEND * (s.total / totalQ));
@@ -143,7 +143,7 @@ export default function TypeRadar({ stats, plain }: { stats: TypeStat[]; plain?:
         const [x, y] = ptOf(i, R);
         return <line key={`axis-${i}`} x1={cx} y1={cy} x2={x} y2={y} stroke="#e7e9ed" strokeWidth={0.8} />;
       })}
-      {/* 영역 경계는 흰 선으로 갈라 바탕색끼리 맞닿지 않게 한다. */}
+      {/* 영역 경계는 흰 선으로 나누어 바탕색끼리 붙지 않게 한다. */}
       {grouped &&
         [0, 1, 2, 3].map((g) => {
           const [x, y] = at(-90 + g * 90, R);

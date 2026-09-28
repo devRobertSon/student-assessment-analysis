@@ -258,7 +258,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
     return () => setLeaveGuard(null);
   });
 
-  // 새로고침과 탭 닫기도 막는다. 이 창은 브라우저가 그린다.
+  // 새로고침과 탭 닫기도 못 하게 한다. 이 창은 브라우저가 그린다.
   useEffect(() => {
     if (!typed) return;
     const warn = (e: BeforeUnloadEvent) => {
@@ -397,7 +397,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
   );
 
   /*
-   * 응시 이력을 몇 벌로 세울지. 셋부터 두 벌로 갈라 오른쪽에 붙인다.
+   * 응시 이력을 몇 벌로 세울지. 셋부터 두 벌로 나누어 오른쪽에 붙인다.
    * 한 벌에 두 줄씩 넷이면 표 높이가 두 줄로 끝나 1쪽 안에 들어간다.
    * 다섯 이상이면 두 벌에 고르게 나눠 담는다. 그래도 넘치면 쪽이 나뉜다.
    */
