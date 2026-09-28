@@ -151,7 +151,7 @@
       "essay": false,
       "answer": "① -3",
       "steps": [
-        "통분하면 `{a(b+c) + b(c+a) + c(a+b)} / (abc)` 가 아니라 각 항의 분모가 다르므로 `a(b+c)/bc + b(c+a)/ac + c(a+b)/ab` 다.",
+        "각 항을 통분하면 `a(b+c)/bc + b(c+a)/ac + c(a+b)/ab` 다.",
         "`a + b + c = 0` 이므로 `b + c = -a`, `c + a = -b`, `a + b = -c` 다.",
         "분자를 모으면 `{a²(-a) + b²(-b) + c²(-c)}/(abc) = -(a³+b³+c³)/(abc)` 다.",
         "`a + b + c = 0` 이면 `a³ + b³ + c³ = 3abc` 다.",
