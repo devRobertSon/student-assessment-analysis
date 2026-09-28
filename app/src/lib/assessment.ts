@@ -132,166 +132,148 @@ export interface Result {
  * 이 값은 예측이 아니라 학원이 정한 도달 기준이다. 시험지 난이도가 바뀌면
  * 같이 손봐야 한다.
  */
-/** 난이도별 문항 무게. 어려운 문항을 맞히는 것이 더 큰 성취다. */
-export const LEVEL_WEIGHT: Record<string, number> = { 표준: 1, 상: 2, 최상: 3 };
-
 /**
- * 환산점수. 난이도와 문항 수를 함께 반영한 50~100점이다.
+ * 시험지 점수. 배점을 그대로 더해 100점 만점으로 본다.
  *
- * 원점수(맞은 문항 수)로는 이 시험지를 잴 수 없다. 진단평가 30문항 중
- * 표준은 7문항뿐이고 나머지는 상·최상이라 학교 시험보다 훨씬 어렵다. 여기서
- * 60%를 맞힌 학생과 학교 시험에서 60%를 맞힌 학생은 같은 학생이 아니다.
+ * 2026-09-29 까지는 난이도마다 무게(표준 1 · 상 2 · 최상 3)를 따로 주어
+ * 50~100 구간의 환산점수를 만들었다. 그런데 **배점이 이미 난이도를 담고
+ * 있다** — 객관식은 표준 2 · 상 3 · 최상 4, 주관식은 거기서 하나씩 더다.
+ * 무게를 따로 두면 난이도 구성이 바뀔 때마다 화면에 적은 설명이 틀려진다.
+ * 실제로 표준이 7문항에서 5문항으로 바뀌었을 때 반년 가까이 어긋나 있었다.
  *
- * 그래서 문항마다 난이도 무게를 주어 더하고, 0점이 곧 바닥이 되지 않도록
- * 50~100 구간에 편다. 무게 만점이 네 시험지 모두 61~62점이라 시험지끼리
- * 환산점수를 견주어도 된다.
+ * 배점만 쓰면 규칙이 고정이라 구성이 바뀌어도 이 계산은 안 틀린다. 선생님이
+ * 채점 화면에서 보는 점수와 등급을 매긴 값이 같아지는 것도 이롭다.
  */
-export function scaledScore(levels: TypeStat[]): number | null {
-  let got = 0;
-  let full = 0;
+export function paperScore(levels: TypeStat[]): number | null {
+  let earned = 0;
+  let points = 0;
   for (const l of levels) {
-    const w = LEVEL_WEIGHT[l.type];
-    if (!w) continue;
-    got += l.correct * w;
-    full += l.total * w;
+    earned += l.earned;
+    points += l.points;
   }
-  if (full === 0) return null;
-  return 50 + (50 * got) / full;
+  if (points === 0) return null;
+  return (100 * earned) / points;
 }
 
 /**
- * 환산점수를 등급으로 바꾸는 칸. 위에서부터 내려오며 처음 걸리는 칸이 등급이다.
+ * 점수를 등급으로 바꾸는 칸. 위에서부터 내려오며 처음 걸리는 칸이 등급이다.
  *
- * 재수강 판정과 같은 방향을 가리키도록 맞췄다. 학원 학생이 재수강 경계(40점)에
- * 서면 전국에서는 2등급쯤이라고 본다. 학원 기준이 전국 기준보다 높기 때문이다.
- * 시험지가 어려워서, 많이 틀려도 5~6등급에서 멈춘다.
+ * 고르게 틀리면 한 문항이 평균 3.33점이라 오답 수와 이렇게 이어진다.
+ *   1등급 0~4개 · 2등급 5~7개 · 3등급 8~12개
+ *   4등급 13~18개 · 5등급 19~24개 · 6등급 25~30개
+ *
+ * 재수강 통과 상한(오답 7개)을 2등급 끝에 두고 나머지를 고르게 나눈 값이다.
+ * 학원 학생이 재수강 경계에 서면 전국에서는 2등급쯤이라고 본다. 학원 기준이
+ * 전국 기준보다 높기 때문이다.
+ *
+ * **7·8·9등급은 두지 않는다.** 시험지가 학교 시험보다 훨씬 어려워서, 다 틀려도
+ * 6등급에서 멈춘다. 2026-09-29 에 원장님이 정했다.
  */
 export const GRADE_CUTS: { grade: number; min: number }[] = [
-  { grade: 1, min: 93 },
-  { grade: 2, min: 85 },
-  { grade: 3, min: 78 },
-  { grade: 4, min: 71 },
-  { grade: 5, min: 63 },
-  { grade: 6, min: 57 },
-  { grade: 7, min: 54 },
-  { grade: 8, min: 52 },
+  { grade: 1, min: 85 },
+  { grade: 2, min: 75 },
+  { grade: 3, min: 60 },
+  { grade: 4, min: 40 },
+  { grade: 5, min: 20 },
 ];
+
+/** 가장 낮은 등급. 어느 칸에도 안 걸리면 여기로 내려앉는다. */
+export const LOWEST_GRADE = 6;
 
 /**
  * 표준 문항을 못 맞히면 위로 올라가지 못하게 막는 선.
  *
- * 환산점수만 보면 표준을 다 틀리고 최상을 다 맞힌 학생이 1등급이 된다. 무게가
- * 최상 쪽에 실려 있어서다. 기초가 서지 않은 채 어려운 문제만 맞히는 것을 위로
- * 쳐 주지 않는다.
+ * 점수만 보면 표준 다섯 문항(10점)을 다 틀려도 90점이라 1등급이 된다. 기초가
+ * 서지 않은 채 어려운 문제만 맞히는 것을 위로 쳐 주지 않는다.
  *
- * 여기서 쓰는 표준 정답률은 화면에 보이는 그 값(TypeStat.rate, 배점 기준)이다.
- * 문항 개수로 따로 세면 화면에 55%라고 적힌 학생이 60% 선을 넘어가 버려서,
- * 왜 등급이 그 위로 못 올라갔는지 화면만 봐서는 알 수 없다.
+ * **배점이 아니라 개수로 잰다.** 표준이 다섯 문항뿐이라 배점으로 재면 3점짜리
+ * 주관식이 섞인 시험지(중2-1·중2-2)에서만 선이 먼저 걸렸다. 같은 두 문항을
+ * 틀리고도 시험지에 따라 등급이 갈렸다. 개수로 재면 여덟 장이 같아지고
+ * "다섯 개 중 세 개는 맞혀야 한다"로 설명도 단순해진다.
  */
 const BASE_CAPS: { under: number; worst: number }[] = [
-  { under: 60, worst: 4 },
-  { under: 40, worst: 6 },
+  { under: 60, worst: 3 }, // 다섯 중 두 개 이하 → 3등급까지
+  { under: 40, worst: 5 }, // 다섯 중 한 개 이하 → 5등급까지
 ];
 
 /**
- * 난이도별 정답률에서 등급을 뽑는다.
+ * 난이도별 집계에서 등급을 뽑는다.
  * 시험지에 난이도를 안 적었으면(=칸이 비었으면) null. 등급을 지어내지 않는다.
  */
 export function gradeFromLevels(levels: TypeStat[]): number | null {
-  const score = scaledScore(levels);
+  const score = paperScore(levels);
   if (score === null) return null;
-  let grade = GRADE_CUTS.find((c) => score >= c.min)?.grade ?? GRADE_CUTS.length + 1;
+  let grade = GRADE_CUTS.find((c) => score >= c.min)?.grade ?? LOWEST_GRADE;
   const std = levels.find((l) => l.type === '표준');
   if (std && std.total > 0) {
-    const rate = std.rate * 100;
+    const rate = (100 * std.correct) / std.total;
     for (const cap of BASE_CAPS) if (rate < cap.under) grade = Math.max(grade, cap.worst);
   }
   return grade;
 }
 
 /**
- * 학원 기준 재수강 판정. 난이도마다 봐 주는 개수를 따로 두고 비율로 합친다.
+ * 학원 기준 재수강 판정. 시험지 점수가 2등급 선 아래면 재수강으로 본다.
  *
- * 쉬운 문제를 틀리는 것과 어려운 문제를 못 푸는 것은 뜻이 다르다. 그래서
- * 틀린 문항마다 난이도에 따라 점수를 붙이고, 그 합이 기준에 닿으면 재수강으로
- * 본다. 표준·상은 8점, 최상은 5점, 기준은 40점이다.
- *   표준·상 5개 = 40점            → 재수강
- *   최상 8개    = 40점            → 재수강
- *   표준·상 2 + 최상 3 = 16 + 15  → 31점, 통과
- *   표준·상 3 + 최상 4 = 24 + 20  → 44점, 재수강
- * 쉬운 문제 하나가 어려운 문제 1.6개만큼 무겁다.
+ * 2026-09-29 까지는 틀린 문항마다 난이도로 점수를 붙여(표준·상 8점, 최상 5점)
+ * 40점에 닿으면 재수강으로 봤다. 등급과 다른 잣대를 하나 더 들고 있는 셈이라
+ * 선생님이 두 벌을 외워야 했고, 둘이 같은 방향을 가리키는지도 눈으로 맞춰
+ * 봐야 했다. 배점으로 등급을 매기기로 하면서 이 판정도 같은 잣대로 모았다.
  *
- * 숫자의 출처. 학원 규칙은 "입학 TEST 30문제 중 7문제를 틀리면 그 학기를
- * 다시 듣는다"이고 난이도를 가리지 않는다. 그런데 진단평가는 그 입학 TEST
- * 보다 쉽다. 입학 TEST 중1-1 은 30문제 중 표준이 1문제뿐인데(상 17, 최상 12)
- * 진단평가는 8문제다. 난이도 구성으로 환산하면 입학 TEST 에서 7개를 틀리는
- * 학생이 진단평가에서는 4.7~6.2개를 틀린다.
- *
- * 8·5·40 은 통과 상한이 총 4~8개(평균 6.0)라 그 환산값보다 한 문제쯤 무디다.
- * 더 조이려면 cut 을 32로 내리면 된다(평균 5.3). 학원이 정할 값이라 데이터에
- * 두었다.
+ * 75점은 2등급의 아래 선이다. 곧 **1~2등급이면 통과, 3등급부터 재수강**이다.
+ * 고르게 틀리면 오답 7개까지 통과이고 8개부터 재수강이다. 예전 방식의 통과
+ * 상한이 4~8개(평균 6.0)였으니 거의 같은 자리다.
  *
  * 이 판정은 등급과 성격이 다르다. 등급은 전국에서 어디쯤인가이고, 이것은
- * 이 학원이 "다음 학기로 보내도 되는가"를 정하는 내부 기준이다. 훨씬 엄격해서
- * 섞으면 잘하는 학생에게 낮은 등급이 찍힌다. 그래서 리포트에는 넣지 않는다.
+ * 이 학원이 "다음 학기로 보내도 되는가"를 정하는 내부 기준이다. 그래서 값은
+ * 같아도 리포트에는 넣지 않고 채점 화면에만 둔다.
  */
-export interface RetakeScale {
-  base: number; // 표준·상 한 문항을 틀릴 때 붙는 점수
-  top: number; // 최상 한 문항을 틀릴 때 붙는 점수
-  cut: number; // 이 점수에 닿으면 재수강
-}
-
-export const DEFAULT_RETAKE_SCALE: RetakeScale = { base: 8, top: 5, cut: 40 };
+export const DEFAULT_RETAKE_CUT = 75;
 
 export interface RetakeCheck {
   total: number; // 채점한 문항 수
-  wrongBase: number; // 표준·상 오답
-  wrongTop: number; // 최상 오답
-  points: number; // 쌓인 점수
-  scale: RetakeScale;
+  wrong: number; // 오답 수
+  score: number; // 시험지 점수. 100점 만점으로 본다
+  cut: number; // 이 점수 아래면 재수강
   pass: boolean;
 }
 
-/**
- * 난이도를 최상과 그 나머지 둘로만 가른다.
- *
- * 표준과 상을 굳이 나누지 않은 것은 판정이 기대는 경계를 하나로 줄이기
- * 위해서다. 표준인지 상인지는 사람마다 갈리지만 최상인지 아닌지는 덜 갈린다.
- * 난이도를 안 적은 문항은 표준·상 쪽으로 센다. 난이도가 아예 없는 시험지도
- * 그러면 "다섯 개부터 재수강"이라는 단순한 규칙으로 자연스럽게 내려앉는다.
- */
+/** 난이도를 최상과 그 나머지 둘로만 가른다. 심화 미달을 셀 때 쓴다. */
 const isTop = (q: ExamQuestion) => q.level?.trim() === '최상';
 
 /** 아직 채점한 문항이 없으면 null. 판정을 지어내지 않는다. */
 export function retakeCheck(
   exam: Exam,
   marks: Mark[],
-  scale: RetakeScale = DEFAULT_RETAKE_SCALE
+  cut: number = DEFAULT_RETAKE_CUT
 ): RetakeCheck | null {
-  const top = new Set(exam.questions.filter(isTop).map((q) => q.no));
   const nos = new Set(exam.questions.map((q) => q.no));
   const mine = marks.filter((m) => nos.has(m.no));
   if (mine.length === 0) return null;
-  const wrong = mine.filter((m) => !isFullMark(m));
-  const wrongTop = wrong.filter((m) => top.has(m.no)).length;
-  const wrongBase = wrong.length - wrongTop;
-  const points = wrongBase * scale.base + wrongTop * scale.top;
-  return { total: mine.length, wrongBase, wrongTop, points, scale, pass: points < scale.cut };
+  let earned = 0;
+  let points = 0;
+  for (const m of mine) {
+    earned += m.earned;
+    points += m.points;
+  }
+  const score = points === 0 ? 0 : (100 * earned) / points;
+  const wrong = mine.filter((m) => !isFullMark(m)).length;
+  return { total: mine.length, wrong, score, cut, pass: score >= cut };
 }
 
 /**
  * 심화 미달. 최상 난이도를 몇 개나 놓쳤는지만 따로 본다.
  *
- * 기초 쪽은 따로 두지 않는다. 표준을 틀리면 한 문항이 8점이라 재수강 판정이
- * 먼저 걸린다. 재수강 권장이 곧 기초가 부족하다는 뜻이라, 같은 말을 두 줄로
- * 적으면 화면만 복잡해진다.
+ * 기초 쪽은 따로 두지 않는다. 표준을 세 개 이상 틀리면 등급이 3등급 위로
+ * 못 올라가게 막는 선에 먼저 걸린다. 같은 말을 두 줄로 적으면 화면만
+ * 복잡해진다.
  *
- * 반대로 최상은 한 문항이 5점이라 여덟 개를 놓쳐야 판정에 닿는다. 그래서
- * 통과한 학생 중에도 최상을 여러 개 놓친 경우가 생기고, 그것은 따로 알아야 한다.
- * 재수강 여부와 상관없이 늘 나온다.
+ * 반대로 최상은 한 문항이 4~5점이라 다섯 개를 놓쳐도 점수로는 통과선 안에
+ * 남는다. 그래서 통과한 학생 중에도 최상을 여러 개 놓친 경우가 생기고, 그것은
+ * 따로 알아야 한다. 재수강 여부와 상관없이 늘 나온다.
  *
- * 정답률이 아니라 개수로 잡는다. 시험지마다 최상이 8~9문항이라 정답률로 해도
- * 같은 자리에 걸리지만, 개수로 적어 두면 선생님이 화면을 보고 바로 셀 수 있다.
+ * 정답률이 아니라 개수로 잡는다. 최상이 열 문항이라 다섯 개가 곧 절반이지만,
+ * 개수로 적어 두면 선생님이 화면을 보고 바로 셀 수 있다.
  */
 export const DEFAULT_ADVANCED_CUT = 5;
 
@@ -321,7 +303,7 @@ export interface AssessmentData {
   exams: Exam[];
   results: Result[];
   /** 재수강 판정에서 봐 주는 개수. 안 적었으면 DEFAULT_RETAKE_BUDGET. */
-  retakeScale?: RetakeScale;
+  retakeCut?: number;
 }
 
 const KEY = 'sda.assess.v1';
@@ -339,15 +321,10 @@ export function loadAssessment(): AssessmentData {
       students: Array.isArray(p.students) ? p.students : [],
       exams: Array.isArray(p.exams) ? p.exams : [],
       results: Array.isArray(p.results) ? p.results : [],
-      // 판정 기준이 정답률 % → 오답 개수 → 난이도별 허용 개수로 두 번 바뀌었다.
-      // 예전에 저장된 값을 그대로 읽으면 엉뚱한 기준이 되므로 모양이 맞을 때만 쓴다.
-      retakeScale:
-        p.retakeScale &&
-        typeof p.retakeScale.base === 'number' &&
-        typeof p.retakeScale.top === 'number' &&
-        typeof p.retakeScale.cut === 'number'
-          ? p.retakeScale
-          : undefined,
+      // 판정 기준이 정답률 % → 오답 개수 → 난이도별 허용 개수 → 시험지 점수로
+      // 세 번 바뀌었다. 예전에 저장된 값을 그대로 읽으면 엉뚱한 기준이 되므로
+      // 지금 모양일 때만 쓴다. 아니면 기본값으로 돌아간다.
+      retakeCut: typeof p.retakeCut === 'number' && p.retakeCut > 0 ? p.retakeCut : undefined,
     };
   } catch {
     return emptyAssessment();

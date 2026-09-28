@@ -134,7 +134,7 @@ export default function TypesPage() {
           </li>
         </ul>
         <p className="hint">
-          진단평가 네 시험지는 유형마다 3문항 이상이 되도록 배분했습니다. 한 유형이 두 문항뿐이면 하나만 실수해도
+          진단평가 여덟 시험지는 유형마다 3문항 이상이 되도록 배분했습니다. 한 유형이 두 문항뿐이면 하나만 실수해도
           정답률이 절반 아래로 떨어져 보완할 곳처럼 보입니다.
         </p>
       </section>
@@ -143,89 +143,90 @@ export default function TypesPage() {
         <h3>예상 고교 등급 기준</h3>
         <p className="muted">
           리포트에 나오는 <b>예상 고교 등급</b>입니다. 학생들 점수를 모아 줄 세우는 상대평가가 아니라, 학원이
-          정한 도달 기준입니다. 맞은 문항 수를 그대로 쓰지 않고 <b>환산점수</b>로 바꾼 뒤 등급을 매깁니다.
+          정한 도달 기준입니다. <b>시험지 점수를 그대로</b> 씁니다.
         </p>
 
-        <h4 className="manual-h4">환산점수</h4>
+        <h4 className="manual-h4">점수를 그대로 쓰는 이유</h4>
         <p className="muted">
-          진단평가 30문항은 표준이 7문항뿐이고 나머지는 상·최상입니다. 학교 시험보다 훨씬 어렵기 때문에 여기서
-          60%를 맞힌 학생과 학교 시험에서 60%를 맞힌 학생은 같은 학생이 아닙니다. 그래서 문항마다 난이도 무게를
-          주어 더하고, 원점수가 0이어도 바닥까지 떨어지지 않도록 <b>50~100점</b> 구간에 폅니다.
+          배점이 이미 난이도를 담고 있습니다. 어려운 문항일수록 배점이 크고, 같은 난이도라도 주관식이 1점 더
+          높습니다. 그래서 난이도 무게를 따로 매기지 않습니다. 선생님이 채점 화면에서 보는 점수와 등급을 매긴
+          값이 같습니다.
         </p>
         <div className="table-scroll">
         <table className="assess-table manual-table">
           <thead>
             <tr>
-              <th style={{ width: 96 }}>난이도</th>
-              <th style={{ width: 96 }}>무게</th>
-              <th>중1-1 기준</th>
+              <th style={{ width: 88 }}>난이도</th>
+              <th style={{ width: 96 }}>객관식</th>
+              <th style={{ width: 96 }}>주관식</th>
+              <th>여덟 장 공통</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td className="nowrap"><b>표준</b></td><td>1점</td><td>7문항 × 1 = 7점</td></tr>
-            <tr><td className="nowrap"><b>상</b></td><td>2점</td><td>14문항 × 2 = 28점</td></tr>
-            <tr><td className="nowrap"><b>최상</b></td><td>3점</td><td>9문항 × 3 = 27점</td></tr>
-            <tr><td className="nowrap"><b>무게 만점</b></td><td colSpan={2}>62점</td></tr>
+            <tr><td className="nowrap"><b>표준</b></td><td>2점</td><td>3점</td><td>5문항</td></tr>
+            <tr><td className="nowrap"><b>상</b></td><td>3점</td><td>4점</td><td>15문항</td></tr>
+            <tr><td className="nowrap"><b>최상</b></td><td>4점</td><td>5점</td><td>10문항</td></tr>
+            <tr><td className="nowrap"><b>합계</b></td><td colSpan={3}>30문항 100점</td></tr>
           </tbody>
         </table>
         </div>
-        <p className="hint">
-          <b>환산점수 = 50 + 50 × (받은 무게 ÷ 무게 만점)</b>. 네 시험지의 무게 만점이 61~62점으로 같아
-          시험지끼리 환산점수를 견주어도 됩니다.
-        </p>
 
         <h4 className="manual-h4">등급 칸</h4>
         <div className="table-scroll">
         <table className="assess-table manual-table">
           <thead>
             <tr>
-              <th style={{ width: 96 }}>등급</th>
-              <th style={{ width: 132 }}>환산점수</th>
-              <th>중1-1 30문항에서 대략</th>
+              <th style={{ width: 88 }}>등급</th>
+              <th style={{ width: 120 }}>점수</th>
+              <th style={{ width: 132 }}>대략 오답 수</th>
+              <th>뜻</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td className="nowrap"><b>1등급</b></td><td>93점 이상</td><td>1~4문항 틀림</td></tr>
-            <tr><td className="nowrap"><b>2등급</b></td><td>85점 이상</td><td>5~8문항 틀림 · 재수강 경계</td></tr>
-            <tr><td className="nowrap"><b>3등급</b></td><td>78점 이상</td><td>8~13문항 틀림</td></tr>
-            <tr><td className="nowrap"><b>4등급</b></td><td>71점 이상</td><td>11~16문항 틀림</td></tr>
-            <tr><td className="nowrap"><b>5등급</b></td><td>63점 이상</td><td>15~19문항 틀림</td></tr>
-            <tr><td className="nowrap"><b>6등급</b></td><td>57점 이상</td><td>20~22문항 틀림</td></tr>
-            <tr><td className="nowrap"><b>7등급</b></td><td>54점 이상</td><td>23~24문항 틀림</td></tr>
-            <tr><td className="nowrap"><b>8등급</b></td><td>52점 이상</td><td></td></tr>
-            <tr><td className="nowrap"><b>9등급</b></td><td>52점 미만</td><td>거의 다 틀림</td></tr>
+            <tr><td className="nowrap"><b>1등급</b></td><td>85점 이상</td><td>0~4문항</td><td>재수강 걱정 없음</td></tr>
+            <tr><td className="nowrap"><b>2등급</b></td><td>75점 이상</td><td>5~7문항</td><td><b>재수강 경계</b></td></tr>
+            <tr><td className="nowrap"><b>3등급</b></td><td>60점 이상</td><td>8~12문항</td><td></td></tr>
+            <tr><td className="nowrap"><b>4등급</b></td><td>40점 이상</td><td>13~18문항</td><td></td></tr>
+            <tr><td className="nowrap"><b>5등급</b></td><td>20점 이상</td><td>19~24문항</td><td></td></tr>
+            <tr><td className="nowrap"><b>6등급</b></td><td>20점 미만</td><td>25~30문항</td><td>가장 낮은 등급</td></tr>
           </tbody>
         </table>
         </div>
         <p className="hint">
-          오른쪽 칸이 겹치는 것은 <b>어느 문항을 틀렸는지</b>에 따라 환산점수가 달라지기 때문입니다. 최상을
-          10문항 틀린 학생과 표준을 10문항 틀린 학생은 오답 수가 같아도 등급이 다릅니다.
+          <b>7·8·9등급은 나오지 않습니다.</b> 진단평가는 학교 시험보다 훨씬 어려워서, 다 틀려도 6등급에서
+          멈추도록 정했습니다.
         </p>
         <p className="hint">
-          칸은 <b>재수강 판정과 같은 방향</b>을 가리키도록 맞췄습니다. 학원 학생이 재수강 경계에 서면 전국에서는
-          2등급쯤으로 봅니다. 학원 기준이 전국 기준보다 높기 때문입니다. 시험지가 어려워서 많이 틀려도 5~6등급에서
-          멈춥니다.
+          오답 수는 고르게 틀렸을 때입니다. 한 문항이 평균 3.33점이라 한 개 틀릴 때마다 3점 남짓 깎입니다.
+          어려운 문항을 틀리면 더 깎이고 쉬운 문항을 틀리면 덜 깎이므로, 같은 개수를 틀려도 점수는 달라집니다.
+        </p>
+        <p className="hint">
+          채점 화면의 <b>재수강 권장</b>도 같은 75점 선을 씁니다. 점수가 75점 아래면 켜집니다. 학원 학생이
+          재수강 경계에 서면 전국에서는 2등급쯤으로 봅니다. 학원 기준이 전국 기준보다 높기 때문입니다.
+          다만 아래의 표준 보정선에 걸려 등급만 내려간 학생은 점수가 75점을 넘을 수 있고, 그때는 재수강
+          권장이 켜지지 않습니다.
         </p>
 
         <h4 className="manual-h4">표준 문항을 못 맞힌 경우</h4>
         <p className="muted">
-          무게가 최상 쪽에 실려 있어, 환산점수만 보면 표준을 다 틀리고 최상을 다 맞힌 학생이 1등급이 됩니다.
-          기초가 서지 않은 채 어려운 문제만 맞히는 것을 위로 쳐 주지 않도록 선을 둡니다.
+          점수만 보면 표준 다섯 문항(10점)을 다 틀려도 90점이라 1등급이 됩니다. 기초가 서지 않은 채 어려운
+          문제만 맞히는 것을 위로 쳐 주지 않도록 선을 둡니다. <b>맞힌 개수로 셉니다.</b>
         </p>
         <ul className="bullets">
           <li>
-            <b>표준 정답률 60% 미만</b>이면 환산점수가 아무리 높아도 <b>4등급</b> 위로 올라가지 않습니다.
+            표준 다섯 문항 중 <b>두 개 이하</b>를 맞혔으면 점수가 아무리 높아도 <b>3등급</b> 위로 올라가지
+            않습니다.
           </li>
           <li>
-            <b>표준 정답률 40% 미만</b>이면 <b>6등급</b> 위로 올라가지 않습니다.
+            <b>한 개 이하</b>를 맞혔으면 <b>5등급</b> 위로 올라가지 않습니다.
           </li>
         </ul>
         <p className="hint">
-          여기서 쓰는 표준 정답률은 <b>채점 화면 집계와 리포트 레이더에 보이는 그 값</b>입니다. 배점까지 반영한
-          값이라, 표준 문항을 같은 개수 맞혀도 배점이 큰 것을 틀리면 더 낮게 나옵니다.
+          다섯 개 중 세 개는 맞혀야 2등급 위로 갈 수 있습니다. 배점이 아니라 개수로 세기 때문에 여덟 시험지가
+          모두 같은 선입니다.
         </p>
         <p className="hint">
-          난이도를 적지 않은 시험지에서는 환산점수도 등급도 나오지 않습니다.
+          난이도를 적지 않은 시험지에서는 등급이 나오지 않습니다.
         </p>
       </section>
 

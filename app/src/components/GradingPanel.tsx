@@ -12,7 +12,7 @@ import {
   makeMark,
   newId,
   pointsOf,
-  DEFAULT_RETAKE_SCALE,
+  DEFAULT_RETAKE_CUT,
   advancedGap,
   retakeCheck,
   scoreOf,
@@ -162,8 +162,8 @@ export default function GradingPanel({ data, setData }: Props) {
   const score = scoreOf(marks);
   const stats = exam ? statsForResult(exam, marks, axis) : [];
   // 학원 기준 판정. 리포트에는 안 들어가고 이 화면에서만 본다.
-  const retakeScale = data.retakeScale ?? DEFAULT_RETAKE_SCALE;
-  const retake = exam ? retakeCheck(exam, marks, retakeScale) : null;
+  const retakeCut = data.retakeCut ?? DEFAULT_RETAKE_CUT;
+  const retake = exam ? retakeCheck(exam, marks, retakeCut) : null;
   // 재수강 판정과 별개로, 최상 난이도를 얼마나 놓쳤는지는 따로 알아야 한다.
   const gap = exam ? advancedGap(exam, marks) : null;
   const fullPoints = exam ? exam.questions.reduce((a, q) => a + pointsOf(q), 0) : 0;

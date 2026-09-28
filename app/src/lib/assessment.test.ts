@@ -9,8 +9,11 @@ import {
   makeMark,
   paperHref,
   pointsOf,
-  scaledScore,
+  paperScore,
   gradeFromLevels,
+  GRADE_CUTS,
+  LOWEST_GRADE,
+  DEFAULT_RETAKE_CUT,
   advancedGap,
   retakeCheck,
   scoreOf,
@@ -242,56 +245,63 @@ describe('문제지 · 해설 · 출제표', () => {
 });
 
 const lvExam = (): Exam => {
-  const mk = (n: number, level: string) => ({ no: n, type: '계산', points: 1, level });
-  const run = (from: number, count: number, level: string) =>
-    Array.from({ length: count }, (_, i) => mk(from + i, level));
-  // 실제 진단평가와 같은 모양. 표준 1~8, 상 9~22, 최상 23~30.
+  const run = (from: number, count: number, level: string, points: number) =>
+    Array.from({ length: count }, (_, i) => ({ no: from + i, type: '계산', points, level }));
+  // 실제 진단평가와 같은 모양. 30문항 100점, 표준 5 · 상 15 · 최상 10.
+  // 배점은 객관식 표준 2 · 상 3 · 최상 4 이고 주관식은 하나씩 더다.
   return {
     id: 'e', title: 't', subject: '수학', date: '',
-    questions: [...run(1, 8, '표준'), ...run(9, 14, '상'), ...run(23, 8, '최상')],
+    questions: [
+      ...run(1, 5, '표준', 2), // 10점
+      ...run(6, 13, '상', 3), // 39점
+      ...run(19, 2, '상', 4), // 8점
+      ...run(21, 7, '최상', 4), // 28점
+      ...run(28, 3, '최상', 5), // 15점
+    ],
   };
 };
 
 describe('학원 기준 재수강 판정', () => {
   const exam = lvExam();
   const marks = (wrong: number[]) =>
-    exam.questions.map((q) => makeMark(q, wrong.includes(q.no) ? 0 : 1));
+    exam.questions.map((q) => makeMark(q, wrong.includes(q.no) ? 0 : pointsOf(q)));
 
-  // 기본 눈금은 표준·상 8점 · 최상 5점 · 40점부터 재수강
-  it('표준·상은 5개부터 재수강', () => {
-    expect(retakeCheck(exam, marks([1, 2, 3, 4]))!).toMatchObject({ points: 32, pass: true });
-    expect(retakeCheck(exam, marks([1, 2, 3, 4, 5]))!).toMatchObject({ points: 40, pass: false });
+  it('시험지 배점이 100점이다', () => {
+    expect(exam.questions.reduce((s, q) => s + pointsOf(q), 0)).toBe(100);
+    expect(exam.questions).toHaveLength(30);
   });
 
-  it('최상은 8개부터 재수강. 일곱 개까지는 봐 준다', () => {
-    expect(retakeCheck(exam, marks([23, 24, 25, 26, 27, 28, 29]))!)
-      .toMatchObject({ wrongTop: 7, points: 35, pass: true });
-    expect(retakeCheck(exam, marks([23, 24, 25, 26, 27, 28, 29, 30]))!)
-      .toMatchObject({ wrongTop: 8, points: 40, pass: false });
+  it('75점이면 통과, 그 아래면 재수강. 2등급 선과 같다', () => {
+    expect(DEFAULT_RETAKE_CUT).toBe(75);
+    // 25점어치를 틀리면 딱 75점이라 통과
+    expect(retakeCheck(exam, marks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))!)
+      .toMatchObject({ score: 75, wrong: 10, pass: true });
+    // 3점짜리 하나가 더 틀리면 72점이라 재수강
+    expect(retakeCheck(exam, marks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]))!)
+      .toMatchObject({ score: 72, wrong: 11, pass: false });
   });
 
-  it('섞여 틀리면 점수를 더해서 본다. 개수가 적어도 쉬운 쪽이 무겁다', () => {
-    // 6개를 틀렸어도 넷이 최상이면 36점이라 통과
-    expect(retakeCheck(exam, marks([1, 2, 23, 24, 25, 26]))!)
-      .toMatchObject({ wrongBase: 2, wrongTop: 4, points: 36, pass: true });
-    // 표준·상이 하나 더 늘면 44점이라 재수강
-    expect(retakeCheck(exam, marks([1, 2, 3, 23, 24, 25, 26]))!)
-      .toMatchObject({ points: 44, pass: false });
+  it('어려운 것만 틀리면 다섯 개부터 판정이 가까워진다', () => {
+    // 최상 5점 3개 + 4점 2개 = 23점 → 77점, 통과
+    expect(retakeCheck(exam, marks([28, 29, 30, 21, 22]))!)
+      .toMatchObject({ score: 77, pass: true });
+    // 4점 하나가 더 틀리면 27점 → 73점, 재수강
+    expect(retakeCheck(exam, marks([28, 29, 30, 21, 22, 23]))!)
+      .toMatchObject({ score: 73, pass: false });
   });
 
-  it('눈금을 바꾸면 판정도 바뀐다', () => {
-    const tight = { base: 8, top: 5, cut: 32 };
-    expect(retakeCheck(exam, marks([1, 2, 3, 4]), tight)!.pass).toBe(false);
-    expect(retakeCheck(exam, marks([1, 2, 3]), tight)!.pass).toBe(true);
+  it('선을 바꾸면 판정도 바뀐다', () => {
+    expect(retakeCheck(exam, marks([28, 29, 30, 21, 22]), 80)!.pass).toBe(false);
+    expect(retakeCheck(exam, marks([28, 29, 30, 21, 22]), 70)!.pass).toBe(true);
   });
 
-  it('난이도를 안 적은 문항은 표준·상 쪽으로 센다', () => {
+  it('난이도를 안 적은 시험지도 점수만으로 판정한다', () => {
     const plain: Exam = {
       ...exam,
-      questions: [1, 2, 3, 4, 5].map((no) => ({ no, type: '계산', points: 1 })),
+      questions: [1, 2, 3, 4, 5].map((no) => ({ no, type: '계산', points: 20 })),
     };
     const all = plain.questions.map((q) => makeMark(q, 0));
-    expect(retakeCheck(plain, all)!).toMatchObject({ wrongBase: 5, wrongTop: 0, pass: false });
+    expect(retakeCheck(plain, all)!).toMatchObject({ score: 0, wrong: 5, pass: false });
   });
 
   it('채점한 문항이 없으면 판정하지 않는다', () => {
@@ -302,7 +312,7 @@ describe('학원 기준 재수강 판정', () => {
 describe('심화 미달', () => {
   const exam = lvExam();
   const marks = (wrong: number[]) =>
-    exam.questions.map((q) => makeMark(q, wrong.includes(q.no) ? 0 : 1));
+    exam.questions.map((q) => makeMark(q, wrong.includes(q.no) ? 0 : pointsOf(q)));
 
   it('최상을 5개부터 미달로 본다', () => {
     expect(advancedGap(exam, marks([23, 24, 25, 26]))).toMatchObject({ wrong: 4, short: false });
@@ -315,7 +325,7 @@ describe('심화 미달', () => {
   });
 
   it('재수강이 아니어도 심화 미달은 따로 뜬다', () => {
-    // 최상 5개 = 25점이라 재수강은 아니지만 심화는 비어 있다
+    // 최상 4점 5개 = 20점이라 80점이고 재수강은 아니지만 심화는 비어 있다
     const m = marks([23, 24, 25, 26, 27]);
     expect(retakeCheck(exam, m)!.pass).toBe(true);
     expect(advancedGap(exam, m)!.short).toBe(true);
@@ -331,79 +341,83 @@ describe('심화 미달', () => {
   });
 });
 
-describe('예상 등급 (난이도 환산점수)', () => {
-  /** 난이도마다 10문항. 무게 만점은 10×1 + 10×2 + 10×3 = 60점이다. */
-  const lv = (표준: number, 상: number, 최상: number) =>
-    [
-      ['표준', 표준],
-      ['상', 상],
-      ['최상', 최상],
-    ].map(([type, pct]) => ({
-      type: type as string,
-      total: 10,
-      correct: ((pct as number) / 10),
-      points: 10,
-      earned: 0,
-      rate: (pct as number) / 100,
-    }));
+describe('예상 등급 (시험지 점수)', () => {
+  /** 표준은 다 맞히고 나머지로 점수를 맞춘 집계. 보정선이 걸리지 않는다. */
+  const at = (score: number) => [
+    { type: '표준', total: 5, correct: 5, points: 10, earned: 10, rate: 1 },
+    { type: '상', total: 15, correct: 0, points: 45, earned: score - 10, rate: 0 },
+    { type: '최상', total: 10, correct: 0, points: 45, earned: 0, rate: 0 },
+  ];
 
-  it('환산점수는 난이도 무게로 매기고 50~100 사이에 편다', () => {
-    expect(scaledScore(lv(100, 100, 100))).toBe(100);
-    expect(scaledScore(lv(0, 0, 0))).toBe(50);
-    // 표준 10 + 상 20 + 최상 24 = 54 → 50 + 50×54/60
-    expect(scaledScore(lv(100, 100, 80))).toBe(95);
+  const exam = lvExam();
+  /** 표준 다섯 문항 가운데 몇 개를 틀렸을 때의 집계. 나머지는 다 맞힌다. */
+  const 표준틀림 = (n: number) =>
+    statsForResult(
+      exam,
+      exam.questions.map((q) => makeMark(q, q.no <= n ? 0 : pointsOf(q))),
+      'level'
+    );
+
+  it('점수는 배점을 그대로 더한 100점 만점이다', () => {
+    expect(paperScore(at(100))).toBe(100);
+    expect(paperScore(at(75))).toBe(75);
+    expect(paperScore(표준틀림(5))).toBe(90); // 표준 10점만 잃었다
+  });
+
+  it('칸은 85 · 75 · 60 · 40 · 20 이고 그 아래는 6등급이다', () => {
+    expect(GRADE_CUTS.map((c) => c.min)).toEqual([85, 75, 60, 40, 20]);
+    expect(LOWEST_GRADE).toBe(6);
   });
 
   it('위에서부터 내려오며 처음 걸리는 칸이 등급이다', () => {
-    expect(gradeFromLevels(lv(100, 100, 100))).toBe(1);
-    expect(gradeFromLevels(lv(100, 100, 80))).toBe(1);
-    expect(gradeFromLevels(lv(100, 100, 50))).toBe(2);
-    expect(gradeFromLevels(lv(100, 90, 40))).toBe(3);
-    expect(gradeFromLevels(lv(100, 70, 20))).toBe(4);
-    expect(gradeFromLevels(lv(90, 50, 10))).toBe(5);
+    expect(gradeFromLevels(at(100))).toBe(1);
+    expect(gradeFromLevels(at(85))).toBe(1);
+    expect(gradeFromLevels(at(84))).toBe(2);
+    expect(gradeFromLevels(at(75))).toBe(2);
+    expect(gradeFromLevels(at(74))).toBe(3);
+    expect(gradeFromLevels(at(60))).toBe(3);
+    expect(gradeFromLevels(at(59))).toBe(4);
+    expect(gradeFromLevels(at(40))).toBe(4);
+    expect(gradeFromLevels(at(39))).toBe(5);
+    expect(gradeFromLevels(at(20))).toBe(5);
+    expect(gradeFromLevels(at(19))).toBe(6);
   });
 
-  it('많이 틀려도 5~6등급에서 멈춘다', () => {
-    // 시험지가 어려워서 원점수가 낮아도 바닥까지 떨어지지 않는다
-    expect(gradeFromLevels(lv(60, 30, 10))).toBe(6);
+  it('다 틀려도 6등급에서 멈춘다. 7·8·9등급은 없다', () => {
+    const 전부틀림 = statsForResult(
+      exam,
+      exam.questions.map((q) => makeMark(q, 0)),
+      'level'
+    );
+    expect(paperScore(전부틀림)).toBe(0);
+    expect(gradeFromLevels(전부틀림)).toBe(6);
   });
 
-  it('표준을 못 맞히면 환산점수가 높아도 위로 못 올라간다', () => {
-    // 무게가 최상 쪽에 실려 있어 환산점수만 보면 1등급이 된다
-    expect(scaledScore(lv(50, 100, 100))).toBeGreaterThan(93);
-    expect(gradeFromLevels(lv(50, 100, 100))).toBe(4);
-    expect(gradeFromLevels(lv(30, 100, 100))).toBe(6);
+  it('표준을 못 맞히면 점수가 높아도 위로 못 올라간다', () => {
+    // 표준만 틀리면 점수는 94~90점이라 그대로 두면 1등급이 된다
+    expect(paperScore(표준틀림(3))).toBe(94);
+    expect(gradeFromLevels(표준틀림(2))).toBe(1); // 다섯 중 셋 맞힘 = 60%
+    expect(gradeFromLevels(표준틀림(3))).toBe(3); // 둘 맞힘 = 40%
+    expect(gradeFromLevels(표준틀림(4))).toBe(5); // 하나 맞힘 = 20%
+    expect(gradeFromLevels(표준틀림(5))).toBe(5);
   });
 
-  it('표준 상한은 화면에 보이는 정답률(배점 기준)을 그대로 쓴다', () => {
-    // 10문항 중 6개를 맞혀도 배점이 큰 것을 틀리면 정답률은 60%에 못 미친다.
-    // 그때는 개수로 60%를 채웠어도 4등급 위로 올라가지 못한다.
-    const levels = [
-      { type: '표준', total: 10, correct: 6, points: 40, earned: 22, rate: 22 / 40 },
-      { type: '상', total: 10, correct: 10, points: 30, earned: 30, rate: 1 },
-      { type: '최상', total: 10, correct: 10, points: 30, earned: 30, rate: 1 },
+  it('보정선은 배점이 아니라 개수로 잰다', () => {
+    // 표준에 3점짜리 주관식이 섞인 시험지. 배점으로 재면 두 개만 틀려도
+    // 54.5%라 걸리지만, 개수로는 다섯 중 셋을 맞혔으므로 걸리지 않는다.
+    const 섞인 = [
+      { type: '표준', total: 5, correct: 3, points: 11, earned: 6, rate: 6 / 11 },
+      { type: '상', total: 15, correct: 15, points: 45, earned: 45, rate: 1 },
+      { type: '최상', total: 10, correct: 10, points: 44, earned: 44, rate: 1 },
     ];
-    expect(levels[0].correct / levels[0].total).toBe(0.6);
-    expect(levels[0].rate).toBeLessThan(0.6);
-    expect(gradeFromLevels(levels)).toBe(4);
-    // 같은 개수라도 배점이 큰 것을 맞혀 정답률이 60%를 넘으면 막지 않는다
-    const ok = [{ ...levels[0], earned: 26, rate: 26 / 40 }, levels[1], levels[2]];
-    expect(gradeFromLevels(ok)).toBe(1);
+    expect(섞인[0].rate).toBeLessThan(0.6);
+    expect(섞인[0].correct / 섞인[0].total).toBe(0.6);
+    expect(gradeFromLevels(섞인)).toBe(1);
   });
 
   it('난이도를 안 적은 시험지는 등급을 지어내지 않는다', () => {
     expect(gradeFromLevels([])).toBeNull();
-    expect(scaledScore([])).toBeNull();
-  });
-
-  it('없는 난이도는 무게 만점에서도 빠진다', () => {
-    // 최상 문항이 아예 없는 시험지. 만점은 10×1 + 10×2 = 30점이다.
-    const only = [
-      { type: '표준', total: 10, correct: 9, points: 10, earned: 0, rate: 0.9 },
-      { type: '상', total: 10, correct: 9, points: 10, earned: 0, rate: 0.9 },
-    ];
-    expect(scaledScore(only)).toBe(95);
-    expect(gradeFromLevels(only)).toBe(1);
+    expect(paperScore([])).toBeNull();
   });
 });
 
