@@ -224,6 +224,22 @@ def col_top(i, top1, topn):
     return PH - MT - (top1 if i < 2 else topn)
 
 
+IMGH = re.compile(r'height="([0-9.]+)"')
+
+
+def 벌린다(html, style):
+    """수식 그림이 줄 높이를 넘으면 그 문단만 줄 간격을 늘린다.
+
+    분수나 근호가 든 그림은 글자보다 키가 크다. 줄 간격을 그대로 두면 위아래
+    줄과 붙어 보인다. 2026년 9월 28일에 공통수학2 28번에서 보고 고쳤다.
+    """
+    키 = [float(x) for x in IMGH.findall(html)]
+    필요 = max(키) + 2 if 키 else 0
+    if 필요 <= style.leading:
+        return style
+    return ParagraphStyle(style.name + '+', parent=style, leading=필요)
+
+
 def make(no, q, ink, new_unit):
     """한 문항의 조각들과 전체 높이."""
     parts = []
@@ -232,17 +248,20 @@ def make(no, q, ink, new_unit):
     for style, text, base in (
             (ST_META, head_line(q), 9.2),
             (ST_ANS, '정답 &nbsp;%s' % mathed(q['answer'], 12.5, True), 12.5)):
-        p = Paragraph(mathed(text, base) if style is ST_META else text, style)
+        글 = mathed(text, base) if style is ST_META else text
+        p = Paragraph(글, 벌린다(글, style))
         ph = p.wrap(INNER, 10000)[1]
         parts.append((p, ph, 3 if style is ST_META else 4))
         h += ph + (3 if style is ST_META else 4)
     for s in q['steps']:
-        p = Paragraph('· ' + mathed(s, 11), ST_STEP)
+        글 = '· ' + mathed(s, 11)
+        p = Paragraph(글, 벌린다(글, ST_STEP))
         ph = p.wrap(INNER, 10000)[1]
         parts.append((p, ph, 0))
         h += ph
-    p = Paragraph('<font name="KRB" color="%s">틀렸다면</font> &nbsp;%s'
-                  % (ink, mathed(q['miss'], 10)), ST_MISS)
+    글 = ('<font name="KRB" color="%s">틀렸다면</font> &nbsp;%s'
+          % (ink, mathed(q['miss'], 10)))
+    p = Paragraph(글, 벌린다(글, ST_MISS))
     ph = p.wrap(INNER, 10000)[1]
     parts.append((p, ph, 5))
     h += ph + 5
