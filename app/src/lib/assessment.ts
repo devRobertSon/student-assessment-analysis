@@ -47,6 +47,20 @@ export function halfOf(q: ExamQuestion): number {
   return pointsOf(q) / 2;
 }
 
+/**
+ * 채점 화면에 재수강·기초 미흡·심화 미흡 판정을 보일지.
+ *
+ * 세 판정은 **수학 진단평가 한 장에 맞춰 둔 값**이다. 30문항에 표준 5·상 15·
+ * 최상 10, 벌점 8·5·40 이 그 시험지 구성에서 나온 수다. 영재성평가는 문항 수도
+ * 구성도 달라 같은 수를 쓸 수 없다.
+ *
+ * 세 칸 채점이 곧 영재성평가라는 표다. 전부 서술형인 시험지만 세 칸을 쓴다.
+ * 나중에 세 칸이면서 판정도 쓰고 싶은 시험지가 생기면 그때 따로 표를 둔다.
+ */
+export function showsVerdicts(exam: Exam): boolean {
+  return exam.grading !== 'half';
+}
+
 /** 시험지에 딸린 인쇄물 세 가지. */
 export type AttachKind = 'paper' | 'solution' | 'blueprint';
 export const ATTACH_KINDS: AttachKind[] = ['paper', 'solution', 'blueprint'];

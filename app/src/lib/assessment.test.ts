@@ -5,6 +5,7 @@ import {
   examQuestionsFromCsv,
   halfOf,
   normalizeGrading,
+  showsVerdicts,
   parseCsv,
   hasAxis,
   isFullMark,
@@ -120,6 +121,16 @@ describe('채점 칸 수', () => {
     const m = makeMark(q, halfOf(q));
     expect(m.earned).toBe(2);
     expect(isFullMark(m)).toBe(false);
+  });
+
+  it('세 칸 시험지에는 판정 칸을 두지 않는다', () => {
+    const 시험지 = (g?: 'ox' | 'half'): Exam => ({
+      id: 'e', title: 't', subject: '과학', date: '', grading: g, questions: [],
+    });
+    expect(showsVerdicts(시험지('half'))).toBe(false);
+    expect(showsVerdicts(시험지('ox'))).toBe(true);
+    // 안 적은 시험지는 지금까지처럼 판정을 보인다
+    expect(showsVerdicts(시험지())).toBe(true);
   });
 });
 

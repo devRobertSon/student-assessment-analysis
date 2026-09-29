@@ -18,6 +18,7 @@ import {
   basicGap,
   retakeCheck,
   scoreOf,
+  showsVerdicts,
   statsForResult,
   todayStr,
 } from '../lib/assessment';
@@ -165,10 +166,12 @@ export default function GradingPanel({ data, setData }: Props) {
   const stats = exam ? statsForResult(exam, marks, axis) : [];
   // 학원 기준 판정. 리포트에는 안 들어가고 이 화면에서만 본다.
   const retakeScale = data.retakeScale ?? DEFAULT_RETAKE_SCALE;
-  const retake = exam ? retakeCheck(exam, marks, retakeScale) : null;
+  // 영재성평가에는 세 판정을 쓰지 않는다. 까닭은 showsVerdicts() 에 적어 두었다.
+  const 판정있음 = !!exam && showsVerdicts(exam);
+  const retake = 판정있음 ? retakeCheck(exam!, marks, retakeScale) : null;
   // 재수강 판정은 난이도를 둘로만 가른다. 양 끝을 얼마나 놓쳤는지는 따로 본다.
-  const basic = exam ? basicGap(exam, marks) : null;
-  const gap = exam ? advancedGap(exam, marks) : null;
+  const basic = 판정있음 ? basicGap(exam!, marks) : null;
+  const gap = 판정있음 ? advancedGap(exam!, marks) : null;
   const fullPoints = exam ? exam.questions.reduce((a, q) => a + pointsOf(q), 0) : 0;
   // 세 칸 채점 시험지인가. 과학 영재성평가처럼 전부 서술형인 시험지가 이것을 쓴다.
   const threeWay = exam?.grading === 'half';
