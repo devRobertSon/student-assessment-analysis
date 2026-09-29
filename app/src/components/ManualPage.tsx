@@ -239,6 +239,10 @@ export default function ManualPage() {
           </li>
         </ul>
         <Shot src="grading.png" alt="채점 화면. 4, 11, 17, 23, 28번이 비어 있다" />
+        <Shot
+          src="grading-half.png"
+          alt="세 칸으로 매기는 시험지. 문항마다 O · △ · X 가 있고 △ 를 누른 칸은 노란색이다"
+        />
         <Shot src="grading-ask.png" alt="빈 문항이 있는 채로 저장할 때 뜨는 창" narrow={420} />
       </section>
 
