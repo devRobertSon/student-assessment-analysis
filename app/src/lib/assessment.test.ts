@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   Exam,
   examQuestionsFromCsv,
+  halfOf,
+  normalizeGrading,
   parseCsv,
   hasAxis,
   isFullMark,
@@ -76,6 +78,48 @@ describe('examQuestionsFromCsv', () => {
     const r = examQuestionsFromCsv('과목,정답\n과학,3');
     expect(r.questions).toHaveLength(0);
     expect(r.errors[0]).toContain('필수 열');
+  });
+
+  it('채점 열이 없으면 채점 방식을 적지 않는다', () => {
+    expect(examQuestionsFromCsv(csv).grading).toBeUndefined();
+  });
+
+  it('채점 열을 읽어 세 칸 시험지를 가린다', () => {
+    const r = examQuestionsFromCsv('시험지,채점,문항번호,유형\n중1 영재,세 칸,1,개념 이해');
+    expect(r.grading).toBe('half');
+  });
+
+  it('채점 열에 다른 말이 적혀 있으면 두 칸으로 본다', () => {
+    const r = examQuestionsFromCsv('시험지,채점,문항번호,유형\n중1 진단,OX,1,연산 처리');
+    expect(r.grading).toBe('ox');
+  });
+});
+
+describe('채점 칸 수', () => {
+  it('세 칸을 뜻하는 말을 알아본다', () => {
+    for (const v of ['세 칸', '세칸', '3칸', 'half', '절반', '부분점수']) {
+      expect(normalizeGrading(v)).toBe('half');
+    }
+  });
+
+  it('그 밖의 말은 두 칸이다', () => {
+    for (const v of ['', 'OX', '두 칸', '맞음/틀림']) {
+      expect(normalizeGrading(v)).toBe('ox');
+    }
+  });
+
+  it('가운데 값은 배점의 절반이다', () => {
+    expect(halfOf({ no: 1, type: 'x', points: 4 })).toBe(2);
+    expect(halfOf({ no: 2, type: 'x', points: 3 })).toBe(1.5);
+    // 배점을 안 적으면 1점으로 보므로 절반은 0.5다
+    expect(halfOf({ no: 3, type: 'x' })).toBe(0.5);
+  });
+
+  it('절반을 받으면 점수에는 들어가고 맞힌 문항으로는 안 센다', () => {
+    const q = { no: 1, type: 'x', points: 4 };
+    const m = makeMark(q, halfOf(q));
+    expect(m.earned).toBe(2);
+    expect(isFullMark(m)).toBe(false);
   });
 });
 

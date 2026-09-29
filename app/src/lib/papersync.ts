@@ -28,6 +28,7 @@ async function examFromSheet(file: string): Promise<Exam | null> {
           subject: res.subject || '수학',
           date: todayStr(),
           questions: res.questions,
+          grading: res.grading,
           files: res.files,
         };
       }
@@ -40,7 +41,8 @@ async function examFromSheet(file: string): Promise<Exam | null> {
 }
 
 /** 시험지에서 저장소가 정하는 부분. 이게 같으면 다시 쓸 필요가 없다. */
-const shape = (e: Exam) => JSON.stringify([e.title, e.subject, e.questions, e.files ?? null]);
+const shape = (e: Exam) =>
+  JSON.stringify([e.title, e.subject, e.questions, e.grading ?? null, e.files ?? null]);
 
 /**
  * papers/ 의 시험지를 앱 목록에 맞춘다.

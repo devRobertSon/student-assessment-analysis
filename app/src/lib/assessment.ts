@@ -1,6 +1,6 @@
 // src/lib/assessment.ts: 진단평가 데이터(학생·시험지·채점) + CSV 임포트 + 집계
 // 저장: localStorage 단일 키 + JSON 백업
-// 채점은 주관식도 O/X만 구분한다. 배점을 다 받으면 O, 아니면 X다.
+// 채점은 시험지마다 두 칸(O/X)이거나 세 칸(O/△/X)이다. Exam.grading 이 고른다.
 export type QFormat = '객관식' | '주관식';
 
 export interface ExamQuestion {
@@ -30,6 +30,23 @@ export function fmtPoints(v: number): string {
   return Number.isInteger(v) ? String(v) : String(Math.round(v * 10) / 10);
 }
 
+/**
+ * 채점 칸을 몇 개 둘지.
+ *
+ * `ox`  맞음·틀림 두 칸. 수학 진단평가가 쓴다.
+ * `half` 맞음·절반·틀림 세 칸. 과학 영재성평가처럼 전부 서술형인 시험지가 쓴다.
+ *
+ * **왜 시험지마다 정하나.** 형식(주관식)으로 정하면 수학 진단평가의 주관식
+ * 다섯 문항도 함께 바뀐다. 그쪽은 답이 맞거나 틀리거나 둘뿐이라 절반이 없다.
+ * 과목으로 정하면 O·X 로 매기고 싶은 과학 시험지를 만들 길이 없다.
+ */
+export type GradeMode = 'ox' | 'half';
+
+/** 세 칸 채점의 가운데 값. 배점의 절반이다. */
+export function halfOf(q: ExamQuestion): number {
+  return pointsOf(q) / 2;
+}
+
 /** 시험지에 딸린 인쇄물 세 가지. */
 export type AttachKind = 'paper' | 'solution' | 'blueprint';
 export const ATTACH_KINDS: AttachKind[] = ['paper', 'solution', 'blueprint'];
@@ -45,6 +62,8 @@ export interface Exam {
   subject: string;
   date: string; // 등록일 YYYY-MM-DD (응시일은 채점 결과 Result.date에 학생별로 기록된다)
   questions: ExamQuestion[];
+  /** 채점 칸 수. 안 적으면 두 칸(O/X)이다. */
+  grading?: GradeMode;
   /**
    * 딸린 인쇄물. 값은 사이트의 papers/ 에 올려 둔 파일 이름이거나 'http…' 주소다.
    * 짧은 문자열이라 다른 데이터와 함께 동기화된다.
@@ -452,19 +471,28 @@ const HEADER_ALIASES: Record<string, string[]> = {
   source: ['출처', '교재', '원교재', 'source'],
   sourceNo: ['원문항', '원문항번호', '교재문항', 'sourceno'],
   title: ['시험지', '시험', '시험지명', '시험명', 'title', 'exam'],
+  grading: ['채점', '채점방식', '채점칸', 'grading'],
   paper: ['문제지', '문제지파일', 'paper'],
   solution: ['해설', '해설지', '해설지파일', 'solution'],
   blueprint: ['출제표', '출제표파일', 'blueprint'],
 };
 
-// 주관식·서술형·논술형·서답형은 형식만 다르게 표시한다. 채점은 객관식과 같은
-// O/X다. 2026-09-21 에 이름을 '주관식' 으로 바꾸기 전에 받아 둔 자료가 있어
-// 예전 낱말도 그대로 받는다.
+// 주관식·서술형·논술형·서답형은 형식만 다르게 표시한다. 채점 칸 수는 형식이
+// 아니라 시험지가 정한다(Exam.grading). 2026-09-21 에 이름을 '주관식' 으로
+// 바꾸기 전에 받아 둔 자료가 있어 예전 낱말도 그대로 받는다.
 const ESSAY_WORDS = ['주관', '서술', '논술', '서답'];
 
 export function normalizeFormat(raw: string): QFormat {
   const v = raw.trim();
   return ESSAY_WORDS.some((w) => v.includes(w)) ? '주관식' : '객관식';
+}
+
+// 채점 칸을 세 개로 두라는 말. 그 밖의 값은 모두 두 칸으로 본다.
+const HALF_WORDS = ['세칸', '세 칸', '3칸', '3', 'half', '절반', '부분'];
+
+export function normalizeGrading(raw: string): GradeMode {
+  const v = raw.trim().toLowerCase();
+  return HALF_WORDS.some((w) => v.includes(w)) ? 'half' : 'ox';
 }
 
 function matchHeader(header: string): string | null {
@@ -479,6 +507,7 @@ export interface CsvParseResult {
   questions: ExamQuestion[];
   title?: string;
   subject?: string;
+  grading?: GradeMode;
   files?: Partial<Record<AttachKind, string>>;
   errors: string[];
 }
@@ -501,6 +530,7 @@ export function examQuestionsFromCsv(text: string): CsvParseResult {
   const idxPoints = header.indexOf('points');
   const idxFormat = header.indexOf('format');
   const idxTitle = header.indexOf('title');
+  const idxGrading = header.indexOf('grading');
   // 인쇄물은 시험지 한 장에 하나뿐이라 문항이 아니라 시험지에 붙는다.
   const attachCols = ATTACH_KINDS.map((k) => [k, header.indexOf(k)] as [AttachKind, number]).filter(
     ([, i]) => i !== -1
@@ -511,6 +541,7 @@ export function examQuestionsFromCsv(text: string): CsvParseResult {
 
   let title: string | undefined;
   let subject: string | undefined;
+  let grading: GradeMode | undefined;
   const files: Partial<Record<AttachKind, string>> = {};
   const questions: ExamQuestion[] = [];
   const seen = new Set<number>();
@@ -548,6 +579,9 @@ export function examQuestionsFromCsv(text: string): CsvParseResult {
     }
     if (idxTitle !== -1 && !title && (cells[idxTitle] ?? '').trim()) title = cells[idxTitle].trim();
     if (idxSubject !== -1 && !subject && (cells[idxSubject] ?? '').trim()) subject = cells[idxSubject].trim();
+    if (idxGrading !== -1 && !grading && (cells[idxGrading] ?? '').trim()) {
+      grading = normalizeGrading(cells[idxGrading]);
+    }
     for (const [kind, idx] of attachCols) {
       const v = (cells[idx] ?? '').trim();
       if (v && !files[kind]) files[kind] = v;
@@ -562,6 +596,7 @@ export function examQuestionsFromCsv(text: string): CsvParseResult {
     questions,
     title,
     subject,
+    grading,
     files: Object.keys(files).length ? files : undefined,
     errors,
   };

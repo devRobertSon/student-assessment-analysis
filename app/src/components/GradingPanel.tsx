@@ -7,6 +7,7 @@ import {
   Mark,
   Result,
   fmtPoints,
+  halfOf,
   hasAxis,
   isEssay,
   makeMark,
@@ -169,6 +170,8 @@ export default function GradingPanel({ data, setData }: Props) {
   const basic = exam ? basicGap(exam, marks) : null;
   const gap = exam ? advancedGap(exam, marks) : null;
   const fullPoints = exam ? exam.questions.reduce((a, q) => a + pointsOf(q), 0) : 0;
+  // 세 칸 채점 시험지인가. 과학 영재성평가처럼 전부 서술형인 시험지가 이것을 쓴다.
+  const threeWay = exam?.grading === 'half';
 
   const save = async () => {
     if (!studentId || !exam) {
@@ -240,7 +243,9 @@ ${listNos(left)}`
         <div>
           <h1>채점 입력</h1>
           <p className="muted">
-            문항마다 O나 X만 누르면 됩니다. 주관식도 같습니다. 배점을 다 받으면 O, 답이 틀렸으면 X입니다.
+            {threeWay
+              ? '문항마다 O · △ · X 중 하나를 누르면 됩니다. △ 는 배점의 절반입니다.'
+              : '문항마다 O나 X만 누르면 됩니다. 주관식도 같습니다. 배점을 다 받으면 O, 답이 틀렸으면 X입니다.'}
           </p>
         </div>
       </div>
@@ -318,13 +323,14 @@ ${listNos(left)}`
                   <button className="mini ghost" onClick={() => setAll('clear')}>
                     초기화
                   </button>
+                  {threeWay && <span className="muted ox-hint">△ 는 배점의 절반입니다</span>}
                   <span style={{ marginLeft: 'auto' }} />
                   <button className="primary mini" onClick={save} disabled={answered === 0}>
                     채점 저장
                   </button>
                 </div>
 
-                <div className="ox-grid">
+                <div className={`ox-grid ${threeWay ? 'three' : ''}`}>
                   {exam.questions.map((q) => {
                     const v = cells[q.no];
                     const pts = pointsOf(q);
@@ -347,6 +353,16 @@ ${listNos(left)}`
                           >
                             O
                           </button>
+                          {threeWay && (
+                            <button
+                              className={`ox-h ${v === halfOf(q) ? 'on' : ''}`}
+                              onClick={() => setCell(q.no, halfOf(q))}
+                              aria-label={`${q.no}번 ${q.type} 절반`}
+                              aria-pressed={v === halfOf(q)}
+                            >
+                              △
+                            </button>
+                          )}
                           <button
                             className={`ox-x ${v === 0 ? 'on' : ''}`}
                             onClick={() => setCell(q.no, 0)}

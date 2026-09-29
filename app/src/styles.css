@@ -433,7 +433,38 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .ox-btns { display: flex; gap: 5px; }
 .ox-btns button { width: 34px; height: 30px; padding: 0; font-size: 14px; font-weight: 600; color: var(--ink-3); border-radius: 6px; }
 .ox-o.on { color: #fff; background: var(--navy); border-color: var(--navy); }
+.ox-h.on { color: #fff; background: var(--warn-ink); border-color: var(--warn-ink); }
 .ox-x.on { color: #fff; background: var(--bad-ink); border-color: var(--bad-ink); }
+/* 세 칸 채점: 단추가 하나 더 붙으므로 한 칸이 그만큼 넓어진다. 다섯 칸을
+   지키려고 단추를 좁히면 손가락으로 누르기 어려워지므로, 한 줄에 네 문항으로
+   줄이고 단추 크기는 그대로 둔다. 띠도 네 칸 기준으로 다시 잡는다. */
+.ox-grid.three { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ox-grid.three .ox-item:nth-child(10n + 6),
+.ox-grid.three .ox-item:nth-child(10n + 7),
+.ox-grid.three .ox-item:nth-child(10n + 8),
+.ox-grid.three .ox-item:nth-child(10n + 9),
+.ox-grid.three .ox-item:nth-child(10n) { background: var(--fill); }
+.ox-grid.three .ox-item:nth-child(8n + 5),
+.ox-grid.three .ox-item:nth-child(8n + 6),
+.ox-grid.three .ox-item:nth-child(8n + 7),
+.ox-grid.three .ox-item:nth-child(8n) { background: #e4e8f0; }
+
+/* 휴대폰에서는 세 칸도 두 칸 격자를 쓴다. **이 블록은 위 네 칸 규칙보다
+   뒤에 와야 한다.** 굵기가 같아서 앞에 두면 네 칸 규칙에 덮인다. */
+@media (max-width: 640px) {
+  /* 한 칸에 112px 뿐인데 번호와 단추 셋은 155px 을 쓴다. 단추를 좁혀 맞추면
+     24px 까지 줄어 누르기 어려워지므로 한 줄에 한 문항만 둔다. */
+  .ox-grid.three { grid-template-columns: 1fr; }
+  .ox-grid.three .ox-item:nth-child(8n + 5),
+  .ox-grid.three .ox-item:nth-child(8n + 6),
+  .ox-grid.three .ox-item:nth-child(8n + 7),
+  .ox-grid.three .ox-item:nth-child(8n) { background: var(--fill); }
+  .ox-grid.three .ox-item:nth-child(even) { background: #e4e8f0; }
+  /* 도구 줄이 좁아 한 글자씩 세로로 접힌다. 머리글이 같은 말을 이미 하므로 뺀다. */
+  .ox-hint { display: none; }
+}
+/* 줄바꿈을 막지 않으면 좁은 자리에서 한 글자씩 세로로 쌓인다. */
+.ox-hint { font-size: 12px; margin-left: 4px; white-space: nowrap; }
 /* 주관식: 색만으로 구분하지 않도록 '주관식' 글자 배지를 함께 단다 */
 /* 시험지 구성 보기: 교차표와 문항 지도 두 가지.
    색은 거들 뿐이라 숫자와 이름을 항상 글자로 함께 적는다. */
