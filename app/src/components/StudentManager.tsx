@@ -63,20 +63,6 @@ export default function StudentManager({
     setSideOpen(false);
   };
 
-  const rateOf = useMemo(() => {
-    const map = new Map<string, number | null>();
-    for (const s of data.students) {
-      const rs = data.results.filter((r) => r.studentId === s.id);
-      if (rs.length === 0) {
-        map.set(s.id, null);
-        continue;
-      }
-      const marks = rs.flatMap((r) => r.marks);
-      map.set(s.id, scoreOf(marks).rate);
-    }
-    return map;
-  }, [data.students, data.results]);
-
   const shown = data.students.filter((s) => s.name.includes(query.trim()));
 
   const studentResults = useMemo(
@@ -286,22 +272,18 @@ export default function StudentManager({
               {data.students.length === 0 ? '등록된 학생이 없습니다.' : '검색 결과가 없습니다.'}
             </p>
           ) : (
-            shown.map((s) => {
-              const r = rateOf.get(s.id);
-              return (
-                <button
-                  key={s.id}
-                  className={`side-item ${s.id === selectedId ? 'on' : ''}`}
-                  onClick={() => pick(s.id)}
-                >
-                  <span className="nm">
-                    {s.name} <span className="gr">{s.grade}</span>
-                  </span>
-                  {/* 점수로 적는다. 채점·리포트와 같은 값, 같은 단위다. */}
-                  <span className="rt">{r === null || r === undefined ? '—' : `${Math.round(r * 100)}점`}</span>
-                </button>
-              );
-            })
+            shown.map((s) => (
+              <button
+                key={s.id}
+                className={`side-item ${s.id === selectedId ? 'on' : ''}`}
+                onClick={() => pick(s.id)}
+              >
+                <span className="nm">{s.name}</span>
+                {/* 학부모님과 같이 보는 화면이라 점수는 적지 않는다. 동명이인을
+                    가리는 데 필요한 학교와 학년만 오른쪽에 둔다. */}
+                <span className="gr">{[s.school, s.grade].filter(Boolean).join(' ')}</span>
+              </button>
+            ))
           )}
         </div>
       </aside>
@@ -361,20 +343,8 @@ export default function StudentManager({
                   <span>학교</span>
                   <input type="text" value={student.school ?? ''} onChange={(e) => update({ school: e.target.value })} />
                 </label>
-                <label className="fld">
-                  <span>학생 연락처</span>
-                  <input type="tel" value={student.contact ?? ''} onChange={(e) => update({ contact: e.target.value })} />
-                </label>
-                <label className="fld">
-                  <span>학부모 연락처</span>
-                  {/* 안내 문구는 두지 않는다. 카드 머리글이 이미 같은 말을 하고,
-                      여섯 칸 중 이 칸에만 붙어 있으면 값이 적힌 것처럼 보인다. */}
-                  <input
-                    type="tel"
-                    value={student.parentContact ?? ''}
-                    onChange={(e) => update({ parentContact: e.target.value })}
-                  />
-                </label>
+                {/* 학년·학교 다음에 형제 재원 여부를 두어 윗줄에서 학생을 가리는
+                    것이 끝나고, 아랫줄이 연락처 둘이 된다. */}
                 <label className="fld">
                   <span>형제 재원 여부</span>
                   <Select
@@ -387,6 +357,20 @@ export default function StudentManager({
                       { value: '없음', label: '없음' },
                       { value: '있음', label: '있음' },
                     ]}
+                  />
+                </label>
+                <label className="fld">
+                  <span>학생 연락처</span>
+                  <input type="tel" value={student.contact ?? ''} onChange={(e) => update({ contact: e.target.value })} />
+                </label>
+                <label className="fld">
+                  <span>학부모 연락처</span>
+                  {/* 안내 문구는 두지 않는다. 카드 머리글이 이미 같은 말을 하고,
+                      여섯 칸 중 이 칸에만 붙어 있으면 값이 적힌 것처럼 보인다. */}
+                  <input
+                    type="tel"
+                    value={student.parentContact ?? ''}
+                    onChange={(e) => update({ parentContact: e.target.value })}
                   />
                 </label>
               </div>
