@@ -363,9 +363,13 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .res-table { min-width: 466px; }
 .res-table th:nth-child(2),
 .res-table td:nth-child(2) { white-space: nowrap; }
-.res-check { width: 16px; height: 16px; margin: 0; accent-color: var(--navy); cursor: pointer; }
-/* 체크를 푼 줄. 지운 것이 아니라 이번 집계에서 뺀 것이라 흐리게만 둔다. */
+.res-check { width: 17px; height: 17px; margin: 0; accent-color: var(--navy); cursor: pointer; }
+/* 지금 보고 있지 않은 줄. 지운 것이 아니라 아래 그림에 안 들어간 것뿐이라
+   흐리게만 둔다. 보고 있는 줄은 바탕을 옅게 깔아 어느 것인지 알린다. */
 .res-table tr.res-off td { color: var(--ink-3); }
+.res-table tr:not(.res-off) td { background: var(--fill); }
+.res-table tr:not(.res-off) td:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+.res-table tr:not(.res-off) td:last-child { border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
 .res-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 10px; }
 .res-head h3 { margin: 0; white-space: nowrap; }
 .res-head-acts { display: flex; gap: 6px; margin-left: auto; }

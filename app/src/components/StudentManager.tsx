@@ -71,57 +71,29 @@ export default function StudentManager({
   );
 
   /**
-   * 아래 점수와 유형별 성취에 넣을 응시. 기본은 전부다.
+   * 아래 유형별 성취에 넣을 응시. 한 번에 하나만 본다.
    *
-   * 여러 번 본 학생은 시험마다 결과가 다르다. 체크를 풀면 그 시험을 빼고
-   * 다시 센다. 채점 기록 자체는 건드리지 않는다.
+   * 여러 번 본 학생은 시험마다 결과가 다르다. 합쳐 놓으면 어느 시험의 그림인지
+   * 알 수 없고, 수학과 과학을 같이 놓으면 재는 유형이 달라 한 그림에 섞인다.
+   * 줄 앞을 눌러 번갈아 본다. 처음에는 마지막으로 본 시험이 잡힌다.
    */
-  const [pickedIds, setPickedIds] = useState<Set<string>>(new Set());
+  const [pickedId, setPickedId] = useState('');
   useEffect(() => {
-    setPickedIds(new Set(studentResults.map((r) => r.id)));
+    setPickedId(studentResults.length ? studentResults[studentResults.length - 1].id : '');
   }, [selectedId, studentResults.length]);
-  const picked = useMemo(
-    () => studentResults.filter((r) => pickedIds.has(r.id)),
-    [studentResults, pickedIds]
-  );
-  const togglePicked = (id: string) =>
-    setPickedIds((cur) => {
-      const next = new Set(cur);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const picked = studentResults.find((r) => r.id === pickedId);
 
-  /**
-   * 유형별 성취를 과목마다 따로 낸다.
-   *
-   * 수학 여덟 유형과 과학 여덟 유형은 재는 것이 다르다. 한 그림에 같이 그리면
-   * 축이 열다섯이 되어 사분면 묶음이 깨지고, 이름이 같은 `개념 이해` 가 두
-   * 과목에서 한 막대로 합쳐진다. 그래서 과목별로 한 벌씩 그린다.
-   */
-  const bySubject = useMemo(() => {
-    if (!selectedId) return [];
-    const examById = new Map(data.exams.map((e) => [e.id, e]));
-    const groups = new Map<string, typeof picked>();
-    for (const r of picked) {
-      const subject = examById.get(r.examId)?.subject ?? '기타';
-      const cur = groups.get(subject);
-      if (cur) cur.push(r);
-      else groups.set(subject, [r]);
-    }
-    return [...groups].map(([subject, rs]) => {
-      const stats = statsCumulative(data.exams, rs);
-      return {
-        subject,
-        count: rs.length,
-        score: scoreOf(rs.flatMap((r) => r.marks)),
-        stats,
-        // 선생님이 보는 화면이라 자리 잡은 쪽과 손봐야 하는 쪽을 함께 둔다.
-        strong: stats.filter((s) => s.rate >= STEADY).length,
-        weak: stats.filter((s) => s.rate < 0.5).length,
-      };
-    });
-  }, [selectedId, data.exams, picked]);
+  const view = useMemo(() => {
+    if (!picked) return null;
+    const stats = statsCumulative(data.exams, [picked]);
+    return {
+      score: scoreOf(picked.marks),
+      stats,
+      // 선생님이 보는 화면이라 자리 잡은 쪽과 손봐야 하는 쪽을 함께 둔다.
+      strong: stats.filter((s) => s.rate >= STEADY).length,
+      weak: stats.filter((s) => s.rate < 0.5).length,
+    };
+  }, [data.exams, picked]);
 
   const add = async () => {
     const nm = newName.trim();
@@ -477,21 +449,10 @@ export default function StudentManager({
                 <div className="res-head">
                   <h3>응시 결과</h3>
                   <span className="hint">
-                    체크한 {picked.length}/{studentResults.length}개가 아래 [유형별 성취]에 들어갑니다
+                    {studentResults.length > 1
+                      ? '줄 앞을 눌러 번갈아 봅니다. 한 번에 한 시험만 아래 [유형별 성취]에 들어갑니다'
+                      : '아래 [유형별 성취]는 이 시험의 결과입니다'}
                   </span>
-                  {studentResults.length > 1 && (
-                    <span className="res-head-acts">
-                      <button
-                        className="mini ghost"
-                        onClick={() => setPickedIds(new Set(studentResults.map((r) => r.id)))}
-                      >
-                        전체 선택
-                      </button>
-                      <button className="mini ghost" onClick={() => setPickedIds(new Set())}>
-                        전체 해제
-                      </button>
-                    </span>
-                  )}
                 </div>
                 {/* 시험지 이름이 좁은 창에서 글자마다 끊기지 않게 감싼다. */}
                 <div className="table-scroll">
@@ -509,16 +470,17 @@ export default function StudentManager({
                     {studentResults.map((r) => {
                       const ex = data.exams.find((e) => e.id === r.examId);
                       const sc = scoreOf(r.marks);
-                      const on = pickedIds.has(r.id);
+                      const on = r.id === pickedId;
                       return (
                         <tr key={r.id} className={on ? '' : 'res-off'}>
                           <td>
                             <input
-                              type="checkbox"
+                              type="radio"
+                              name="res-pick"
                               className="res-check"
                               checked={on}
-                              onChange={() => togglePicked(r.id)}
-                              aria-label={`${ex?.title ?? '시험'} ${r.date} 결과 넣기`}
+                              onChange={() => setPickedId(r.id)}
+                              aria-label={`${ex?.title ?? '시험'} ${r.date} 결과 보기`}
                             />
                           </td>
                           <td>{ex?.title ?? '—'}</td>
@@ -555,48 +517,44 @@ export default function StudentManager({
                 <>
                   {/* 리포트의 같은 칸과 이름을 맞춘다. */}
                   <h3>유형별 성취</h3>
-                  {picked.length === 0 ? (
+                  {!view || !picked ? (
                     /* 고른 것이 없으면 그리지 않는다. 그리면 온통 0인 그림이 나와
                        못하는 학생처럼 보인다. */
-                    <p className="muted">위 [응시 결과]에서 시험을 하나 이상 체크하세요.</p>
+                    <p className="muted">위 [응시 결과]에서 시험을 하나 고르세요.</p>
                   ) : (
-                    bySubject.map((g) => (
-                      <div key={g.subject} className="subject-block">
-                        {/* 점수·강점·보완은 그림 바로 위에 둔다. 과목마다 따로 낸 값이라
-                            그림과 떨어뜨리면 어느 과목 숫자인지 흐려진다. 과목 이름은
-                            과목이 둘 이상일 때만 단다. */}
-                        <div className="subject-head">
-                          {bySubject.length > 1 && <b>{g.subject}</b>}
-                          <div className="stu-stats">
-                            <div>
-                              {/* 응시가 여러 번이면 문항을 다 합쳐 낸 값이라 평균이라고
-                                  밝힌다. 리포트 머리칸도 같은 말로 바뀐다. */}
-                              <span className="hint">{g.count > 1 ? '평균 점수' : '점수'}</span>
-                              <b>{Math.round(g.score.rate * 100)}점</b>
-                            </div>
-                            <div>
-                              <span className="hint">강점 유형</span>
-                              <b>
-                                {g.strong}/{g.stats.length}
-                              </b>
-                            </div>
-                            <div>
-                              <span className="hint">보완 유형</span>
-                              <b>
-                                {g.weak}/{g.stats.length}
-                              </b>
-                            </div>
+                    <>
+                      {/* 점수·강점·보완은 그림 바로 위에 둔다. 어느 시험의 값인지
+                          그림과 떨어뜨리면 흐려진다. */}
+                      <div className="subject-head">
+                        <div className="stu-stats">
+                          <div>
+                            <span className="hint">점수</span>
+                            <b>{Math.round(view.score.rate * 100)}점</b>
                           </div>
-                          <span className="hint">시험 {g.count}개</span>
-                        </div>
-                        <div className="type-bars-wrap">
-                          <div className="type-radar-wrap">
-                            <TypeRadar stats={g.stats} plain />
+                          <div>
+                            <span className="hint">강점 유형</span>
+                            <b>
+                              {view.strong}/{view.stats.length}
+                            </b>
                           </div>
-                          <TypeBars stats={g.stats} showTag={false} />
+                          <div>
+                            <span className="hint">보완 유형</span>
+                            <b>
+                              {view.weak}/{view.stats.length}
+                            </b>
+                          </div>
                         </div>
+                        <span className="hint">
+                          {data.exams.find((e) => e.id === picked.examId)?.title ?? '시험'} · {picked.date}
+                        </span>
                       </div>
-                    ))
+                      <div className="type-bars-wrap">
+                        <div className="type-radar-wrap">
+                          <TypeRadar stats={view.stats} plain />
+                        </div>
+                        <TypeBars stats={view.stats} showTag={false} />
+                      </div>
+                    </>
                   )}
                 </>
               )}
