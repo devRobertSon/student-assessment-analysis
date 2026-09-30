@@ -8,6 +8,7 @@ spec.json 옆에 세 파일을 만든다.
     <학년>_과학_영재성평가_문제지.pdf     학생에게 나눠 주는 것
     <학년>_과학_영재성평가_정답.pdf       정답과 세 칸 채점 기준, 유형·난이도
     <학년>_과학_영재성평가_시험지.csv     앱에 올리는 시험지
+    <학년>_과학_영재성평가_출제표.csv     소문항마다 단원·유형·난이도·배점·답을 적은 표
 
 이름 앞부분이 앱의 시험지 이름과 같아야 사이트 자료 목록에서 한 묶음으로 모인다
 (app/scripts/papers-manifest.mjs).
@@ -435,7 +436,7 @@ def write_csv(spec, path, base):
     매기고, 대문항과 소문항은 원문항 칸에 `3-(2)` 꼴로 적는다. 세 칸 채점이다."""
     title = '%s %s' % (spec['grade'], spec['word'])
     cols = ['시험지', '과목', '문항번호', '단원', '유형', '난이도', '형식', '배점', '정답', '원문항',
-            '채점', '문제지', '해설']
+            '채점', '문제지', '해설', '출제표']
     with io.open(path, 'w', encoding='utf-8-sig', newline='') as f:
         w = csv.writer(f)
         w.writerow(cols)
@@ -446,7 +447,27 @@ def write_csv(spec, path, base):
                 first = n == 1
                 w.writerow([title, '과학', n, it['unit'], p['type'], p['level'], '서술형', p['pts'],
                             p['answer'], '%d-(%d)' % (it['no'], k + 1), '세 칸',
-                            base + '_문제지.pdf' if first else '', base + '_정답.pdf' if first else ''])
+                            base + '_문제지.pdf' if first else '',
+                            base + '_정답.pdf' if first else '',
+                            base + '_출제표.csv' if first else ''])
+    return n
+
+
+def write_blueprint(spec, path):
+    """출제표 CSV. 시험지 한 장이 어떻게 짜였는지 소문항 줄로만 보여 준다.
+
+    수학 출제표와 읽는 법이 같고, 대문항이 있는 것만 다르다. 원출처는 넣지
+    않는다. 과학은 장면을 모두 새로 써서 원출처가 그 문항이 아니다."""
+    cols = ['문항', '대문항', '제목', '단원', '유형', '난이도', '형식', '배점', '정답']
+    with io.open(path, 'w', encoding='utf-8-sig', newline='') as f:
+        w = csv.writer(f)
+        w.writerow(cols)
+        n = 0
+        for it in spec['items']:
+            for k, p in enumerate(it['parts']):
+                n += 1
+                w.writerow([n, '%d-(%d)' % (it['no'], k + 1), it['title'], it['unit'],
+                            p['type'], p['level'], '서술형', p['pts'], p['answer']])
     return n
 
 
@@ -462,12 +483,13 @@ def main(spec_path):
     n2 = build(answer_story(spec), os.path.join(here, base + '_정답.pdf'),
                meta_of(spec, spec['word'] + ' 정답'), False)
     n3 = write_csv(spec, os.path.join(here, base + '_시험지.csv'), base)
+    n4 = write_blueprint(spec, os.path.join(here, base + '_출제표.csv'))
     for no, fs, bs, h, avail, ok in report:
         print('대문항 %2d  그림 %3d%%  답 칸 %3d%%  %3.0f / %3.0f mm  %s'
               % (no, fs * 100, bs * 100, h, avail, '' if ok else '넘침'))
     for first in sorted(set(WRAPPED)):
         print('자리가 모자라 글이 꺾인 표: 첫 칸이 "%s"' % first)
-    print('문제지 %d쪽, 정답 %d쪽, CSV %d문항' % (n1, n2, n3))
+    print('문제지 %d쪽, 정답 %d쪽, 시험지 CSV %d문항, 출제표 %d줄' % (n1, n2, n3, n4))
 
 
 if __name__ == '__main__':
