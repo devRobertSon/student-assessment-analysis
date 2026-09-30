@@ -836,6 +836,9 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .subject-block + .subject-block { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line-2); }
 .subject-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 10px; }
 .subject-head b { font-size: 14px; font-weight: 600; }
+/* 리포트의 과목 고르는 줄에 붙는 안내. 칩 뒤에서 줄이 넘어가면 통째로 내려간다. */
+.report-subject-note { flex-basis: 100%; }
+@media (min-width: 1100px) { .report-subject-note { flex-basis: auto; margin-left: 4px; } }
 
 @media (max-width: 1180px) {
   .pane { padding: 16px 20px 20px; }

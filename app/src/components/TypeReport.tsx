@@ -160,12 +160,51 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
     [data.results, studentId]
   );
 
+  /**
+   * 리포트 한 장에는 한 과목만 담는다.
+   *
+   * 수학 여덟 유형과 과학 여덟 유형은 재는 것이 다르다. 섞으면 레이더 축이
+   * 열다섯이 되어 사분면 묶음이 깨지고, 이름이 같은 유형이 한 칸으로 합쳐진다.
+   * [학생] 화면은 과목마다 한 벌씩 그려 보여 주지만, 리포트는 A4 지면이라
+   * 아예 한 과목만 고르게 막는다.
+   */
+  const subjects = useMemo(() => {
+    const seen: string[] = [];
+    for (const r of studentResults) {
+      const s = examById.get(r.examId)?.subject ?? '기타';
+      if (!seen.includes(s)) seen.push(s);
+    }
+    return seen;
+  }, [studentResults, examById]);
+  const [subject, setSubject] = useState('');
+  /** 고른 과목의 응시만. 아래 기간·체크·미리보기가 모두 이 목록 위에서 돈다. */
+  const subjectResults = useMemo(
+    () => studentResults.filter((r) => (examById.get(r.examId)?.subject ?? '기타') === subject),
+    [studentResults, examById, subject]
+  );
+
   useEffect(() => {
     setFromDate('');
     setToDate('');
     setRangeMode('all');
-    setSelectedIds(new Set(studentResults.map((r) => r.id)));
-  }, [studentId, studentResults.length]);
+    // 학생을 바꾸면 마지막으로 본 시험의 과목으로 맞춘다.
+    const last = studentResults.length
+      ? examById.get(studentResults[studentResults.length - 1].examId)?.subject ?? '기타'
+      : '';
+    setSubject(last);
+    setSelectedIds(new Set(studentResults.filter((r) => (examById.get(r.examId)?.subject ?? '기타') === last).map((r) => r.id)));
+  }, [studentId, studentResults.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** 과목을 바꾸면 그 과목을 통째로 고른 상태에서 시작한다. */
+  const pickSubject = (s: string) => {
+    setSubject(s);
+    setFromDate('');
+    setToDate('');
+    setRangeMode('all');
+    setSelectedIds(
+      new Set(studentResults.filter((r) => (examById.get(r.examId)?.subject ?? '기타') === s).map((r) => r.id))
+    );
+  };
 
   useEffect(() => {
     // 상담 메모는 [학생]의 메모에 적어 둔 것으로 시작한다. 상담에서 나온 말을
@@ -180,7 +219,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
   const applyRange = (from: string, to: string) => {
     setFromDate(from);
     setToDate(to);
-    const inRange = studentResults.filter((r) => (!from || r.date >= from) && (!to || r.date <= to));
+    const inRange = subjectResults.filter((r) => (!from || r.date >= from) && (!to || r.date <= to));
     setSelectedIds(new Set(inRange.map((r) => r.id)));
   };
 
@@ -201,8 +240,8 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
   ];
 
   const selectedResults = useMemo(
-    () => studentResults.filter((r) => selectedIds.has(r.id)),
-    [studentResults, selectedIds]
+    () => subjectResults.filter((r) => selectedIds.has(r.id)),
+    [subjectResults, selectedIds]
   );
   const stats: TypeStat[] = useMemo(
     () => (studentId ? statsCumulative(data.exams, selectedResults) : []),
@@ -506,7 +545,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
               <h3 style={{ margin: 0 }}>리포트에 포함할 시험</h3>
               {/* 개수는 제목 옆에 둔다. 버튼 옆에 붙이면 버튼 이름처럼 읽힌다. */}
               <span className="hint">
-                {selectedResults.length}/{studentResults.length}개 선택
+                {selectedResults.length}/{subjectResults.length}개 선택
               </span>
               <span className="report-pick-actions">
                 <button className="mini ghost" onClick={() => applyRange('', '')}>
@@ -517,6 +556,25 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
                 </button>
               </span>
             </div>
+            {/* 과목이 둘 이상인 학생만 고르는 줄이 나온다. 한 과목뿐이면 고를 것이 없다. */}
+            {subjects.length > 1 && (
+              <div className="report-range">
+                <span className="report-range-label">과목</span>
+                {subjects.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    className={`chip ${subject === s ? 'on' : ''}`}
+                    onClick={() => pickSubject(s)}
+                  >
+                    {s}
+                  </button>
+                ))}
+                <span className="hint report-subject-note">
+                  리포트 한 장에는 한 과목만 담습니다. 수학과 과학은 재는 유형이 달라 한 레이더에 섞지 않습니다.
+                </span>
+              </div>
+            )}
             <div className="report-range">
               <span className="report-range-label">기간</span>
               {PRESETS.map((p) => (
@@ -548,7 +606,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
               </div>
             )}
             <div className="report-exam-list">
-              {studentResults.map((r) => {
+              {subjectResults.map((r) => {
                 const ex = examById.get(r.examId);
                 const sc = scoreOf(r.marks);
                 return (
