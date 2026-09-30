@@ -300,9 +300,6 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
     });
 
   const today = todayStr();
-  const lastExam = selectedResults.length ? examById.get(selectedResults[selectedResults.length - 1].examId) : undefined;
-  const lastDate = selectedResults.length ? selectedResults[selectedResults.length - 1].date : '';
-  const questionCount = selectedResults.reduce((a, r) => a + r.marks.length, 0);
 
   /*
    * 1쪽이 A4를 넘으면 응시 이력과 의견을 함께 다음 쪽으로 보낸다.
@@ -680,14 +677,11 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
             <div ref={page1Ref} className={`report-capture${splitNotes ? ' rp-wide' : ''}`}>
               <Letterhead page={`1 / ${pageCount}`} />
 
+              {/* 제목 오른쪽에 시험 이름과 응시일을 적지 않는다. 시험을 둘 넣어도
+                  한 줄만 나와 어느 시험인지 잘못 읽힌다. 어느 시험을 언제 봤는지는
+                  아래 [응시 이력] 표에 줄마다 다 적혀 있다. */}
               <div className="rp-title-row">
                 <h1 className="rp-title">진단평가 결과 리포트</h1>
-                <div className="rp-title-meta">
-                  <div>{lastExam?.title ?? '진단평가'}</div>
-                  <div>
-                    {lastDate} 응시 · {questionCount}문항
-                  </div>
-                </div>
               </div>
 
               <div className="rp-id-row">

@@ -450,14 +450,7 @@ export default function StudentManager({
 
             {studentResults.length > 0 && (
               <div className="assess-card">
-                <div className="res-head">
-                  <h3>응시 결과</h3>
-                  <span className="hint">
-                    {studentResults.length > 1
-                      ? '줄 앞을 눌러 번갈아 봅니다. 한 번에 한 시험만 아래 [유형별 성취]에 들어갑니다'
-                      : '아래 [유형별 성취]는 이 시험의 결과입니다'}
-                  </span>
-                </div>
+                <h3>응시 결과</h3>
                 {/* 시험지 이름이 좁은 창에서 글자마다 끊기지 않게 감싼다. */}
                 <div className="table-scroll">
                 <table className="assess-table res-table">

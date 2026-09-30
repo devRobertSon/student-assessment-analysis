@@ -370,9 +370,6 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .res-table tr:not(.res-off) td { background: var(--fill); }
 .res-table tr:not(.res-off) td:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
 .res-table tr:not(.res-off) td:last-child { border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
-.res-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 10px; }
-.res-head h3 { margin: 0; white-space: nowrap; }
-.res-head-acts { display: flex; gap: 6px; margin-left: auto; }
 
 /* 시험지 목록은 이름 말고는 다 짧은 값이라 머리글과 값을 함께 가운데로 둔다.
    머리글만 가운데로 하면 값과 어긋나 보인다. 이름 열(2번째)은 왼쪽 그대로. */
@@ -957,9 +954,9 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .report-capture { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); flex: none; }
 
 /* ── 리포트: 1쪽 ─────────────────────────────────── */
-.rp-title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+/* 오른쪽 칸을 없애 제목만 남았다. 줄은 그대로 두어 아래 칸과 사이가 같다. */
+.rp-title-row { display: flex; align-items: flex-end; }
 .rp-title { font-family: 'Gowun Batang', serif; font-size: 36px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
-.rp-title-meta { text-align: right; font-size: 13px; color: var(--ink-2); }
 .rp-id-row { display: flex; gap: 14px; align-items: stretch; }
 
 /* 머리의 네 칸은 모두 [라벨 · 큰 값 · 작은 값] 세 줄이다. 줄 높이를 못 박고
