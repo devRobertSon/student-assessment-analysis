@@ -123,25 +123,19 @@ export default function StudentManager({
       if (cur) cur.push(r);
       else groups.set(subject, [r]);
     }
-    return [...groups].map(([subject, rs]) => ({
-      subject,
-      count: rs.length,
-      score: scoreOf(rs.flatMap((r) => r.marks)),
-      stats: statsCumulative(data.exams, rs),
-    }));
+    return [...groups].map(([subject, rs]) => {
+      const stats = statsCumulative(data.exams, rs);
+      return {
+        subject,
+        count: rs.length,
+        score: scoreOf(rs.flatMap((r) => r.marks)),
+        stats,
+        // 선생님이 보는 화면이라 자리 잡은 쪽과 손봐야 하는 쪽을 함께 둔다.
+        strong: stats.filter((s) => s.rate >= STEADY).length,
+        weak: stats.filter((s) => s.rate < 0.5).length,
+      };
+    });
   }, [selectedId, data.exams, picked]);
-
-  const total = scoreOf(picked.flatMap((r) => r.marks));
-  // 선생님이 보는 화면이라 자리 잡은 쪽과 손봐야 하는 쪽을 함께 둔다.
-  // 과목이 둘이면 여덟 + 여덟을 더한 값이다.
-  const allStats = bySubject.flatMap((g) => g.stats);
-  const strongCount = allStats.filter((s) => s.rate >= STEADY).length;
-  const weakCount = allStats.filter((s) => s.rate < 0.5).length;
-  // 머리칸의 이 줄은 학생에 대한 사실이라 체크와 상관없이 마지막 응시를 적는다.
-  const lastExam = studentResults.length
-    ? data.exams.find((e) => e.id === studentResults[studentResults.length - 1].examId)
-    : undefined;
-  const lastDate = studentResults.length ? studentResults[studentResults.length - 1].date : '';
 
   const add = async () => {
     const nm = newName.trim();
@@ -329,38 +323,7 @@ export default function StudentManager({
                     {student.school ? ` · ${student.school}` : ''}
                   </span>
                 </div>
-                <div className="hint">
-                  {lastExam ? `${lastExam.title} · ${lastDate} 응시` : '아직 채점된 시험이 없습니다'}
-                </div>
               </div>
-
-              {/* 아래 [응시 결과]에서 체크한 시험만 센다. 체크를 다 풀면 낼 값이
-                  없으므로 이 칸을 통째로 뺀다. */}
-              {picked.length > 0 && (
-                <>
-                  <div className="stu-div" />
-                  <div className="stu-stats">
-                    <div>
-                      {/* 응시가 여러 번이면 문항을 다 합쳐 낸 값이라 평균이라고 밝힌다.
-                          리포트 머리칸도 같은 말로 바뀐다. */}
-                      <span className="hint">{picked.length > 1 ? '평균 점수' : '점수'}</span>
-                      <b>{Math.round(total.rate * 100)}점</b>
-                    </div>
-                    <div>
-                      <span className="hint">강점 유형</span>
-                      <b>
-                        {strongCount}/{allStats.length}
-                      </b>
-                    </div>
-                    <div>
-                      <span className="hint">보완 유형</span>
-                      <b>
-                        {weakCount}/{allStats.length}
-                      </b>
-                    </div>
-                  </div>
-                </>
-              )}
 
               <div className="stu-actions">
                 <button className="mini" onClick={() => setCopying(true)}>
@@ -530,7 +493,7 @@ export default function StudentManager({
                 <div className="res-head">
                   <h3>응시 결과</h3>
                   <span className="hint">
-                    체크한 {picked.length}/{studentResults.length}개가 위 점수와 아래 유형별 성취에 들어갑니다
+                    체크한 {picked.length}/{studentResults.length}개가 아래 [유형별 성취]에 들어갑니다
                   </span>
                   {studentResults.length > 1 && (
                     <span className="res-head-acts">
@@ -615,15 +578,33 @@ export default function StudentManager({
                   ) : (
                     bySubject.map((g) => (
                       <div key={g.subject} className="subject-block">
-                        {/* 과목이 하나면 머리글을 달지 않는다. 카드 제목이 이미 있다. */}
-                        {bySubject.length > 1 && (
-                          <div className="subject-head">
-                            <b>{g.subject}</b>
-                            <span className="hint">
-                              {Math.round(g.score.rate * 100)}점 · 시험 {g.count}개 · 유형 {g.stats.length}종
-                            </span>
+                        {/* 점수·강점·보완은 그림 바로 위에 둔다. 과목마다 따로 낸 값이라
+                            그림과 떨어뜨리면 어느 과목 숫자인지 흐려진다. 과목 이름은
+                            과목이 둘 이상일 때만 단다. */}
+                        <div className="subject-head">
+                          {bySubject.length > 1 && <b>{g.subject}</b>}
+                          <div className="stu-stats">
+                            <div>
+                              {/* 응시가 여러 번이면 문항을 다 합쳐 낸 값이라 평균이라고
+                                  밝힌다. 리포트 머리칸도 같은 말로 바뀐다. */}
+                              <span className="hint">{g.count > 1 ? '평균 점수' : '점수'}</span>
+                              <b>{Math.round(g.score.rate * 100)}점</b>
+                            </div>
+                            <div>
+                              <span className="hint">강점 유형</span>
+                              <b>
+                                {g.strong}/{g.stats.length}
+                              </b>
+                            </div>
+                            <div>
+                              <span className="hint">보완 유형</span>
+                              <b>
+                                {g.weak}/{g.stats.length}
+                              </b>
+                            </div>
                           </div>
-                        )}
+                          <span className="hint">시험 {g.count}개</span>
+                        </div>
                         <div className="type-bars-wrap">
                           <div className="type-radar-wrap">
                             <TypeRadar stats={g.stats} plain />

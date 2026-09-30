@@ -834,8 +834,13 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 
 /* 과목마다 한 벌씩 그리는 유형별 성취. 두 벌이 붙으면 사이를 줄로 가른다. */
 .subject-block + .subject-block { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line-2); }
-.subject-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 10px; }
-.subject-head b { font-size: 14px; font-weight: 600; }
+/* 과목 이름 · 점수·강점·보완 · 시험 수가 그림 바로 위에 한 줄로 선다. */
+.subject-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 22px; margin-bottom: 12px; }
+.subject-head > b { font-size: 15px; font-weight: 700; }
+.subject-head .hint { margin-left: auto; }
+/* 머리칸에서 내려온 숫자라 글자를 조금 줄여 그림을 누르지 않게 한다. */
+.subject-head .stu-stats { gap: 22px; }
+.subject-head .stu-stats b { font-size: 18px; }
 /* 리포트의 과목 고르는 줄에 붙는 안내. 칩 뒤에서 줄이 넘어가면 통째로 내려간다. */
 .report-subject-note { flex-basis: 100%; }
 @media (min-width: 1100px) { .report-subject-note { flex-basis: auto; margin-left: 4px; } }
