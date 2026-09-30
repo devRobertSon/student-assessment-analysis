@@ -832,6 +832,11 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .chip.on:hover { background: var(--navy-hover); }
 .grow { flex-grow: 1; }
 
+/* 과목마다 한 벌씩 그리는 유형별 성취. 두 벌이 붙으면 사이를 줄로 가른다. */
+.subject-block + .subject-block { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line-2); }
+.subject-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 10px; }
+.subject-head b { font-size: 14px; font-weight: 600; }
+
 @media (max-width: 1180px) {
   .pane { padding: 16px 20px 20px; }
   .split { grid-template-columns: 240px minmax(0, 1fr); gap: 14px; }

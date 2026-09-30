@@ -106,14 +106,37 @@ export default function StudentManager({
       return next;
     });
 
-  const stats = useMemo(
-    () => (selectedId ? statsCumulative(data.exams, picked) : []),
-    [selectedId, data.exams, picked]
-  );
+  /**
+   * 유형별 성취를 과목마다 따로 낸다.
+   *
+   * 수학 여덟 유형과 과학 여덟 유형은 재는 것이 다르다. 한 그림에 같이 그리면
+   * 축이 열다섯이 되어 사분면 묶음이 깨지고, 이름이 같은 `개념 이해` 가 두
+   * 과목에서 한 막대로 합쳐진다. 그래서 과목별로 한 벌씩 그린다.
+   */
+  const bySubject = useMemo(() => {
+    if (!selectedId) return [];
+    const examById = new Map(data.exams.map((e) => [e.id, e]));
+    const groups = new Map<string, typeof picked>();
+    for (const r of picked) {
+      const subject = examById.get(r.examId)?.subject ?? '기타';
+      const cur = groups.get(subject);
+      if (cur) cur.push(r);
+      else groups.set(subject, [r]);
+    }
+    return [...groups].map(([subject, rs]) => ({
+      subject,
+      count: rs.length,
+      score: scoreOf(rs.flatMap((r) => r.marks)),
+      stats: statsCumulative(data.exams, rs),
+    }));
+  }, [selectedId, data.exams, picked]);
+
   const total = scoreOf(picked.flatMap((r) => r.marks));
   // 선생님이 보는 화면이라 자리 잡은 쪽과 손봐야 하는 쪽을 함께 둔다.
-  const strongCount = stats.filter((s) => s.rate >= STEADY).length;
-  const weakCount = stats.filter((s) => s.rate < 0.5).length;
+  // 과목이 둘이면 여덟 + 여덟을 더한 값이다.
+  const allStats = bySubject.flatMap((g) => g.stats);
+  const strongCount = allStats.filter((s) => s.rate >= STEADY).length;
+  const weakCount = allStats.filter((s) => s.rate < 0.5).length;
   // 머리칸의 이 줄은 학생에 대한 사실이라 체크와 상관없이 마지막 응시를 적는다.
   const lastExam = studentResults.length
     ? data.exams.find((e) => e.id === studentResults[studentResults.length - 1].examId)
@@ -326,13 +349,13 @@ export default function StudentManager({
                     <div>
                       <span className="hint">강점 유형</span>
                       <b>
-                        {strongCount}/{stats.length}
+                        {strongCount}/{allStats.length}
                       </b>
                     </div>
                     <div>
                       <span className="hint">보완 유형</span>
                       <b>
-                        {weakCount}/{stats.length}
+                        {weakCount}/{allStats.length}
                       </b>
                     </div>
                   </div>
@@ -590,12 +613,25 @@ export default function StudentManager({
                        못하는 학생처럼 보인다. */
                     <p className="muted">위 [응시 결과]에서 시험을 하나 이상 체크하세요.</p>
                   ) : (
-                    <div className="type-bars-wrap">
-                      <div className="type-radar-wrap">
-                        <TypeRadar stats={stats} plain />
+                    bySubject.map((g) => (
+                      <div key={g.subject} className="subject-block">
+                        {/* 과목이 하나면 머리글을 달지 않는다. 카드 제목이 이미 있다. */}
+                        {bySubject.length > 1 && (
+                          <div className="subject-head">
+                            <b>{g.subject}</b>
+                            <span className="hint">
+                              {Math.round(g.score.rate * 100)}점 · 시험 {g.count}개 · 유형 {g.stats.length}종
+                            </span>
+                          </div>
+                        )}
+                        <div className="type-bars-wrap">
+                          <div className="type-radar-wrap">
+                            <TypeRadar stats={g.stats} plain />
+                          </div>
+                          <TypeBars stats={g.stats} showTag={false} />
+                        </div>
                       </div>
-                      <TypeBars stats={stats} showTag={false} />
-                    </div>
+                    ))
                   )}
                 </>
               )}
