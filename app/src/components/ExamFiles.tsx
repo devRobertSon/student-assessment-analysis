@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ATTACH_KINDS, ATTACH_LABEL, AttachKind, Exam, paperHref } from '../lib/assessment';
+import { ATTACH_KINDS, AttachKind, Exam, attachLabel, paperHref } from '../lib/assessment';
 import CsvViewer from './CsvViewer';
 
 /** 브라우저가 새 탭에서 그려 주는 파일인지. */
@@ -8,7 +8,7 @@ const inlineable = (name: string) => /\.(pdf|png|jpe?g|gif|webp|svg)(\?|#|$)/i.t
 const isCsv = (name: string) => /\.csv(\?|#|$)/i.test(name.trim());
 
 /**
- * 시험지 한 줄의 인쇄물 칸. 문제지 · 해설 · 출제표.
+ * 시험지 한 줄의 인쇄물 칸. 문제지 · 해설(또는 정답) · 출제표.
  *
  * 보기 전용이다. 어느 파일이 붙는지는 papers/ 의 시험지 CSV 에 적혀 있고,
  * 파일 자체도 관리자가 저장소에 직접 올린다. 이 화면에서 갈아 끼우는 길을
@@ -33,7 +33,7 @@ export default function ExamFiles({ exam }: { exam: Exam }) {
         return (
           <span key={kind} className="file-chip">
             <span className="file-name" title={name}>
-              {ATTACH_LABEL[kind]}
+              {attachLabel(kind, name)}
             </span>
             <span className="file-acts">
               {inlineable(name) && (
@@ -56,7 +56,7 @@ export default function ExamFiles({ exam }: { exam: Exam }) {
 
       {viewingCsv && exam.files?.[viewingCsv] && (
         <CsvViewer
-          title={ATTACH_LABEL[viewingCsv]}
+          title={attachLabel(viewingCsv, exam.files[viewingCsv])}
           name={exam.files[viewingCsv] as string}
           href={paperHref(exam.files[viewingCsv] as string)}
           onClose={() => setViewingCsv(null)}

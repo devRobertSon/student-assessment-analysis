@@ -70,6 +70,21 @@ export const ATTACH_LABEL: Record<AttachKind, string> = {
   blueprint: '출제표',
 };
 
+/** 파일 이름 끝에 붙여 쓰는 종류. papers/ 의 이름 규칙과 같은 낱말이다. */
+const ATTACH_WORDS = ['문제지', '해설', '정답', '출제표'];
+
+/**
+ * 인쇄물 칸에 보일 이름.
+ *
+ * 붙은 파일이 `중2_과학_영재성평가_정답.pdf` 처럼 종류로 끝나면 그 낱말을 쓴다.
+ * 수학은 풀이를 실은 해설이고 과학 영재성평가는 답과 세 칸 채점 기준을 실은
+ * 정답이라, 같은 solution 칸이라도 파일에 따라 다르게 불러야 한다.
+ */
+export function attachLabel(kind: AttachKind, file?: string): string {
+  const word = /_([^_./\\]+)\.[a-z0-9]+$/i.exec(file ?? '')?.[1];
+  return word && ATTACH_WORDS.includes(word) ? word : ATTACH_LABEL[kind];
+}
+
 export interface Exam {
   id: string;
   title: string;

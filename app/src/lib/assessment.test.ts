@@ -6,6 +6,7 @@ import {
   halfOf,
   normalizeGrading,
   showsVerdicts,
+  attachLabel,
   parseCsv,
   hasAxis,
   isFullMark,
@@ -131,6 +132,18 @@ describe('채점 칸 수', () => {
     expect(showsVerdicts(시험지('ox'))).toBe(true);
     // 안 적은 시험지는 지금까지처럼 판정을 보인다
     expect(showsVerdicts(시험지())).toBe(true);
+  });
+
+  it('인쇄물 이름은 파일 이름 끝의 종류를 따른다', () => {
+    // 과학 영재성평가는 풀이가 아니라 답과 채점 기준이라 '정답' 이다
+    expect(attachLabel('solution', '중2_과학_영재성평가_정답.pdf')).toBe('정답');
+    expect(attachLabel('solution', '중2-1_진단평가_해설.pdf')).toBe('해설');
+    expect(attachLabel('paper', '중2-1_진단평가_문제지.pdf')).toBe('문제지');
+    expect(attachLabel('blueprint', '중2-1_진단평가_출제표.csv')).toBe('출제표');
+    // 규칙에 안 맞는 이름이나 주소는 칸 이름을 그대로 쓴다
+    expect(attachLabel('solution', 'https://example.com/a.pdf')).toBe('해설');
+    expect(attachLabel('solution', '아무이름.pdf')).toBe('해설');
+    expect(attachLabel('solution')).toBe('해설');
   });
 });
 

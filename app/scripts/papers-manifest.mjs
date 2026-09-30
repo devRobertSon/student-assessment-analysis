@@ -18,11 +18,13 @@ const OUT = join(DIR, 'index.json');
 const LABELS = {
   문제지: '문제지 PDF',
   해설: '해설 PDF',
+  // 과학 영재성평가는 풀이가 아니라 답과 세 칸 채점 기준을 싣는다.
+  정답: '정답 PDF',
   시험지: '시험지 CSV',
   출제표: '출제표 CSV',
 };
 // 한 줄 안에서 늘 같은 차례로 보이도록.
-const ORDER = ['시험지', '문제지', '해설', '출제표'];
+const ORDER = ['시험지', '문제지', '해설', '정답', '출제표'];
 
 let names = [];
 try {
