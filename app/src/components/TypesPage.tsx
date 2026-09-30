@@ -289,7 +289,7 @@ export default function TypesPage() {
           둡니다.
         </p>
 
-        <h4 className="manual-h4">영재학교 지필고사 등급</h4>
+        <h4 className="manual-h4">영재학교 시험등급</h4>
         <div className="table-scroll">
           <table className="assess-table manual-table">
             <thead>

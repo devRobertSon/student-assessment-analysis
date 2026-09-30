@@ -224,7 +224,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
   const pickedExam = selectedResults.length ? examById.get(selectedResults[0].examId) : undefined;
   const gifted = pickedExam?.grading === 'half';
   const scale = scaleOf(pickedExam);
-  // 영재성평가는 영재학교 지필고사 등급 A·B·C 이고 표준 문항 보정선이 없다.
+  // 영재성평가는 영재학교 시험등급 A·B·C 이고 표준 문항 보정선이 없다.
   const giftedRank = gifted ? giftedGrade(levels) : null;
   const grade: string | number | null = gifted ? giftedRank : gradeFromLevels(levels);
   const scaled = paperScore(levels);
@@ -529,9 +529,6 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
                     {s}
                   </button>
                 ))}
-                <span className="hint report-subject-note">
-                  리포트 한 장에는 한 과목만 담습니다. 수학과 과학은 재는 유형이 달라 한 레이더에 섞지 않습니다.
-                </span>
               </div>
             )}
             <div className="report-range">
@@ -733,12 +730,13 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
                 )}
                 {grade !== null && (
                   <div className="rp-grade">
-                    <span className="rp-cap">{gifted ? '영재학교 지필고사 등급' : '예상 고교 등급'}</span>
+                    <span className="rp-cap">{gifted ? '영재학교 시험등급' : '예상 고교 등급'}</span>
                     <div className="rp-val">
                       <b>{grade}</b>
                     </div>
-                    {/* 등급을 매긴 값이 무엇인지 함께 적는다. */}
-                    <em className="rp-sub">{scaled === null ? '—' : Math.round(scaled)}점</em>
+                    {/* 등급을 매긴 값이 무엇인지 함께 적는다. A·B·C 는 점수 그대로라
+                        옆 [점수] 칸과 같은 값이 되어 적지 않는다. */}
+                    {!gifted && <em className="rp-sub">{scaled === null ? '—' : Math.round(scaled)}점</em>}
                   </div>
                 )}
               </div>

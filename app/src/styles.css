@@ -849,9 +849,6 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 /* 머리칸에서 내려온 숫자라 글자를 조금 줄여 그림을 누르지 않게 한다. */
 .subject-head .stu-stats { gap: 22px; }
 .subject-head .stu-stats b { font-size: 18px; }
-/* 리포트의 과목 고르는 줄에 붙는 안내. 칩 뒤에서 줄이 넘어가면 줄째 내려간다. */
-.report-subject-note { flex-basis: 100%; }
-@media (min-width: 1100px) { .report-subject-note { flex-basis: auto; margin-left: 4px; } }
 
 @media (max-width: 1180px) {
   .pane { padding: 16px 20px 20px; }
