@@ -8,6 +8,7 @@ import {
   showsVerdicts,
   attachLabel,
   counselText,
+  countTypes,
   Student,
   parseCsv,
   hasAxis,
@@ -192,6 +193,41 @@ describe('채점 칸 수', () => {
 
     it('메모의 줄바꿈은 그대로 둔다', () => {
       expect(counselText(학생({ memo: '첫 줄\n둘째 줄' }))).toBe('[메모]\n첫 줄\n둘째 줄');
+    });
+  });
+
+  describe('분석 유형 수', () => {
+    const 시험지 = (subject: string, types: string[]): Exam => ({
+      id: subject + types.join(), title: 't', subject, date: '',
+      questions: types.map((type, i) => ({ no: i + 1, type })),
+    });
+    // 수학 여덟, 과학 여덟. 두 과목에 `개념 이해` 가 같이 있다.
+    const 수학 = ['개념 이해', '표현 해석', '연산 처리', '공식 활용',
+                  '규칙 발견', '근거 제시', '단계별 해결', '식 설정'];
+    const 과학 = ['개념 이해', '적용', '문제 인식·가설', '탐구 설계',
+                  '탐구 수행', '자료 변환·해석', '결론·일반화', '의사소통'];
+
+    it('과목마다 따로 세고 가장 큰 값을 낸다', () => {
+      // 이름을 한 자루에 담아 세면 겹치는 `개념 이해` 때문에 15가 된다.
+      // 학생은 한 과목을 여덟 유형으로 진단받으므로 여덟이어야 한다.
+      expect(countTypes([시험지('수학', 수학), 시험지('과학', 과학)])).toBe(8);
+      expect(countTypes([시험지('수학', 수학)])).toBe(8);
+      expect(countTypes([시험지('과학', 과학)])).toBe(8);
+    });
+
+    it('한 과목의 시험지가 여럿이면 합쳐 센다', () => {
+      const 앞 = 시험지('수학', 수학.slice(0, 5));
+      const 뒤 = 시험지('수학', 수학.slice(3));
+      expect(countTypes([앞, 뒤])).toBe(8);
+    });
+
+    it('과목마다 가짓수가 다르면 많은 쪽을 낸다', () => {
+      expect(countTypes([시험지('수학', 수학), 시험지('과학', 과학.slice(0, 3))])).toBe(8);
+      expect(countTypes([시험지('수학', 수학.slice(0, 2)), 시험지('과학', 과학)])).toBe(8);
+    });
+
+    it('시험지가 없으면 0', () => {
+      expect(countTypes([])).toBe(0);
     });
   });
 });

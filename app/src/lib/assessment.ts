@@ -798,12 +798,22 @@ export function hasAxis(exam: Exam, axis: Axis): boolean {
   return exam.questions.some((q) => keysOf(q, axis).length > 0);
 }
 
-// 등록된 시험지들에 실제로 등장하는 문항 유형의 가짓수.
-// 홈 화면의 '분석 유형' 숫자. 유형 분류를 바꿔도 이 값이 저절로 따라온다.
+/**
+ * 한 과목을 몇 가지 유형으로 재는가. 홈 화면의 '분석 유형' 숫자다.
+ *
+ * 과목마다 따로 센 뒤 가장 큰 값을 낸다. 수학도 여덟, 과학도 여덟이면 여덟이다.
+ * 과목을 가리지 않고 이름을 한 자루에 담아 세면 `개념 이해` 가 두 과목에 다
+ * 있어서 8 + 8 이 15가 된다. 학생은 한 과목을 여덟 유형으로 진단받으므로
+ * 여덟이 맞는 숫자다. 유형 분류를 바꿔도 이 값이 저절로 따라온다.
+ */
 export function countTypes(exams: Exam[]): number {
-  const seen = new Set<string>();
-  for (const e of exams) for (const q of e.questions) for (const t of splitTypes(q.type)) seen.add(t);
-  return seen.size;
+  const bySubject = new Map<string, Set<string>>();
+  for (const e of exams) {
+    let seen = bySubject.get(e.subject);
+    if (!seen) bySubject.set(e.subject, (seen = new Set<string>()));
+    for (const q of e.questions) for (const t of splitTypes(q.type)) seen.add(t);
+  }
+  return Math.max(0, ...[...bySubject.values()].map((s) => s.size));
 }
 
 // total·correct는 문항 수, points·earned는 점수.
