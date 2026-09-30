@@ -9,6 +9,7 @@ import {
   attachLabel,
   counselText,
   countTypes,
+  GIFTED_TEXT,
   giftedGrade,
   scaleOf,
   GIFTED_SCALE,
@@ -261,6 +262,15 @@ describe('채점 칸 수', () => {
         { type: '최상', rate: 1, correct: 20, total: 20, earned: 80, points: 80 },
       ];
       expect(giftedGrade(levels)).toBe('A');
+    });
+
+    it('등급 문장은 어느 유형이 되고 안 되는지를 말하지 않는다', () => {
+      // 등급은 점수 하나로, 뒷문장은 유형별 정답률로 정해진다. 등급 문장이
+      // 유형을 집으면 B 인데 개념 이해가 보완인 학생에게서 둘이 어긋난다.
+      for (const g of ['A', 'B', 'C']) {
+        expect(GIFTED_TEXT[g].own).not.toMatch(/개념|기본|연산|탐구|자료|의사소통/);
+        expect(GIFTED_TEXT[g].own).toContain('영재학교 지필고사');
+      }
     });
 
     it('세 칸 채점 시험지만 70·30 선을 쓴다', () => {

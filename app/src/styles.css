@@ -828,7 +828,18 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
    설명이 다음 줄로 내려가게 한다. */
 .stu-info-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 12px; }
 .stu-info-head h3 { margin: 0; white-space: nowrap; }
-.field-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px; }
+/* 칸 수를 창 너비가 아니라 카드 너비로 정한다. 창에 못을 박아 두면 학생 목록을
+   접어 카드가 넓어져도 두 칸에 머물렀다.
+
+   최소 너비를 `max(200px, 카드의 3분의 1)` 로 잡아 두 가지를 한 줄로 푼다.
+   3분의 1 쪽이 크면 넉 칸이 들어갈 자리가 없어 셋에서 멈추고, 200px 쪽이
+   크면 셋이 너무 좁아졌다는 뜻이라 둘로 준다. 200px 는 `010-1234-5678` 과
+   `학부모 연락처` 가 들어가는 너비다. */
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(200px, (100% - 32px) / 3), 1fr));
+  gap: 12px 16px;
+}
 .fld { display: flex; flex-direction: column; gap: 5px; }
 .fld > span { font-size: 11px; font-weight: 600; color: var(--ink-3); }
 .chips { display: flex; flex-wrap: wrap; gap: 7px; }
@@ -850,7 +861,6 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 @media (max-width: 1180px) {
   .pane { padding: 16px 20px 20px; }
   .split { grid-template-columns: 240px minmax(0, 1fr); gap: 14px; }
-  .field-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .type-bars-wrap { flex-direction: column; align-items: stretch; }
   .type-radar-wrap { align-self: center; width: 100%; max-width: 520px; }
 }
@@ -862,7 +872,6 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
   .split { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'toggle' 'side' 'main'; }
   .side { position: static; }
   .side-list { max-height: 240px; }
-  .field-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ── 학생 정보: 진도 표 ──────────────────────────── */
