@@ -7,6 +7,8 @@ import {
   normalizeGrading,
   showsVerdicts,
   attachLabel,
+  counselText,
+  Student,
   parseCsv,
   hasAxis,
   isFullMark,
@@ -144,6 +146,53 @@ describe('채점 칸 수', () => {
     expect(attachLabel('solution', 'https://example.com/a.pdf')).toBe('해설');
     expect(attachLabel('solution', '아무이름.pdf')).toBe('해설');
     expect(attachLabel('solution')).toBe('해설');
+  });
+
+  describe('상담내용 글', () => {
+    const 학생 = (p: Partial<Student> = {}): Student => ({
+      id: 's', name: '홍길동', grade: '중2', ...p,
+    });
+
+    it('세 토막을 이름표를 달아 줄로 잇는다', () => {
+      const t = counselText(학생({
+        targetSchools: ['영재학교', '과학고'],
+        mathProgress: '중3-2, 대수', mathBooks: '중등 - 쎈',
+        sciProgress: '중2 전범위', sciBooks: '하이탑',
+        memo: '계산 실수가 잦다.',
+      }));
+      expect(t).toBe(
+        [
+          '[목표 고등학교] 영재학교, 과학고',
+          '',
+          '[현재 진도]',
+          '수학 : 중3-2, 대수 / 중등 - 쎈',
+          '과학 : 중2 전범위 / 하이탑',
+          '',
+          '[메모]',
+          '계산 실수가 잦다.',
+        ].join('\n')
+      );
+    });
+
+    it('비어 있는 항목은 이름표째 뺀다', () => {
+      // 목표 고등학교만 적힌 학생
+      expect(counselText(학생({ targetSchools: ['과학고'] }))).toBe('[목표 고등학교] 과학고');
+      // 메모만 적힌 학생
+      expect(counselText(학생({ memo: '조용하다.' }))).toBe('[메모]\n조용하다.');
+      // 아무것도 없으면 빈 글
+      expect(counselText(학생())).toBe('');
+      // 빈 문자열과 공백만 있는 값도 없는 것으로 본다
+      expect(counselText(학생({ memo: '   ', targetSchools: ['', ' '] }))).toBe('');
+    });
+
+    it('진도와 학습 내용 가운데 하나만 적혀도 그 과목 줄은 나온다', () => {
+      expect(counselText(학생({ mathProgress: '중3-2' }))).toBe('[현재 진도]\n수학 : 중3-2');
+      expect(counselText(학생({ sciBooks: '하이탑' }))).toBe('[현재 진도]\n과학 : 하이탑');
+    });
+
+    it('메모의 줄바꿈은 그대로 둔다', () => {
+      expect(counselText(학생({ memo: '첫 줄\n둘째 줄' }))).toBe('[메모]\n첫 줄\n둘째 줄');
+    });
   });
 });
 

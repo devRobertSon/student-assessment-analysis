@@ -135,6 +135,47 @@ export interface Student {
   sciBooks?: string;
 }
 
+/**
+ * 메모에 적을 수 있는 글자 수.
+ *
+ * 학생의 메모가 리포트의 [상담 메모 · 특이사항]으로 그대로 넘어가고, 그 칸은
+ * 2쪽에 정해진 높이로 인쇄된다. 두 곳이 같은 수를 써야 화면에서 다 보이던 글이
+ * 인쇄에서 잘리지 않는다.
+ */
+export const MEMO_MAX = 200;
+
+/**
+ * 에듀오케이의 입학상담내용 칸에 붙여 넣을 글을 만든다.
+ *
+ * 적어 둔 것만 넣는다. 빈 항목은 이름표만 남기지 않고 통째로 뺀다. 빈 이름표가
+ * 섞이면 붙여 넣은 뒤 지우는 손이 한 번 더 간다.
+ *
+ * 만든 글은 그대로 쓰는 것이 아니라 띄운 창에서 고칠 수 있다. 상담마다 덧붙일
+ * 말이 다르므로 여기서는 적어 둔 값만 모아 첫 꼴을 내준다.
+ */
+export function counselText(s: Student): string {
+  const blocks: string[] = [];
+
+  const schools = (s.targetSchools ?? []).filter((t) => t.trim());
+  if (schools.length) blocks.push(`[목표 고등학교] ${schools.join(', ')}`);
+
+  // '진도 / 학습 내용' 인데 한쪽만 적혀 있으면 빗금 없이 적힌 쪽만 쓴다.
+  const line = (name: string, progress?: string, books?: string) => {
+    const both = [progress, books].map((v) => (v ?? '').trim()).filter(Boolean);
+    return both.length ? `${name} : ${both.join(' / ')}` : '';
+  };
+  const rows = [
+    line('수학', s.mathProgress, s.mathBooks),
+    line('과학', s.sciProgress, s.sciBooks),
+  ].filter(Boolean);
+  if (rows.length) blocks.push(['[현재 진도]', ...rows].join('\n'));
+
+  const memo = (s.memo ?? '').trim();
+  if (memo) blocks.push(`[메모]\n${memo}`);
+
+  return blocks.join('\n\n');
+}
+
 export interface Mark {
   no: number;
   // 채점 당시의 값을 함께 적어둔다. 시험지를 나중에 고쳐도

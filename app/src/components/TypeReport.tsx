@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { toJpeg } from 'html-to-image';
 import {
   AssessmentData,
+  MEMO_MAX,
   TARGET_SCHOOLS,
   TypeStat,
   paperScore,
@@ -24,7 +25,6 @@ const PAGE_H = 1123;
 // 100자에서 끊는다. 넘치면 화면에도 인쇄에도 두 줄까지만 보인다.
 const SUMMARY_MAX = 100;
 const NOTE_MAX = 100;
-const MEMO_MAX = 200;
 
 /**
  * 손으로 적을 날짜 칸. '20    년    월    일'처럼 공백을 여러 개 넣으면
@@ -168,9 +168,13 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
   }, [studentId, studentResults.length]);
 
   useEffect(() => {
-    setSession(EMPTY_SESSION);
+    // 상담 메모는 [학생]의 메모에 적어 둔 것으로 시작한다. 상담에서 나온 말을
+    // 리포트를 낼 때 다시 치지 않게 한다. 여기서 고쳐도 학생 정보는 그대로다.
+    const memo = data.students.find((s) => s.id === studentId)?.memo ?? '';
+    setSession({ ...EMPTY_SESSION, memo });
     setSummaryTouched(false);
     setPdfSaved(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studentId]);
 
   const applyRange = (from: string, to: string) => {
@@ -565,7 +569,8 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
             <h3>인쇄 전 입력</h3>
             <p className="hint" style={{ marginBottom: 12 }}>
               여기에 적은 내용이 아래 미리보기와 PDF에 들어갑니다. 학생 정보·목표 고등학교·진도는 [학생]
-              화면에 적어둔 값이 들어갑니다. 이 칸들은 저장되지 않는 임시 입력이라 학생을 바꾸면 비워집니다.
+              화면에 적어둔 값이 들어가고, 상담 메모는 [학생]의 메모로 채워집니다. 이 칸들은 저장되지 않는
+              임시 입력이라 학생을 바꾸면 다시 채워집니다.
             </p>
 
             {/* 칸마다 테두리를 둘러 카드로 만든다. 한 줄에 놓이는 두 카드는 높이를
@@ -638,7 +643,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
               <label className="fld">
                 <span className="fld-head">
                   상담 메모 · 특이사항
-                  <em>2쪽에 인쇄</em>
+                  <em>[학생]의 메모로 채워집니다 · 2쪽에 인쇄</em>
                   <i>
                     {session.memo.length}/{MEMO_MAX}자
                   </i>

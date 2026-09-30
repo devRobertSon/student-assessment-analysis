@@ -280,6 +280,27 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .cf-yes { font-weight: 600; }
 .csv-box .pick-head .hint { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 
+/* 상담내용 복사 — 에듀오케이에 붙여 넣을 글을 띄워 고치고 복사한다 */
+.counsel-box {
+  width: min(640px, 100%); max-height: min(640px, 90vh); background: #fff;
+  border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22); cursor: default; text-align: left;
+}
+.counsel-box .pick-head .hint { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.counsel-guide { margin: 0; line-height: 1.6; }
+/* 붙여 넣을 글이라 화면에서 보이는 그대로 줄이 나뉘어야 한다.
+   가로 막대는 나올 일이 없는데도 자리를 차지해 끈다. */
+.counsel-area {
+  flex-grow: 1; min-height: 230px; resize: vertical; line-height: 1.7;
+  font-family: inherit; white-space: pre-wrap; overflow-x: hidden;
+}
+.counsel-fail { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--bad-ink); }
+.counsel-foot { display: flex; align-items: center; gap: 8px; }
+.counsel-foot .primary { margin-left: auto; min-width: 104px; }
+
+/* 학생 메모. 상담에서 나온 말을 그대로 적어 리포트로 넘긴다. */
+.stu-memo { resize: vertical; min-height: 96px; line-height: 1.7; font-family: inherit; }
+
 /* ── 채점: 한 문항씩 띄우는 직접 입력 창 ───────────── */
 .gd-back {
   position: fixed; inset: 0; z-index: 50; background: rgba(20, 22, 30, 0.38);
@@ -337,10 +358,17 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
    줄지 않게 잡고 감싸개가 가로로 밀게 한다. */
 .manual-table { min-width: 560px; }
 
-/* 시험지 이름은 끊지 않는다. 표는 그만큼 넓어지고 감싸개가 가로로 민다. */
-.res-table { min-width: 430px; }
-.res-table th:first-child,
-.res-table td:first-child { white-space: nowrap; }
+/* 시험지 이름은 끊지 않는다. 표는 그만큼 넓어지고 감싸개가 가로로 민다.
+   첫 칸은 체크박스라 이름은 두 번째 칸이다. */
+.res-table { min-width: 466px; }
+.res-table th:nth-child(2),
+.res-table td:nth-child(2) { white-space: nowrap; }
+.res-check { width: 16px; height: 16px; margin: 0; accent-color: var(--navy); cursor: pointer; }
+/* 체크를 푼 줄. 지운 것이 아니라 이번 집계에서 뺀 것이라 흐리게만 둔다. */
+.res-table tr.res-off td { color: var(--ink-3); }
+.res-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 10px; }
+.res-head h3 { margin: 0; white-space: nowrap; }
+.res-head-acts { display: flex; gap: 6px; margin-left: auto; }
 
 /* 시험지 목록은 이름 말고는 다 짧은 값이라 머리글과 값을 함께 가운데로 둔다.
    머리글만 가운데로 하면 값과 어긋나 보인다. 이름 열(2번째)은 왼쪽 그대로. */
@@ -724,7 +752,20 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .pane > .assess-card { flex-grow: 1; }
 
 /* ── 학생 화면: 좌측 목록 + 우측 상세 ─────────────── */
-.split { flex-grow: 1; display: grid; grid-template-columns: 264px minmax(0, 1fr); gap: 18px; align-items: start; }
+/* 여는 단추가 맨 윗줄을 통째로 쓰고, 그 아래에 목록과 본문이 놓인다.
+   좁은 창에서 셋이 세로로 쌓여도 단추가 목록 위에 그대로 있다. */
+.split {
+  flex-grow: 1; display: grid; gap: 18px; align-items: start;
+  grid-template-columns: 264px minmax(0, 1fr);
+  grid-template-areas: 'toggle toggle' 'side main';
+}
+/* 학부모님과 같이 보는 화면이라 학생 목록은 접어 둔다. 접으면 한 칸만 남는다.
+   클래스가 둘이라 아래 좁은 창 규칙보다 세다. */
+.split.side-shut { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'toggle' 'main'; }
+.side { grid-area: side; }
+.main { grid-area: main; }
+.side-toggle { grid-area: toggle; display: flex; align-items: center; gap: 9px; }
+.side-toggle .hint { font-size: 12px; }
 .side {
   background: var(--card);
   border: 1px solid var(--line);
@@ -775,7 +816,8 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .stu-stats { display: flex; gap: 26px; }
 .stu-stats > div { display: flex; flex-direction: column-reverse; }
 .stu-stats b { font-size: 20px; font-weight: 700; line-height: 1.25; }
-.stu-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+/* 단추가 넷이라 좁은 창에서 한 줄에 들어가지 않는다. 넘치면 아랫줄로 내린다. */
+.stu-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-left: auto; }
 
 /* 좁은 창에서 '학생 정보'가 '학생 / 정보' 로 쪼개졌다. 제목은 붙여 두고
    설명이 다음 줄로 내려가게 한다. */
@@ -802,7 +844,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
   /* 손가락으로 누를 단추라 조금 키운다. */
   .file-act { padding: 5px 8px; font-size: 12px; }
   .file-name { padding: 3px 0; font-size: 12.5px; }
-  .split { grid-template-columns: minmax(0, 1fr); }
+  .split { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'toggle' 'side' 'main'; }
   .side { position: static; }
   .side-list { max-height: 240px; }
   .field-grid { grid-template-columns: minmax(0, 1fr); }

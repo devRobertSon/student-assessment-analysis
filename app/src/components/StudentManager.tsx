@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AssessmentData,
+  MEMO_MAX,
   Sibling,
   Student,
   TARGET_SCHOOLS,
+  counselText,
   newId,
   scoreOf,
   statsCumulative,
@@ -12,6 +14,7 @@ import { STEADY } from './TypeRadar';
 import TypeRadar from './TypeRadar';
 import TypeBars from './TypeBars';
 import ConfirmDialog from './ConfirmDialog';
+import CounselCopy from './CounselCopy';
 import Select from './Select';
 import { ask } from '../lib/notice';
 
@@ -39,12 +42,26 @@ export default function StudentManager({
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
   const [newGrade, setNewGrade] = useState(DEFAULT_GRADE);
+  /**
+   * 학생 목록을 펼쳤는가. 접은 채로 연다.
+   *
+   * 이 화면은 학부모님과 같이 본다. 옆에 다른 집 아이들의 이름과 점수가
+   * 늘어서 있으면 안 된다. 고를 때만 펼치고, 고르면 바로 다시 접는다.
+   */
+  const [sideOpen, setSideOpen] = useState(false);
   // 지우기 전에 한 번 묻는다.
   const [pending, setPending] = useState<
     { kind: 'student' } | { kind: 'result'; id: string; label: string } | null
   >(null);
+  /** 상담내용 창을 띄웠는가. */
+  const [copying, setCopying] = useState(false);
 
   const student = data.students.find((s) => s.id === selectedId);
+
+  const pick = (id: string) => {
+    setSelectedId(id);
+    setSideOpen(false);
+  };
 
   const rateOf = useMemo(() => {
     const map = new Map<string, number | null>();
@@ -66,14 +83,38 @@ export default function StudentManager({
     () => data.results.filter((r) => r.studentId === selectedId).sort((a, b) => a.date.localeCompare(b.date)),
     [data.results, selectedId]
   );
-  const stats = useMemo(
-    () => (selectedId ? statsCumulative(data.exams, studentResults) : []),
-    [selectedId, data.exams, studentResults]
+
+  /**
+   * 아래 점수와 유형별 성취에 넣을 응시. 기본은 전부다.
+   *
+   * 여러 번 본 학생은 시험마다 결과가 다르다. 체크를 풀면 그 시험을 빼고
+   * 다시 센다. 채점 기록 자체는 건드리지 않는다.
+   */
+  const [pickedIds, setPickedIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    setPickedIds(new Set(studentResults.map((r) => r.id)));
+  }, [selectedId, studentResults.length]);
+  const picked = useMemo(
+    () => studentResults.filter((r) => pickedIds.has(r.id)),
+    [studentResults, pickedIds]
   );
-  const total = scoreOf(studentResults.flatMap((r) => r.marks));
+  const togglePicked = (id: string) =>
+    setPickedIds((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const stats = useMemo(
+    () => (selectedId ? statsCumulative(data.exams, picked) : []),
+    [selectedId, data.exams, picked]
+  );
+  const total = scoreOf(picked.flatMap((r) => r.marks));
   // 선생님이 보는 화면이라 자리 잡은 쪽과 손봐야 하는 쪽을 함께 둔다.
   const strongCount = stats.filter((s) => s.rate >= STEADY).length;
   const weakCount = stats.filter((s) => s.rate < 0.5).length;
+  // 머리칸의 이 줄은 학생에 대한 사실이라 체크와 상관없이 마지막 응시를 적는다.
   const lastExam = studentResults.length
     ? data.exams.find((e) => e.id === studentResults[studentResults.length - 1].examId)
     : undefined;
@@ -90,7 +131,7 @@ export default function StudentManager({
     }
     const id = newId('stu');
     setData({ ...data, students: [...data.students, { id, name: nm, grade: newGrade }] });
-    setSelectedId(id);
+    pick(id);
     setNewName('');
     setAdding(false);
   };
@@ -124,7 +165,14 @@ export default function StudentManager({
   };
 
   return (
-    <div className="split">
+    <div className={`split ${sideOpen ? '' : 'side-shut'}`}>
+      {copying && student && (
+        <CounselCopy
+          name={`${student.name} · ${student.grade}`}
+          text={counselText(student)}
+          onClose={() => setCopying(false)}
+        />
+      )}
       {pending && (
         <ConfirmDialog
           title={pending.kind === 'student' ? '학생 삭제' : '채점 결과 삭제'}
@@ -147,6 +195,16 @@ export default function StudentManager({
           onNo={() => setPending(null)}
         />
       )}
+      {/* 목록을 여는 단추. 학부모님과 같이 보는 화면이라 목록은 접어 둔다.
+          좁은 창에서 목록이 본문 위로 쌓이므로 단추는 늘 맨 윗줄에 둔다. */}
+      <div className="side-toggle">
+        <button className="mini" aria-expanded={sideOpen} onClick={() => setSideOpen((o) => !o)}>
+          {sideOpen ? '◂ 학생 목록 접기' : '▸ 학생 목록 펼치기'}
+        </button>
+        <span className="hint">{data.students.length}명</span>
+      </div>
+
+      {sideOpen && (
       <aside className="side">
         <div className="side-head">
           <div className="side-title">
@@ -217,7 +275,7 @@ export default function StudentManager({
                 <button
                   key={s.id}
                   className={`side-item ${s.id === selectedId ? 'on' : ''}`}
-                  onClick={() => setSelectedId(s.id)}
+                  onClick={() => pick(s.id)}
                 >
                   <span className="nm">
                     {s.name} <span className="gr">{s.grade}</span>
@@ -230,11 +288,12 @@ export default function StudentManager({
           )}
         </div>
       </aside>
+      )}
 
       <div className="main">
         {!student ? (
           <div className="assess-card empty-state">
-            <p className="muted">왼쪽에서 학생을 고르면 진단 결과가 나옵니다.</p>
+            <p className="muted">[학생 목록 펼치기]를 눌러 학생을 고르면 진단 결과가 나옵니다.</p>
           </div>
         ) : (
           <>
@@ -252,14 +311,16 @@ export default function StudentManager({
                 </div>
               </div>
 
-              {studentResults.length > 0 && (
+              {/* 아래 [응시 결과]에서 체크한 시험만 센다. 체크를 다 풀면 낼 값이
+                  없으므로 이 칸을 통째로 뺀다. */}
+              {picked.length > 0 && (
                 <>
                   <div className="stu-div" />
                   <div className="stu-stats">
                     <div>
                       {/* 응시가 여러 번이면 문항을 다 합쳐 낸 값이라 평균이라고 밝힌다.
                           리포트 머리칸도 같은 말로 바뀐다. */}
-                      <span className="hint">{studentResults.length > 1 ? '평균 점수' : '점수'}</span>
+                      <span className="hint">{picked.length > 1 ? '평균 점수' : '점수'}</span>
                       <b>{Math.round(total.rate * 100)}점</b>
                     </div>
                     <div>
@@ -274,15 +335,14 @@ export default function StudentManager({
                         {weakCount}/{stats.length}
                       </b>
                     </div>
-                    <div>
-                      <span className="hint">응시</span>
-                      <b>{studentResults.length}회</b>
-                    </div>
                   </div>
                 </>
               )}
 
               <div className="stu-actions">
+                <button className="mini" onClick={() => setCopying(true)}>
+                  상담내용 복사
+                </button>
                 <button className="mini" onClick={onOpenGrading}>
                   채점 입력
                 </button>
@@ -343,11 +403,28 @@ export default function StudentManager({
                     ]}
                   />
                 </label>
-                <label className="fld">
-                  <span>메모</span>
-                  <input type="text" value={student.memo ?? ''} onChange={(e) => update({ memo: e.target.value })} />
-                </label>
               </div>
+
+              {/* 한 줄 칸이던 것을 넓혔다. 상담에서 나온 말을 그대로 적어 두면
+                  리포트의 [상담 메모 · 특이사항]에 그대로 실린다. 글자 수도 그
+                  칸과 같게 막는다. 넘치면 인쇄에서 잘린다. */}
+              <label className="fld" style={{ marginTop: 12 }}>
+                <span className="fld-head">
+                  메모
+                  <em>리포트의 [상담 메모 · 특이사항]에 그대로 들어갑니다</em>
+                  <i>
+                    {(student.memo ?? '').length}/{MEMO_MAX}자
+                  </i>
+                </span>
+                <textarea
+                  className="stu-memo"
+                  rows={5}
+                  maxLength={MEMO_MAX}
+                  value={student.memo ?? ''}
+                  onChange={(e) => update({ memo: e.target.value })}
+                  placeholder="상담에서 나온 말, 눈여겨볼 점을 적어 두세요."
+                />
+              </label>
 
               <div className="fld" style={{ marginTop: 12 }}>
                 <span>목표 고등학교 (복수 선택)</span>
@@ -427,12 +504,31 @@ export default function StudentManager({
 
             {studentResults.length > 0 && (
               <div className="assess-card">
-                <h3>응시 결과</h3>
+                <div className="res-head">
+                  <h3>응시 결과</h3>
+                  <span className="hint">
+                    체크한 {picked.length}/{studentResults.length}개가 위 점수와 아래 유형별 성취에 들어갑니다
+                  </span>
+                  {studentResults.length > 1 && (
+                    <span className="res-head-acts">
+                      <button
+                        className="mini ghost"
+                        onClick={() => setPickedIds(new Set(studentResults.map((r) => r.id)))}
+                      >
+                        전체 선택
+                      </button>
+                      <button className="mini ghost" onClick={() => setPickedIds(new Set())}>
+                        전체 해제
+                      </button>
+                    </span>
+                  )}
+                </div>
                 {/* 시험지 이름이 좁은 창에서 글자마다 끊기지 않게 감싼다. */}
                 <div className="table-scroll">
                 <table className="assess-table res-table">
                   <thead>
                     <tr>
+                      <th style={{ width: 36 }}></th>
                       <th>시험지</th>
                       <th style={{ width: 116 }}>응시일</th>
                       <th style={{ width: 150 }}>점수</th>
@@ -443,8 +539,18 @@ export default function StudentManager({
                     {studentResults.map((r) => {
                       const ex = data.exams.find((e) => e.id === r.examId);
                       const sc = scoreOf(r.marks);
+                      const on = pickedIds.has(r.id);
                       return (
-                        <tr key={r.id}>
+                        <tr key={r.id} className={on ? '' : 'res-off'}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              className="res-check"
+                              checked={on}
+                              onChange={() => togglePicked(r.id)}
+                              aria-label={`${ex?.title ?? '시험'} ${r.date} 결과 넣기`}
+                            />
+                          </td>
                           <td>{ex?.title ?? '—'}</td>
                           <td>{r.date}</td>
                           <td>
@@ -479,12 +585,18 @@ export default function StudentManager({
                 <>
                   {/* 리포트의 같은 칸과 이름을 맞춘다. */}
                   <h3>유형별 성취</h3>
-                  <div className="type-bars-wrap">
-                    <div className="type-radar-wrap">
-                      <TypeRadar stats={stats} plain />
+                  {picked.length === 0 ? (
+                    /* 고른 것이 없으면 그리지 않는다. 그리면 온통 0인 그림이 나와
+                       못하는 학생처럼 보인다. */
+                    <p className="muted">위 [응시 결과]에서 시험을 하나 이상 체크하세요.</p>
+                  ) : (
+                    <div className="type-bars-wrap">
+                      <div className="type-radar-wrap">
+                        <TypeRadar stats={stats} plain />
+                      </div>
+                      <TypeBars stats={stats} showTag={false} />
                     </div>
-                    <TypeBars stats={stats} showTag={false} />
-                  </div>
+                  )}
                 </>
               )}
             </div>
