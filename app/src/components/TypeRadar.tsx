@@ -1,21 +1,23 @@
-import { TypeStat } from '../lib/assessment';
+import { MATH_SCALE, Scale, TypeStat } from '../lib/assessment';
 
 // 정답률 구간. 색만으로 뜻을 전하면 색각 이상·흑백 인쇄에서 구분이 사라지므로
 // 화면에는 항상 rateTag()의 글자 라벨을 함께 붙인다.
+//
+// 선은 시험지마다 다르다(assessment.ts 의 `scaleOf`). 안 넘기면 수학 선이다.
 /** 이 위는 이미 자리 잡은 유형. 리포트 머리의 '강점 유형 N개'도 같은 선을 쓴다. */
-export const STEADY = 0.8;
-/** 이 아래는 보완할 유형. 종합 의견 초안도 같은 선에서 문장을 가른다. */
-export const FAIR = 0.5;
+export const STEADY = MATH_SCALE.steady;
+/** 이 아래는 보완할 유형. 종합 의견 초안도 같은 선에서 문장을 나눈다. */
+export const FAIR = MATH_SCALE.fair;
 
-export function rateColor(rate: number): string {
-  if (rate >= STEADY) return '#0ca30c';
-  if (rate >= FAIR) return '#fab219';
+export function rateColor(rate: number, scale: Scale = MATH_SCALE): string {
+  if (rate >= scale.steady) return '#0ca30c';
+  if (rate >= scale.fair) return '#fab219';
   return '#d03b3b';
 }
 
-export function rateTag(rate: number): { label: string; cls: string } {
-  if (rate >= STEADY) return { label: '강점', cls: 'tag-good' };
-  if (rate >= FAIR) return { label: '보통', cls: 'tag-warn' };
+export function rateTag(rate: number, scale: Scale = MATH_SCALE): { label: string; cls: string } {
+  if (rate >= scale.steady) return { label: '강점', cls: 'tag-good' };
+  if (rate >= scale.fair) return { label: '보통', cls: 'tag-warn' };
   // '약점'은 아이를 재는 말이고 '보완'은 무엇을 할지 가리키는 말이다.
   return { label: '보완', cls: 'tag-bad' };
 }
@@ -66,7 +68,15 @@ const LABEL_R = R + 18;
  * 적으면 같은 값이 두 번 나온다. 리포트 1쪽은 레이더만 나가므로 정답률을 적는다.
  * 강점·보완 글자는 양쪽 다 적지 않는다.
  */
-export default function TypeRadar({ stats, plain }: { stats: TypeStat[]; plain?: boolean }) {
+export default function TypeRadar({
+  stats,
+  plain,
+  scale = MATH_SCALE,
+}: {
+  stats: TypeStat[];
+  plain?: boolean;
+  scale?: Scale;
+}) {
   if (stats.length < 3) {
     return <p className="muted">레이더 차트는 유형이 3개 이상일 때 표시됩니다.</p>;
   }
@@ -182,7 +192,7 @@ export default function TypeRadar({ stats, plain }: { stats: TypeStat[]; plain?:
         if (!s) return null;
         const [x, y] = ptOf(i, R * s.rate);
         return (
-          <circle key={`dot-${i}`} cx={x} cy={y} r={5} fill={rateColor(s.rate)} stroke="#fff" strokeWidth={1.6}>
+          <circle key={`dot-${i}`} cx={x} cy={y} r={5} fill={rateColor(s.rate, scale)} stroke="#fff" strokeWidth={1.6}>
             <title>
               {`${s.type} ${Math.round(s.rate * 100)}% · ${s.correct}/${s.total}문항 · ${s.earned}/${s.points}점`}
             </title>
@@ -207,7 +217,7 @@ export default function TypeRadar({ stats, plain }: { stats: TypeStat[]; plain?:
               <title>{s ? name : `${name} · 이 시험지에는 없는 유형`}</title>
             </text>
             {!plain && s && (
-              <text x={x} y={y + dy + 15} fontSize={11} fontWeight={700} fill={rateColor(s.rate)}>
+              <text x={x} y={y + dy + 15} fontSize={11} fontWeight={700} fill={rateColor(s.rate, scale)}>
                 {Math.round(s.rate * 100)}%
               </text>
             )}

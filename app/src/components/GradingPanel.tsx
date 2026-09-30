@@ -17,6 +17,7 @@ import {
   advancedGap,
   basicGap,
   retakeCheck,
+  scaleOf,
   scoreOf,
   showsVerdicts,
   statsForResult,
@@ -448,7 +449,8 @@ ${listNos(left)}`
                           {fmtPoints(s.earned)}/{fmtPoints(s.points)}점
                         </span>
                         <span className="p">{Math.round(s.rate * 100)}%</span>
-                        <span className="g">{rateTag(s.rate).label}</span>
+                        {/* 강점·보완 선은 시험지마다 다르다. 영재성평가는 70·30 이다. */}
+                        <span className="g">{rateTag(s.rate, scaleOf(exam)).label}</span>
                       </div>
                     ))}
                   </div>

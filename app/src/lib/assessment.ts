@@ -147,7 +147,7 @@ export const MEMO_MAX = 200;
 /**
  * 에듀오케이의 입학상담내용 칸에 붙여 넣을 글을 만든다.
  *
- * 적어 둔 것만 넣는다. 빈 항목은 이름표만 남기지 않고 통째로 뺀다. 빈 이름표가
+ * 적어 둔 것만 넣는다. 빈 항목은 이름표만 남기지 않고 함께 뺀다. 빈 이름표가
  * 섞이면 붙여 넣은 뒤 지우는 손이 한 번 더 간다.
  *
  * 만든 글은 그대로 쓰는 것이 아니라 띄운 창에서 고칠 수 있다. 상담마다 덧붙일
@@ -271,6 +271,73 @@ export const GRADE_CUTS: { grade: number; min: number }[] = [
 
 /** 가장 낮은 등급. 어느 칸에도 안 걸리면 여기로 내려앉는다. */
 export const LOWEST_GRADE = 9;
+
+/**
+ * 영재성평가의 영재학교 지필고사 등급. 1~9등급이 아니라 A·B·C 셋이다.
+ *
+ * 2026-10-01 에 원장님이 정하셨다. 표준 문항 보정선은 두지 않는다. 전부
+ * 서술형에 세 칸 채점이라 표준 다섯 문항만으로
+ * 위로 올라가지 못하게 할 근거가 없다.
+ */
+export const GIFTED_CUTS: { grade: string; min: number }[] = [
+  { grade: 'A', min: 70 },
+  { grade: 'B', min: 40 },
+];
+/** 어느 칸에도 안 걸리면 C. */
+export const LOWEST_GIFTED = 'C';
+
+/**
+ * A·B·C 가 무슨 뜻인지.
+ *
+ * `own` 은 그 학생의 리포트 종합 의견 첫 문장으로 들어간다. 뒤에 강점과 보완이
+ * 이어지므로 할 일을 한 번만 적는다.
+ * `all` 은 [유형 분석] 화면의 등급표에 적는 글이다. 세 등급을 나란히 놓고 읽는
+ * 자리라 무엇을 하면 되는지까지 적는다.
+ */
+export const GIFTED_TEXT: Record<string, { own: string; all: string }> = {
+  A: {
+    own: '영재학교 지필고사를 볼 수 있는 점수입니다.',
+    all: '영재학교 지필고사를 볼 수 있는 점수입니다. 정답률이 낮은 유형만 더 익히면 됩니다.',
+  },
+  B: {
+    own: '개념은 알고 있으나 문제 연습이 모자랍니다.',
+    all: '개념은 알고 있으나 문제 연습이 모자랍니다. 서술형으로 푸는 연습을 더 해야 합니다.',
+  },
+  C: {
+    own: '개념부터 다시 확인한 뒤에 문제 연습으로 넘어가야 합니다.',
+    all: '개념부터 다시 확인한 뒤에 문제 연습으로 넘어가야 합니다.',
+  },
+};
+
+/**
+ * 정답률을 강점·보통·보완으로 가르는 선. 시험지마다 다르다.
+ *
+ * 수학 진단평가는 객관식이 섞여 80·50 이고, 과학 영재성평가는 전부 서술형에
+ * 세 칸 채점(△ 가 절반)이라 정답률이 낮게 나와 70·30 이다.
+ */
+export interface Scale {
+  /** 이 위는 강점 */
+  steady: number;
+  /** 이 아래는 보완 */
+  fair: number;
+}
+export const MATH_SCALE: Scale = { steady: 0.8, fair: 0.5 };
+export const GIFTED_SCALE: Scale = { steady: 0.7, fair: 0.3 };
+
+/**
+ * 그 시험지에 쓰는 선. 세 칸 채점이 곧 영재성평가라는 표다.
+ * 시험지를 안 넘기면 수학 선을 쓴다.
+ */
+export function scaleOf(exam?: Exam | null): Scale {
+  return exam?.grading === 'half' ? GIFTED_SCALE : MATH_SCALE;
+}
+
+/** 영재성평가 등급. 난이도를 안 적었으면 null. */
+export function giftedGrade(levels: TypeStat[]): string | null {
+  const score = paperScore(levels);
+  if (score === null) return null;
+  return GIFTED_CUTS.find((c) => score >= c.min)?.grade ?? LOWEST_GIFTED;
+}
 
 /**
  * 표준 문항을 못 맞히면 위로 올라가지 못하게 하는 선.

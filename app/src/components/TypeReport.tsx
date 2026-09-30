@@ -6,7 +6,9 @@ import {
   TARGET_SCHOOLS,
   TypeStat,
   paperScore,
+  giftedGrade,
   gradeFromLevels,
+  scaleOf,
   scoreOf,
   todayStr,
   statsCumulative,
@@ -14,7 +16,8 @@ import {
 import { logoUrl, sealUrl } from '../lib/brand';
 import { ask, notify } from '../lib/notice';
 import { setLeaveGuard } from '../lib/leaveGuard';
-import TypeRadar, { FAIR, STEADY } from './TypeRadar';
+import TypeRadar from './TypeRadar';
+import { autoSummary } from '../lib/summary';
 import DatePicker from './DatePicker';
 import Select from './Select';
 
@@ -23,8 +26,8 @@ const PAGE_H = 1123;
 
 // 둘 다 인쇄에 두 줄로 들어가는 길이다. 재어 보면 102자에서 세 줄로 넘어가므로
 // 100자에서 끊는다. 넘치면 화면에도 인쇄에도 두 줄까지만 보인다.
-const SUMMARY_MAX = 100;
-const NOTE_MAX = 100;
+/* 1쪽에 종합 의견만 들어간다. 강점 둘과 약점 둘에 훈련까지 담는 길이다. */
+const SUMMARY_MAX = 400;
 
 /**
  * 손으로 적을 날짜 칸. '20    년    월    일'처럼 공백을 여러 개 넣으면
@@ -61,18 +64,6 @@ function SealStamp() {
   );
 }
 
-// 유형별 결과에서 종합 의견 초안을 만든다. 선생님이 그대로 쓰거나 고쳐 쓴다.
-/**
- * 받침에 맞는 조사를 고른다. '정리는', '해석은'처럼 나오게 한다.
- * 이걸 안 하면 '표현 해석은(는)'처럼 괄호가 그대로 인쇄된다.
- */
-function josa(text: string, withBatchim: string, without: string): string {
-  const last = text.trim().slice(-1);
-  const code = last.charCodeAt(0);
-  if (code < 0xac00 || code > 0xd7a3) return without;
-  return (code - 0xac00) % 28 ? withBatchim : without;
-}
-
 /**
  * 종합 의견 초안. 학부모가 읽는 글이라 본 대로만 적는다.
  * 어느 유형에서 틀렸는지, 그게 오답의 몇 문항인지, 어느 유형의 정답률이 높은지.
@@ -80,31 +71,6 @@ function josa(text: string, withBatchim: string, without: string): string {
  * 문장에 쓰는 50%·80% 는 화면의 보완·강점 구분선과 같은 값이라 표와 어긋나지 않는다.
  * 해석이나 처방은 선생님이 [선생님 의견]에 직접 쓴다.
  */
-function autoSummary(stats: TypeStat[], correct: number, total: number): string {
-  if (stats.length === 0 || total === 0) return '';
-  const label = (list: TypeStat[]) => list.map((s) => s.type).join(', ');
-  // stats는 약한 순으로 들어온다. 보완할 것은 앞에서, 강점은 뒤에서 세 개를 고른다.
-  const worst = stats.filter((s) => s.rate < FAIR).slice(0, 3);
-  const best = stats.filter((s) => s.rate >= STEADY).slice(-3).reverse();
-  const wrong = total - correct;
-  // 이름을 댄 유형만 센다. 그래야 문장 안에서 숫자와 유형이 어긋나지 않는다.
-  const worstWrong = worst.reduce((a, s) => a + (s.total - s.correct), 0);
-
-  const parts: string[] = [];
-  if (worst.length > 0) {
-    parts.push(`${label(worst)} 유형에서 틀린 문항이 많습니다.`);
-    if (wrong > 0 && worstWrong > 0) parts.push(`오답 ${wrong}문항 중 ${worstWrong}문항이 이 유형입니다.`);
-  } else {
-    parts.push(`정답률이 ${FAIR * 100}%에 못 미치는 유형은 없습니다.`);
-  }
-  if (best.length > 0) {
-    const g = label(best);
-    parts.push(`${g}${josa(g, '은', '는')} 정답률 ${STEADY * 100}% 이상입니다.`);
-  }
-  const text = parts.join(' ');
-  return text.length > SUMMARY_MAX ? text.slice(0, SUMMARY_MAX - 1) + '…' : text;
-}
-
 interface Props {
   data: AssessmentData;
   studentId: string;
@@ -117,17 +83,12 @@ type RangeMode = 'all' | 'm3' | 'm6' | 'year' | 'custom';
 // 인쇄물에만 쓰이고 저장하지 않는 입력들
 interface SessionFields {
   summary: string;
-  note: string;
-  /** 켜면 선생님 의견을 빈 칸으로 인쇄한다. 그 자리에 손으로 적는다. */
-  noteBlank: boolean;
   consultDate: string;
   memo: string;
   signName: string;
 }
 const EMPTY_SESSION: SessionFields = {
   summary: '',
-  note: '',
-  noteBlank: false,
   consultDate: '',
   memo: '',
   signName: '',
@@ -166,7 +127,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
    * 수학 여덟 유형과 과학 여덟 유형은 재는 것이 다르다. 섞으면 레이더 축이
    * 열다섯이 되어 사분면 묶음이 깨지고, 이름이 같은 유형이 한 칸으로 합쳐진다.
    * [학생] 화면은 과목마다 한 벌씩 그려 보여 주지만, 리포트는 A4 지면이라
-   * 아예 한 과목만 고르게 막는다.
+   * 아예 한 과목만 고르게 한다.
    */
   const subjects = useMemo(() => {
     const seen: string[] = [];
@@ -195,7 +156,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
     setSelectedIds(new Set(studentResults.filter((r) => (examById.get(r.examId)?.subject ?? '기타') === last).map((r) => r.id)));
   }, [studentId, studentResults.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /** 과목을 바꾸면 그 과목을 통째로 고른 상태에서 시작한다. */
+  /** 과목을 바꾸면 그 과목을 전부 고른 상태에서 시작한다. */
   const pickSubject = (s: string) => {
     setSubject(s);
     setFromDate('');
@@ -256,13 +217,29 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
 
   // 선생님이 손대기 전까지는 자동 문안을 따라간다.
   // 예상 등급 기준은 학원이 정한 고정값이다. 화면에서 고치지 않는다.
-  const grade = gradeFromLevels(levels);
+  /**
+   * 고른 시험지. 등급 칸과 강점·보완 선이 이것으로 정해진다.
+   * 세 칸 채점이 곧 영재성평가라는 표다.
+   */
+  const pickedExam = selectedResults.length ? examById.get(selectedResults[0].examId) : undefined;
+  const gifted = pickedExam?.grading === 'half';
+  const scale = scaleOf(pickedExam);
+  // 영재성평가는 영재학교 지필고사 등급 A·B·C 이고 표준 문항 보정선이 없다.
+  const giftedRank = gifted ? giftedGrade(levels) : null;
+  const grade: string | number | null = gifted ? giftedRank : gradeFromLevels(levels);
   const scaled = paperScore(levels);
   // 리포트 머리에는 '몇 개가 모자라는가'가 아니라 '몇 개가 자리 잡았는가'를 적는다.
-  // 같은 사실이라도 학부모가 먼저 읽는 숫자는 딛고 설 곳이어야 한다.
-  const steady = stats.filter((s) => s.rate >= STEADY).length;
+  // 같은 사실이라도 학부모가 먼저 읽는 숫자는 잘한 쪽이어야 한다.
+  const steady = stats.filter((s) => s.rate >= scale.steady).length;
 
-  const draftSummary = useMemo(() => autoSummary(stats, total.correct, total.total), [stats, total.correct, total.total]);
+  // 고른 시험의 과목. 두 과목에 `개념 이해` 가 같이 있어 과목으로 가려낸다.
+  const summarySubject = selectedResults.length
+    ? examById.get(selectedResults[0].examId)?.subject ?? '수학'
+    : '수학';
+  const draftSummary = useMemo(
+    () => autoSummary(summarySubject, stats, SUMMARY_MAX, scale, giftedRank),
+    [summarySubject, stats, scale, giftedRank]
+  );
   const summary = summaryTouched ? session.summary : draftSummary;
 
   const set = (patch: Partial<SessionFields>) => {
@@ -281,8 +258,6 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
   const typed =
     !pdfSaved &&
     (summaryTouched ||
-      session.note.trim() !== '' ||
-      session.noteBlank ||
       session.memo.trim() !== '' ||
       session.signName.trim() !== '' ||
       session.consultDate !== '');
@@ -360,9 +335,8 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
      * 이동 그룹은 flex-grow 로 남는 자리를 채워 늘어난다. 늘어난 높이로 재면
      * '넘쳤는가'가 아니라 '쪽을 다 썼는가'를 재게 되어, 한 번 나뉘면 글을
      * 지워도 다시 합쳐지지 않는다. 잴 때만 늘어남을 꺼 내용 높이를 읽는다.
-     * 손으로 적는 빈 칸도 같이 꺼야 최소 높이로 줄어든다.
      */
-    const grows = [moved, ...moved.querySelectorAll<HTMLElement>('.rp-note-hand')];
+    const grows = [moved];
     const before = grows.map((el) => el.style.flexGrow);
     grows.forEach((el) => (el.style.flexGrow = '0'));
     const movedH = H(moved);
@@ -372,7 +346,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
     const whole =
       stable + narrowSecH + movedH + gap * 5 + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
     setSplitNotes(whole > PAGE_H);
-  }, [splitNotes, summary, session.note, session.noteBlank, selectedResults, stats, levels, student]);
+  }, [splitNotes, summary, selectedResults, stats, levels, student]);
 
   const downloadPdf = async () => {
     if (!page1Ref.current || !student) return;
@@ -490,23 +464,8 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
       {summary.trim() && (
         <section className="report-sec">
           <span className="report-sec-h">종합 의견</span>
-          <p className="report-note-body rp-note-2">{summary}</p>
+          <p className="report-note-body">{summary}</p>
         </section>
-      )}
-      {/* 손으로 적기를 켜면 글 대신 빈 칸이 나가고, 그 칸이 쪽에 남는 자리를
-          다 가져가 제일 크게 벌어진다. */}
-      {session.noteBlank ? (
-        <section className="report-sec rp-note-hand">
-          <span className="report-sec-h">선생님 의견</span>
-          <div className="rp-memo-box" />
-        </section>
-      ) : (
-        session.note.trim() && (
-          <section className="report-sec">
-            <span className="report-sec-h">선생님 의견</span>
-            <p className="report-note-body rp-note-2">{session.note}</p>
-          </section>
-        )
       )}
     </div>
   );
@@ -667,37 +626,6 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
                 )}
               </label>
 
-              {/* 안에 체크박스가 하나 더 있어 label 로 감싸지 않는다.
-                  label 안에 label 을 넣으면 누른 자리가 어디로 가는지 흐려진다. */}
-              <div className="fld">
-                <span className="fld-head">
-                  선생님 의견
-                  <em>비워두면 인쇄에서 빠집니다 · 2줄까지 인쇄</em>
-                  <i>
-                    {session.note.length}/{NOTE_MAX}자
-                  </i>
-                </span>
-                <label className="fld-check">
-                  <input
-                    type="checkbox"
-                    checked={session.noteBlank}
-                    onChange={(e) => set({ noteBlank: e.target.checked })}
-                  />
-                  손으로 적기 (빈 칸을 제일 크게 인쇄)
-                </label>
-                <textarea
-                  className="report-note-input"
-                  rows={4}
-                  maxLength={NOTE_MAX}
-                  disabled={session.noteBlank}
-                  placeholder={
-                    session.noteBlank ? '빈 칸으로 인쇄합니다.' : '상담 내용이나 추천 수업을 적으세요.'
-                  }
-                  value={session.noteBlank ? '' : session.note}
-                  onChange={(e) => set({ note: e.target.value })}
-                />
-              </div>
-
               <label className="fld">
                 <span className="fld-head">
                   상담 메모 · 특이사항
@@ -805,7 +733,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
                 )}
                 {grade !== null && (
                   <div className="rp-grade">
-                    <span className="rp-cap">예상 고교 등급</span>
+                    <span className="rp-cap">{gifted ? '영재학교 지필고사 등급' : '예상 고교 등급'}</span>
                     <div className="rp-val">
                       <b>{grade}</b>
                     </div>
@@ -824,7 +752,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
                 {/* 막대는 두지 않는다. 레이더 꼭짓점에 이미 정답률이 적혀 있어
                     같은 값을 두 번 보여주게 된다. 문항 수는 [학생] 화면에 있다. */}
                 <div className="rp-radar-only">
-                  <TypeRadar stats={stats} />
+                  <TypeRadar stats={stats} scale={scale} />
                 </div>
               </section>
 

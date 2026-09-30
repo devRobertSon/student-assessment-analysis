@@ -3,6 +3,7 @@ import {
   AssessmentData,
   MEMO_MAX,
   Sibling,
+  scaleOf,
   Student,
   TARGET_SCHOOLS,
   counselText,
@@ -10,7 +11,7 @@ import {
   scoreOf,
   statsCumulative,
 } from '../lib/assessment';
-import { STEADY } from './TypeRadar';
+
 import TypeRadar from './TypeRadar';
 import TypeBars from './TypeBars';
 import ConfirmDialog from './ConfirmDialog';
@@ -86,12 +87,15 @@ export default function StudentManager({
   const view = useMemo(() => {
     if (!picked) return null;
     const stats = statsCumulative(data.exams, [picked]);
+    // 강점·보완을 가르는 선은 시험지마다 다르다. 영재성평가는 70·30 이다.
+    const scale = scaleOf(data.exams.find((e) => e.id === picked.examId));
     return {
       score: scoreOf(picked.marks),
       stats,
+      scale,
       // 선생님이 보는 화면이라 자리 잡은 쪽과 손봐야 하는 쪽을 함께 둔다.
-      strong: stats.filter((s) => s.rate >= STEADY).length,
-      weak: stats.filter((s) => s.rate < 0.5).length,
+      strong: stats.filter((s) => s.rate >= scale.steady).length,
+      weak: stats.filter((s) => s.rate < scale.fair).length,
     };
   }, [data.exams, picked]);
 
@@ -349,7 +353,7 @@ export default function StudentManager({
 
               {/* 한 줄 칸이던 것을 넓혔다. 상담에서 나온 말을 그대로 적어 두면
                   리포트의 [상담 메모 · 특이사항]에 그대로 실린다. 글자 수도 그
-                  칸과 같게 막는다. 넘치면 인쇄에서 잘린다. */}
+                  칸과 같게 한다. 넘치면 인쇄에서 잘린다. */}
               <label className="fld" style={{ marginTop: 12 }}>
                 <span className="fld-head">
                   메모
@@ -524,7 +528,7 @@ export default function StudentManager({
                   ) : (
                     <>
                       {/* 점수·강점·보완은 그림 바로 위에 둔다. 어느 시험의 값인지
-                          그림과 떨어뜨리면 흐려진다. */}
+                          그림과 떨어뜨리면 알기 어렵다. */}
                       <div className="subject-head">
                         <div className="stu-stats">
                           <div>
@@ -550,9 +554,9 @@ export default function StudentManager({
                       </div>
                       <div className="type-bars-wrap">
                         <div className="type-radar-wrap">
-                          <TypeRadar stats={view.stats} plain />
+                          <TypeRadar stats={view.stats} plain scale={view.scale} />
                         </div>
-                        <TypeBars stats={view.stats} showTag={false} />
+                        <TypeBars stats={view.stats} showTag={false} scale={view.scale} />
                       </div>
                     </>
                   )}

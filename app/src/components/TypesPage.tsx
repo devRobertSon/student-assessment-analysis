@@ -4,7 +4,13 @@
  * 리포트 레이더의 여덟 꼭짓점이 무엇인지, 어디서 나온 구분인지, 그리고
  * 어느 유형의 정답률이 낮을 때 무엇을 시키면 되는지를 모아 둔다. 사용법이 아니라
  * 수업에 쓰는 내용이라 탭을 따로 뒀다.
+ *
+ * 수학 여덟 유형은 여기에 문단으로 적혀 있고, 리포트에 넣을 짧은 꼴은
+ * `lib/typeGuide.ts` 에 있다. 과학 여덟 유형은 그 파일에서 그대로 그린다.
  */
+import { GIFTED_TEXT } from '../lib/assessment';
+import { SCIENCE_GUIDE } from '../lib/typeGuide';
+
 export default function TypesPage() {
   return (
     <div className="assess-pane manual">
@@ -258,6 +264,97 @@ export default function TypesPage() {
         <p className="hint">
           차트에는 왼쪽의 짧은 이름으로 나옵니다. 오른쪽은 평가원이 쓰는 원래 이름입니다.
         </p>
+
+        {/* 리포트의 종합 의견이 이 글을 그대로 가져다 쓴다. 두 곳이 어긋나지
+            않도록 같은 자료(lib/typeGuide.ts)에서 그린다. */}
+        <h4 className="manual-h4">유형별 설명과 훈련법</h4>
+        <ul className="bullets type-guide">
+          {SCIENCE_GUIDE.map((g) => (
+            <li key={g.type}>
+              <b>{g.type}</b>
+              <p>{g.what}을 재는 유형입니다.</p>
+              <p className="tg-train">
+                <b className="tg-tag">훈련</b> {g.train}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="assess-card">
+        <h3>영재성평가 기준</h3>
+        <p className="muted">
+          과학 영재성평가는 <b>전부 서술형</b>이고 <b>세 칸 채점</b>(O · △ · X, △ 는 배점의 절반)입니다. 같은
+          실력이라도 객관식이 섞인 진단평가보다 정답률이 낮게 나옵니다. 그래서 등급과 강점·보완 선을 따로
+          둡니다.
+        </p>
+
+        <h4 className="manual-h4">영재학교 지필고사 등급</h4>
+        <div className="table-scroll">
+          <table className="assess-table manual-table">
+            <thead>
+              <tr>
+                <th style={{ width: 66 }}>등급</th>
+                <th style={{ width: 150 }}>점수</th>
+                <th>뜻</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { g: 'A', 점수: '70점 이상' },
+                { g: 'B', 점수: '40점 이상 70점 미만' },
+                { g: 'C', 점수: '40점 미만' },
+              ].map((r) => (
+                <tr key={r.g}>
+                  <td className="nowrap">
+                    <b>{r.g}</b>
+                  </td>
+                  <td className="nowrap">{r.점수}</td>
+                  <td>{GIFTED_TEXT[r.g].all}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="hint">
+          등급의 뜻은 <b>리포트 종합 의견 첫 문장</b>으로도 들어갑니다. 학생마다 제 등급에 해당하는 한 줄만
+          나가고, 그 뒤에 강점과 보완할 곳이 이어집니다. 수학 진단평가의 1~9등급과 다릅니다. <b>표준 문항 보정선을 두지 않습니다.</b> 표준이 다섯 문항뿐이라
+          그것만으로 위로 올라가지 못하게 할 근거가 없습니다. <b>재수강 판정도 쓰지 않습니다.</b>
+        </p>
+
+        <h4 className="manual-h4">강점 · 보완 선</h4>
+        <div className="table-scroll">
+          <table className="assess-table manual-table">
+            <thead>
+              <tr>
+                <th style={{ width: 90 }}>구간</th>
+                <th>영재성평가</th>
+                <th>수학 진단평가</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="nowrap">
+                  <b>강점</b>
+                </td>
+                <td>정답률 70% 이상</td>
+                <td>80% 이상</td>
+              </tr>
+              <tr>
+                <td className="nowrap">보통</td>
+                <td>30% 이상 70% 미만</td>
+                <td>50% 이상 80% 미만</td>
+              </tr>
+              <tr>
+                <td className="nowrap">
+                  <b>보완</b>
+                </td>
+                <td>30% 미만</td>
+                <td>50% 미만</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );

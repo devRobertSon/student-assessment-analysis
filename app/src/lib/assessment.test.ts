@@ -9,6 +9,10 @@ import {
   attachLabel,
   counselText,
   countTypes,
+  giftedGrade,
+  scaleOf,
+  GIFTED_SCALE,
+  MATH_SCALE,
   Student,
   parseCsv,
   hasAxis,
@@ -228,6 +232,47 @@ describe('채점 칸 수', () => {
 
     it('시험지가 없으면 0', () => {
       expect(countTypes([])).toBe(0);
+    });
+  });
+
+  describe('영재성평가 기준', () => {
+    /** 등급은 점수만 본다. 점수는 earned / points 로 난다. */
+    const 점수 = (score: number) => [
+      { type: '표준', rate: score / 100, correct: 0, total: 0, earned: score, points: 100 },
+    ];
+
+    it('등급은 A·B·C 셋이다', () => {
+      expect(giftedGrade(점수(100))).toBe('A');
+      expect(giftedGrade(점수(70))).toBe('A');
+      expect(giftedGrade(점수(69))).toBe('B');
+      expect(giftedGrade(점수(40))).toBe('B');
+      expect(giftedGrade(점수(39))).toBe('C');
+      expect(giftedGrade(점수(0))).toBe('C');
+    });
+
+    it('난이도를 안 적은 시험지에서는 등급이 없다', () => {
+      expect(giftedGrade([])).toBe(null);
+    });
+
+    it('표준 문항을 다 틀려도 점수대로 준다. 보정선이 없다', () => {
+      // 수학이면 표준 정답률 0% 라 5등급까지 내려가지만 영재성평가는 그대로다
+      const levels = [
+        { type: '표준', rate: 0, correct: 0, total: 5, earned: 0, points: 10 },
+        { type: '최상', rate: 1, correct: 20, total: 20, earned: 80, points: 80 },
+      ];
+      expect(giftedGrade(levels)).toBe('A');
+    });
+
+    it('세 칸 채점 시험지만 70·30 선을 쓴다', () => {
+      const 시험지 = (g?: 'ox' | 'half'): Exam => ({
+        id: 'e', title: 't', subject: '과학', date: '', grading: g, questions: [],
+      });
+      expect(GIFTED_SCALE).toEqual({ steady: 0.7, fair: 0.3 });
+      expect(MATH_SCALE).toEqual({ steady: 0.8, fair: 0.5 });
+      expect(scaleOf(시험지('half'))).toEqual(GIFTED_SCALE);
+      expect(scaleOf(시험지('ox'))).toEqual(MATH_SCALE);
+      expect(scaleOf(시험지())).toEqual(MATH_SCALE);
+      expect(scaleOf()).toEqual(MATH_SCALE);
     });
   });
 });
