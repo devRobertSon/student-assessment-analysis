@@ -36,18 +36,31 @@ export default function App() {
   // 학생 선택은 학생 화면·채점·리포트가 함께 쓰므로 여기에서 들고 있는다.
   const [studentId, setStudentId] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
-  // 시험지는 저장소의 papers/ 에서만 들어온다. 열 때 한 번 맞춰 준다.
+  // 시험지는 저장소의 papers/ 에서만 들어온다.
   const dataRef = useRef(data);
   dataRef.current = data;
-  const synced = useRef(false);
+  const setDataRef = useRef(setData);
+  setDataRef.current = setData;
+  /**
+   * 열 때 한 번, 클라우드 상태가 바뀔 때, 그리고 시험지 수가 달라질 때 맞춘다.
+   *
+   * 로그인한 사람은 화면이 뜬 뒤에 클라우드 문서가 내려와 자료를 통째로
+   * 덮어쓴다. 열 때 한 번만 맞추면, 저장소에 새로 올린 시험지가 그 덮어쓰기에
+   * 묻혀 목록에서 사라진다. 다른 기기에서 옛 자료를 올려도 마찬가지다.
+   * 그래서 덮어써진 뒤에 다시 맞춘다.
+   *
+   * 되돌이에 빠지지 않는다. 맞출 것이 없으면 null 이라 저장도 동기화도
+   * 일어나지 않고, 한 번 채워 넣으면 그다음 번에 null 이 되어 멈춘다.
+   */
   useEffect(() => {
-    if (synced.current) return;
-    synced.current = true;
+    let alive = true;
     syncExamsFromPapers(dataRef.current).then((exams) => {
-      // 바뀐 게 없으면 null이라 저장도 동기화도 일어나지 않는다.
-      if (exams) setData({ ...dataRef.current, exams });
+      if (alive && exams) setDataRef.current({ ...dataRef.current, exams });
     });
-  }, [setData]);
+    return () => {
+      alive = false;
+    };
+  }, [cloudStatus, data.exams.length]);
 
   const importJson = async (file: File) => {
     try {
