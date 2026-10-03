@@ -41,7 +41,9 @@ HEAD_H = 16                   # 번호·배점 줄
 PER_COL = 2                   # 한 단에 두 문항. 한 쪽은 두 단이라 네 문항이다
 ANSBOX = 36                   # 주관식 정답칸. 분수가 들어가는 높이. 풀이는 그 아래 빈 자리에 쓴다
 FORM_SIZE = 9                 # 정답칸에 미리 찍는 단위·기호
-FORM_SLANT = 12               # 그 안의 영문자를 기울이는 각도
+FORM_SLANT = 12               # 그 안의 변수 글자를 기울이는 각도
+# 정답칸에 찍는 영문자 중 단위. 이것은 똑바로 두고 나머지는 변수로 보아 기울인다
+UNITS = {'mm', 'cm', 'm', 'km', 'mg', 'g', 'kg', 'mL', 'L', 'l', 's', 'h'}
 MIN_GAP = 40                  # 문항 사이 최소 간격
 BOTTOM_GAP = 0                # 남는 자리는 아래에서 문항마다 똑같이 나눈다
 HEAD_GAP = 7                  # 머리말과 첫 문항 사이. 1쪽과 뒤쪽이 같다
@@ -112,8 +114,9 @@ def draw_form(c, form, x0, x1, base):
     '≤ a ≤' 를 찍고 양쪽을 비운다. 빈자리는 남는 폭을 똑같이 나눈다.
     2026년 10월 3일에 원장님이 정했다.
 
-    영문자는 기울여 찍는다. 문항 그림의 `a` 가 수식 글자라 기울어 있어서,
+    변수 글자는 기울여 찍는다. 문항 그림의 `a` 가 수식 글자라 기울어 있어서,
     똑바로 세우면 다른 글자로 보인다. 노토에 기울인 글꼴이 없어 눕혀 그린다.
+    `cm` 같은 단위는 그림에서도 똑바로 서 있어 그대로 둔다(UNITS).
     """
     parts = form.split('{}')
     c.setFillColor(INK)
@@ -123,7 +126,7 @@ def draw_form(c, form, x0, x1, base):
     x = x0
     for k, p in enumerate(parts):
         for run in re.findall(r'[A-Za-z]+|[^A-Za-z]+', p):
-            if run[0].isascii() and run[0].isalpha():
+            if run[0].isascii() and run[0].isalpha() and run not in UNITS:
                 c.saveState()
                 c.translate(x, base)
                 c.skew(0, FORM_SLANT)

@@ -74,28 +74,28 @@
           "label": "시험지 CSV",
           "file": "중1-2_진단평가_시험지.csv",
           "ext": "csv",
-          "size": 4772
+          "size": 4752
         },
         {
           "kind": "문제지",
           "label": "문제지 PDF",
           "file": "중1-2_진단평가_문제지.pdf",
           "ext": "pdf",
-          "size": 2956289
+          "size": 2909415
         },
         {
           "kind": "해설",
           "label": "해설 PDF",
           "file": "중1-2_진단평가_해설.pdf",
           "ext": "pdf",
-          "size": 1411550
+          "size": 1408802
         },
         {
           "kind": "출제표",
           "label": "출제표 CSV",
           "file": "중1-2_진단평가_출제표.csv",
           "ext": "csv",
-          "size": 3726
+          "size": 3706
         }
       ]
     },
@@ -140,28 +140,28 @@
           "label": "시험지 CSV",
           "file": "중2-1_진단평가_시험지.csv",
           "ext": "csv",
-          "size": 4292
+          "size": 4268
         },
         {
           "kind": "문제지",
           "label": "문제지 PDF",
           "file": "중2-1_진단평가_문제지.pdf",
           "ext": "pdf",
-          "size": 1854451
+          "size": 1818168
         },
         {
           "kind": "해설",
           "label": "해설 PDF",
           "file": "중2-1_진단평가_해설.pdf",
           "ext": "pdf",
-          "size": 1501568
+          "size": 1502564
         },
         {
           "kind": "출제표",
           "label": "출제표 CSV",
           "file": "중2-1_진단평가_출제표.csv",
           "ext": "csv",
-          "size": 3246
+          "size": 3222
         }
       ]
     },
@@ -173,28 +173,28 @@
           "label": "시험지 CSV",
           "file": "중2-2_진단평가_시험지.csv",
           "ext": "csv",
-          "size": 4279
+          "size": 4259
         },
         {
           "kind": "문제지",
           "label": "문제지 PDF",
           "file": "중2-2_진단평가_문제지.pdf",
           "ext": "pdf",
-          "size": 2437784
+          "size": 2403652
         },
         {
           "kind": "해설",
           "label": "해설 PDF",
           "file": "중2-2_진단평가_해설.pdf",
           "ext": "pdf",
-          "size": 1309548
+          "size": 1310105
         },
         {
           "kind": "출제표",
           "label": "출제표 CSV",
           "file": "중2-2_진단평가_출제표.csv",
           "ext": "csv",
-          "size": 3233
+          "size": 3213
         }
       ]
     },
@@ -206,28 +206,28 @@
           "label": "시험지 CSV",
           "file": "중3-1_진단평가_시험지.csv",
           "ext": "csv",
-          "size": 4426
+          "size": 4405
         },
         {
           "kind": "문제지",
           "label": "문제지 PDF",
           "file": "중3-1_진단평가_문제지.pdf",
           "ext": "pdf",
-          "size": 1603629
+          "size": 1633215
         },
         {
           "kind": "해설",
           "label": "해설 PDF",
           "file": "중3-1_진단평가_해설.pdf",
           "ext": "pdf",
-          "size": 1274520
+          "size": 1276088
         },
         {
           "kind": "출제표",
           "label": "출제표 CSV",
           "file": "중3-1_진단평가_출제표.csv",
           "ext": "csv",
-          "size": 3380
+          "size": 3359
         }
       ]
     },
@@ -239,28 +239,28 @@
           "label": "시험지 CSV",
           "file": "중3-2_진단평가_시험지.csv",
           "ext": "csv",
-          "size": 4189
+          "size": 4183
         },
         {
           "kind": "문제지",
           "label": "문제지 PDF",
           "file": "중3-2_진단평가_문제지.pdf",
           "ext": "pdf",
-          "size": 2677410
+          "size": 2641585
         },
         {
           "kind": "해설",
           "label": "해설 PDF",
           "file": "중3-2_진단평가_해설.pdf",
           "ext": "pdf",
-          "size": 1481992
+          "size": 1483004
         },
         {
           "kind": "출제표",
           "label": "출제표 CSV",
           "file": "중3-2_진단평가_출제표.csv",
           "ext": "csv",
-          "size": 3143
+          "size": 3137
         }
       ]
     },

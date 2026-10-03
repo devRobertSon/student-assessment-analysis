@@ -351,6 +351,41 @@ def draw_entry(c, b, x, y, ucol):
     return top - b['h']
 
 
+def table_answer(q):
+    """일람표에 적을 답.
+
+    정답칸에 단위를 미리 찍은 주관식(`ansForm` 의 빈자리가 하나)은 학생이 칸에
+    쓰는 값만 적는다. 일람표는 학생이 쓴 것과 맞춰 보는 자리라 단위가 없어도
+    되고, 단위는 아래 정답 줄에 그대로 있다. 중1-2 11번 `(16π + 60) m²` 가
+    9.5 로 줄여도 잘려서 2026년 10월 3일에 넣었다.
+
+    빈자리가 둘 이상이면 갈린다. `평균 {}점, 분산 {}` 처럼 글로 이름을 붙인
+    꼴은 값을 차례대로 `87, 16` 으로 적는다. `{} ≤ a ≤ {}` · `y = {}x + {}`
+    처럼 등호·부등호로 이은 꼴은 값만 늘어놓으면 뜻을 몰라 답 전체를 적는다.
+    """
+    a = q['answer'].replace('`', '')
+    form = q.get('ansForm') or ''
+    if '{}' not in form:
+        return a
+    for k, v in (('^2', '²'), ('^3', '³')):
+        a = a.replace(k, v)
+    parts = form.split('{}')
+    m = re.fullmatch('(.+?)'.join(re.escape(p) for p in parts), a)
+    if not m:
+        return q['answer'].replace('`', '')
+    vals = []
+    for v in m.groups():
+        v = v.strip()
+        if v.startswith('(') and v.endswith(')') and '(' not in v[1:-1]:
+            v = v[1:-1].strip()
+        vals.append(v)
+    if len(vals) == 1:
+        return vals[0]
+    if re.search('[=<>≤≥]', ''.join(parts)):
+        return a
+    return ', '.join(vals)
+
+
 def draw_table(c, qs, ucol, y0):
     """1쪽 머리말 아래 정답 일람표."""
     x0 = ML
@@ -380,7 +415,7 @@ def draw_table(c, qs, ucol, y0):
             # 빼고(한글이 없을 때만), 그래도 넘치면 글자를 TABLE_MIN 까지 줄이고,
             # 그래도 넘치면 말줄임을 쓴다. 2026년 10월 3일에 중1-1 29번
             # `1/2 ≤ a ≤ 8` 이 주관식이 되며 잘려 나와 넣었다.
-            a = qs[i]['answer'].replace('`', '')
+            a = table_answer(qs[i])
             size, room = 12.5, cw - 34
             circled = ''.join(ch for ch in a if ch in '①②③④⑤')
             if circled:

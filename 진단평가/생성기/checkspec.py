@@ -18,8 +18,17 @@ import 경로
 웃돈주관식 = 5
 객관식배점 = {'표준': 2, '상': 3, '최상': 4}
 유형최소, 유형최대 = 3, 5
-# 정답칸에 학생이 쓰는 것. 숫자와 분수만이다
-수 = r'-?[0-9]+(?:\.[0-9]+)?(?:/[0-9]+)?'
+# 유형 상한을 넘겨도 되는 시험지. 중3-1 은 22·30번을 이차함수의 활용 문항으로
+# 바꾸며 식 설정이 7문항이 되었다. 활용 문항이 모두 식 설정이라 피할 수 없어
+# 2026년 10월 3일에 원장님이 이 장만 예외로 두기로 했다. `문항배정_순서.md` 끝을 본다.
+유형예외 = {'중3-1 진단평가': {'식 설정': 7}}
+# 정답칸에 학생이 쓰는 것. 숫자와 분수이고, π 와 √ 가 든 것도 수로 본다.
+# `16π + 60` 처럼 π 가 든 넓이는 식째 쓴다. 칸에 `(□π + □)` 를 찍으면 답의
+# 꼴을 알려 주게 된다. 보기에서 고르는 문항은 `ㄴ, ㄷ, ㅁ` 처럼 기호를 쓴다.
+수 = r'[-−+×/().π√0-9 ]*[0-9π][-−+×/().π√0-9 ]*'
+보기 = r'[ㄱ-ㅎ](?:, *[ㄱ-ㅎ])*'
+# 스펙의 `cm^2` 와 정답칸에 찍는 `cm²` 를 같게 본다
+첨자 = {'^2': '²', '^3': '³'}
 
 
 def 칸에맞나(q):
@@ -28,13 +37,15 @@ def 칸에맞나(q):
     학생은 정답칸에 숫자만 쓴다. 단위와 기호는 `ansForm` 으로 미리 찍는다.
     """
     a = q['answer'].replace('`', '')
+    for k, v in 첨자.items():
+        a = a.replace(k, v)
     form = q.get('ansForm') or '{}'
     pat = '(.+?)'.join(re.escape(p) for p in form.split('{}'))
     m = re.fullmatch(pat, a)
     if not m:
         return '정답 %r 이 정답칸 꼴 %r 과 안 맞는다' % (a, form)
     for g in m.groups():
-        if not re.fullmatch(수, g.strip()):
+        if not (re.fullmatch(수, g.strip()) or re.fullmatch(보기, g.strip())):
             return '정답칸에 숫자 말고 %r 를 써야 한다. ansForm 으로 미리 찍는다' % g.strip()
     return None
 
@@ -66,9 +77,11 @@ def check(f):
     print('%s주관식 %d (%d점) · 그중 1점 더 받는 것 %d'
           % (ok(len(bonus) == 웃돈주관식), len(ess), sum(q['points'] for q in ess),
              len(bonus)))
+    상한 = dict.fromkeys(types, 유형최대)
+    상한.update(유형예외.get(spec['title'], {}))
     맞다 = (len(types) == 8
           and min(types.values()) >= 유형최소
-          and max(types.values()) <= 유형최대)
+          and all(n <= 상한[t] for t, n in types.items()))
     print('%s8유형 %d~%d  %s'
           % (ok(맞다), min(types.values()), max(types.values()), dict(types)))
     print('   단원 %s' % dict(units))
