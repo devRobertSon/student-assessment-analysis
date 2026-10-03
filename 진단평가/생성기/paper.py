@@ -39,7 +39,7 @@ COLW = (PW - ML - MR - GUTTER) / 2
 INNER = COLW - 9              # 색 세로선 오른쪽의 실제 문항 폭
 HEAD_H = 16                   # 번호·배점 줄
 PER_COL = 2                   # 한 단에 두 문항. 한 쪽은 두 단이라 네 문항이다
-ANSBOX = 24                   # 주관식 정답칸. 풀이는 그 아래 빈 자리에 쓴다
+ANSBOX = 36                   # 주관식 정답칸. 분수가 들어가는 높이. 풀이는 그 아래 빈 자리에 쓴다
 FORM_SIZE = 9                 # 정답칸에 미리 찍는 단위·기호
 FORM_SLANT = 12               # 그 안의 영문자를 기울이는 각도
 MIN_GAP = 40                  # 문항 사이 최소 간격
@@ -174,12 +174,14 @@ def draw_block(c, b, x, y, ucol):
         c.setStrokeColor(colors.HexColor(bar))
         c.setLineWidth(0.7)
         c.roundRect(tx, y - ANSBOX, INNER, ANSBOX, 3, stroke=1, fill=0)
+        # '정답' 과 미리 찍는 글자는 칸 세로 가운데에 맞춘다
+        mid = y - ANSBOX / 2
         c.setFillColor(colors.HexColor(ink))
         c.setFont('KRB', 6.4)
-        c.drawString(tx + 7, y - 15, '정답')
+        c.drawString(tx + 7, mid - 3, '정답')
         if q.get('ansForm'):
             draw_form(c, q['ansForm'], tx + 7 + c.stringWidth('정답', 'KRB', 6.4) + 10,
-                      tx + INNER - 10, y - 15.5)
+                      tx + INNER - 10, mid - 3.5)
         y -= ANSBOX
 
     c.setStrokeColor(colors.HexColor(bar))
