@@ -58,7 +58,7 @@ const rank = (k) => {
   return i === -1 ? ORDER.length : i;
 };
 // 가나다 순으로 놓으면 '공통수학' 이 '중' 보다 앞에 온다. 배우는 차례대로 놓는다.
-const GRADES = ['중1', '중2', '중3', '공통수학'];
+const GRADES = ['초5', '초6', '중1', '중2', '중3', '공통수학'];
 const grade = (name) => {
   const i = GRADES.findIndex((g) => name.startsWith(g));
   return i === -1 ? GRADES.length : i;

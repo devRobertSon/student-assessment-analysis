@@ -45,6 +45,9 @@ FORM_SLANT = 12               # 그 안의 변수 글자를 기울이는 각도
 # 정답칸에 찍는 영문자 중 단위. 이것은 똑바로 두고 나머지는 변수로 보아 기울인다
 UNITS = {'mm', 'cm', 'm', 'km', 'mg', 'g', 'kg', 'mL', 'L', 'l', 's', 'h'}
 MIN_GAP = 40                  # 문항 사이 최소 간격
+# 칸보다 커서 줄인 문항도 아래 문항과 이만큼은 띄운다. 칸 끝까지 채우면 다음 문항
+# 번호가 앞 문항 선지에 붙는다. 2026-10-03 초6-1 21·23번에서 보았다.
+SHRINK_GAP = 12
 BOTTOM_GAP = 0                # 남는 자리는 아래에서 문항마다 똑같이 나눈다
 HEAD_GAP = 7                  # 머리말과 첫 문항 사이. 1쪽과 뒤쪽이 같다
 
@@ -220,9 +223,10 @@ def build(spec, path):
         'word': spec['title'][len(grade):].strip() or '진단평가',
         'range': '%s ~ %s' % (units[0], units[-1]),
         'stat': '%d문제 · %d점' % (len(qs), sum(q['points'] for q in qs)),
-        'high': not grade.startswith('중'),
+        # 초등도 중등 머리말을 쓴다. 2026-10-03 원장님이 정했다.
+        'high': not grade.startswith(('중', '초')),
         # 2쪽부터 머리말에 적는 글. 중등은 파란 띠 안, 고등은 첫 줄이다.
-        'band': ('%s %s' if not grade.startswith('중') else '%sㅣ%s')
+        'band': ('%s %s' if not grade.startswith(('중', '초')) else '%sㅣ%s')
                 % (grade, spec['title'][len(grade):].strip() or '진단평가'),
         'foot': '알파학원 교육연구소',
     }
@@ -242,10 +246,11 @@ def build(spec, path):
         x = ML + (ci % 2) * (COLW + GUTTER)
         ch = col_height(ci, top1, topn)
         # 칸보다 큰 문항은 그림을 줄여 넣는다
+        room = ch / PER_COL - SHRINK_GAP
         for b in blocks:
-            if b['h'] > ch / PER_COL:
-                b['imgh'] -= b['h'] - ch / PER_COL
-                b['h'] = ch / PER_COL
+            if b['h'] > room:
+                b['imgh'] -= b['h'] - room
+                b['h'] = room
         # 단을 문항 수만큼 똑같이 나누고 각 문항을 제 칸 맨 위에 놓는다.
         # 남는 자리는 그 문항 아래에 그대로 남아 푸는 자리가 된다.
         slot = ch / PER_COL

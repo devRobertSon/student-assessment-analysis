@@ -463,9 +463,10 @@ def build(spec, path):
         'word': '%s 해설' % (spec['title'][len(grade):].strip() or '진단평가'),
         'range': '%s ~ %s' % (units[0], units[-1]),
         'stat': '%d문제 · %d점 · 교사용' % (len(qs), sum(q['points'] for q in qs)),
-        'high': not grade.startswith('중'),
+        # 초등도 중등 머리말을 쓴다. 2026-10-03 원장님이 정했다.
+        'high': not grade.startswith(('중', '초')),
         # 2쪽부터 머리말에 적는 글. 중등은 파란 띠 안, 고등은 첫 줄이다.
-        'band': ('%s %s 해설' if not grade.startswith('중') else '%sㅣ%s 해설')
+        'band': ('%s %s 해설' if not grade.startswith(('중', '초')) else '%sㅣ%s 해설')
                 % (grade, spec['title'][len(grade):].strip() or '진단평가'),
         'foot': '알파학원 교육연구소 · 교사용',
     }

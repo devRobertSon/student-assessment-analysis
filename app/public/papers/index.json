@@ -1,6 +1,39 @@
 {
   "groups": [
     {
+      "name": "초6-1 진단평가",
+      "files": [
+        {
+          "kind": "시험지",
+          "label": "시험지 CSV",
+          "file": "초6-1_진단평가_시험지.csv",
+          "ext": "csv",
+          "size": 4631
+        },
+        {
+          "kind": "문제지",
+          "label": "문제지 PDF",
+          "file": "초6-1_진단평가_문제지.pdf",
+          "ext": "pdf",
+          "size": 2682888
+        },
+        {
+          "kind": "해설",
+          "label": "해설 PDF",
+          "file": "초6-1_진단평가_해설.pdf",
+          "ext": "pdf",
+          "size": 1424471
+        },
+        {
+          "kind": "출제표",
+          "label": "출제표 CSV",
+          "file": "초6-1_진단평가_출제표.csv",
+          "ext": "csv",
+          "size": 3585
+        }
+      ]
+    },
+    {
       "name": "중1 과학 영재성평가",
       "files": [
         {

@@ -23,6 +23,10 @@ from PIL import Image
 import 경로
 
 INK = 160          # 이보다 어두우면 글자로 본다
+# 수 카드 테두리처럼 연한 색 선은 INK 로는 글자로 안 보여 잘린다. 2026-10-03 초6-1
+# 단원1-16 에서 카드 아래 절반이 잘렸다. 띠로 자를 자리를 정한 뒤 선지 바로 위까지
+# 이보다 어두운 것이 있으면 그 아래까지 남긴다.
+LIGHT = 235
 MARGIN = 1         # 위아래 흰 여백. 꺼낸 조각과 같게 1px 를 남긴다
 WIDE = 50          # 선지 위 빈 줄이 이보다 좁으면 줄 수를 잘못 준 것일 수 있다
 
@@ -50,7 +54,11 @@ def cut(name, lines=2):
     if len(b) <= lines:
         raise SystemExit('%s: 글자 띠가 %d개뿐이라 선지 %d줄을 뗄 수 없다' % (name, len(b), lines))
     keep = b[-lines - 1][1] + MARGIN
-    gap = b[-lines][0] - b[-lines - 1][1]
+    g, (w, _) = im.convert('L').load(), im.size
+    light = [y for y in range(keep, b[-lines][0] - 6) if any(g[x, y] < LIGHT for x in range(w))]
+    if light:
+        keep = light[-1] + 1 + MARGIN
+    gap = b[-lines][0] - keep
     out = 경로.안('문항', name + '_주관식.png')
     im.crop((0, 0, im.size[0], keep)).save(out)
     note = '' if gap >= WIDE else '  !! 선지 위 빈 줄이 %dpx 로 좁다. 줄 수를 확인하라' % gap
