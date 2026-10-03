@@ -41,28 +41,28 @@
           "label": "시험지 CSV",
           "file": "중1-1_진단평가_시험지.csv",
           "ext": "csv",
-          "size": 4359
+          "size": 4339
         },
         {
           "kind": "문제지",
           "label": "문제지 PDF",
           "file": "중1-1_진단평가_문제지.pdf",
           "ext": "pdf",
-          "size": 1819573
+          "size": 1790569
         },
         {
           "kind": "해설",
           "label": "해설 PDF",
           "file": "중1-1_진단평가_해설.pdf",
           "ext": "pdf",
-          "size": 1456310
+          "size": 1457137
         },
         {
           "kind": "출제표",
           "label": "출제표 CSV",
           "file": "중1-1_진단평가_출제표.csv",
           "ext": "csv",
-          "size": 3313
+          "size": 3293
         }
       ]
     },

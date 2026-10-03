@@ -9,6 +9,7 @@
 """
 import json
 import os
+import re
 import sys
 
 from PIL import Image as PILImage
@@ -39,6 +40,8 @@ INNER = COLW - 9              # 색 세로선 오른쪽의 실제 문항 폭
 HEAD_H = 16                   # 번호·배점 줄
 PER_COL = 2                   # 한 단에 두 문항. 한 쪽은 두 단이라 네 문항이다
 ANSBOX = 24                   # 주관식 정답칸. 풀이는 그 아래 빈 자리에 쓴다
+FORM_SIZE = 9                 # 정답칸에 미리 찍는 단위·기호
+FORM_SLANT = 12               # 그 안의 영문자를 기울이는 각도
 MIN_GAP = 40                  # 문항 사이 최소 간격
 BOTTOM_GAP = 0                # 남는 자리는 아래에서 문항마다 똑같이 나눈다
 HEAD_GAP = 7                  # 머리말과 첫 문항 사이. 1쪽과 뒤쪽이 같다
@@ -102,6 +105,37 @@ def pack(qs):
     return cols
 
 
+def draw_form(c, form, x0, x1, base):
+    """정답칸에 단위와 기호를 미리 찍는다. 학생은 `{}` 자리에 숫자만 쓴다.
+
+    `{}개` 는 칸 오른쪽 끝에 '개' 를 찍는다. `{} ≤ a ≤ {}` 는 가운데에
+    '≤ a ≤' 를 찍고 양쪽을 비운다. 빈자리는 남는 폭을 똑같이 나눈다.
+    2026년 10월 3일에 원장님이 정했다.
+
+    영문자는 기울여 찍는다. 문항 그림의 `a` 가 수식 글자라 기울어 있어서,
+    똑바로 세우면 다른 글자로 보인다. 노토에 기울인 글꼴이 없어 눕혀 그린다.
+    """
+    parts = form.split('{}')
+    c.setFillColor(INK)
+    c.setFont('KR', FORM_SIZE)
+    used = sum(c.stringWidth(p, 'KR', FORM_SIZE) for p in parts)
+    blank = (x1 - x0 - used) / max(len(parts) - 1, 1)
+    x = x0
+    for k, p in enumerate(parts):
+        for run in re.findall(r'[A-Za-z]+|[^A-Za-z]+', p):
+            if run[0].isascii() and run[0].isalpha():
+                c.saveState()
+                c.translate(x, base)
+                c.skew(0, FORM_SLANT)
+                c.drawString(0, 0, run)
+                c.restoreState()
+            else:
+                c.drawString(x, base, run)
+            x += c.stringWidth(run, 'KR', FORM_SIZE)
+        if k < len(parts) - 1:
+            x += blank
+
+
 def draw_block(c, b, x, y, ucol):
     """y는 덩어리의 위쪽 좌표. 아래로 그려 내려간다.
 
@@ -143,6 +177,9 @@ def draw_block(c, b, x, y, ucol):
         c.setFillColor(colors.HexColor(ink))
         c.setFont('KRB', 6.4)
         c.drawString(tx + 7, y - 15, '정답')
+        if q.get('ansForm'):
+            draw_form(c, q['ansForm'], tx + 7 + c.stringWidth('정답', 'KRB', 6.4) + 10,
+                      tx + INNER - 10, y - 15.5)
         y -= ANSBOX
 
     c.setStrokeColor(colors.HexColor(bar))

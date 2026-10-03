@@ -152,6 +152,7 @@ GAP = 15              # 항목 사이 최소 간격
 MAX_EXTRA = 30        # 남는 공간을 한 틈에 몰아줄 수 있는 상한
 BOTTOM = 8
 TABLE_H = 150         # 정답 일람표 — 6칸 5줄
+TABLE_MIN = 9.5       # 일람표에서 긴 답을 줄여 넣는 가장 작은 글자
 HEAD_GAP = 20         # 머리말과 정답표 이름 사이
 
 ST_META = ParagraphStyle('m', fontName='KR', fontSize=9.2, leading=13.2,
@@ -375,17 +376,26 @@ def draw_table(c, qs, ucol, y0):
             c.setFont('KRB', 10)
             c.drawString(cx + 6, cy + 8.5, '%d' % (i + 1))
             c.setFillColor(colors.HexColor('#16181c'))
-            c.setFont('KRB', 12.5)
-            # 객관식은 번호만으로 충분하고, 그 밖의 답은 넘치면 말줄임을 쓴다
+            # 객관식은 번호만으로 충분하다. 그 밖의 답이 넘치면 먼저 띄어쓰기를
+            # 빼고(한글이 없을 때만), 그래도 넘치면 글자를 TABLE_MIN 까지 줄이고,
+            # 그래도 넘치면 말줄임을 쓴다. 2026년 10월 3일에 중1-1 29번
+            # `1/2 ≤ a ≤ 8` 이 주관식이 되며 잘려 나와 넣었다.
             a = qs[i]['answer'].replace('`', '')
+            size, room = 12.5, cw - 34
             circled = ''.join(ch for ch in a if ch in '①②③④⑤')
             if circled:
                 a = circled
-            elif math_width(c, a, 'KRB', 12.5) > cw - 34:
-                while math_width(c, a + '…', 'KRB', 12.5) > cw - 34 and len(a) > 1:
-                    a = a[:-1]
-                a += '…'
-            draw_math(c, cx + 32, cy + 8, a, 'KRB', 12.5)
+            else:
+                if math_width(c, a, 'KRB', size) > room and not re.search('[가-힣]', a):
+                    a = a.replace(' ', '')
+                while math_width(c, a, 'KRB', size) > room and size > TABLE_MIN:
+                    size -= 0.5
+                if math_width(c, a, 'KRB', size) > room:
+                    while math_width(c, a + '…', 'KRB', size) > room and len(a) > 1:
+                        a = a[:-1]
+                    a += '…'
+            c.setFont('KRB', size)
+            draw_math(c, cx + 32, cy + 8, a, 'KRB', size)
     c.setStrokeColor(HAIR)
     c.rect(x0, y0 - rows * rh, w, rows * rh, stroke=1, fill=0)
 

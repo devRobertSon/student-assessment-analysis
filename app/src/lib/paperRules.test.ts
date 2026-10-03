@@ -53,7 +53,7 @@ describe('PAPER_RULES', () => {
     const R = PAPER_RULES;
     expect(LEVELS.reduce((a, l) => a + R.levels[l].min, 0)).toBeLessThanOrEqual(R.count);
     expect(LEVELS.reduce((a, l) => a + R.levels[l].max, 0)).toBeGreaterThanOrEqual(R.count);
-    expect(R.formats.객관식 + R.formats.주관식).toBe(R.count);
+    expect(R.bonusEssays).toBeLessThanOrEqual(R.count);
   });
 
   it('난이도 폭이 표준 대 상 대 최상 = 1 대 4 대 3 을 담는다', () => {
@@ -93,7 +93,7 @@ describe('PAPER_RULES', () => {
       const u = s + 5;
       const t2 = R.count - s - u;
       const base = s * R.points.객관식.표준 + t2 * R.points.객관식.상 + u * R.points.객관식.최상;
-      const premium = (R.points.주관식.표준 - R.points.객관식.표준) * R.formats.주관식;
+      const premium = (R.points.주관식.표준 - R.points.객관식.표준) * R.bonusEssays;
       expect(base + premium).toBe(R.total);
     }
   });
@@ -140,7 +140,26 @@ describe('checkPaper', () => {
     qs[0].format = '객관식';
     qs[0].points = pointsFor('객관식', '표준');
     const v = checkPaper(qs);
-    expect(v.filter((x) => x.rule === '형식 구성')).toHaveLength(2); // 객관식 26, 주관식 4
+    // 1점 더 받는 주관식이 4문항이 된다
+    expect(v.filter((x) => x.rule === '형식 구성')).toHaveLength(1);
+    expect(v.find((x) => x.rule === '형식 구성')?.detail).toContain('5문항이어야 하는데 4문항');
+  });
+
+  it('선지만 뗀 간단한 주관식은 객관식과 배점이 같아도 된다', () => {
+    const qs = paper();
+    // 중1-1 처럼 객관식 다섯을 배점 그대로 주관식으로 바꾼다
+    for (const i of [2, 4, 12, 24, 28]) {
+      expect(qs[i].format).toBe('객관식');
+      qs[i].format = '주관식';
+    }
+    expect(checkPaper(qs)).toEqual([]);
+  });
+
+  it('주관식 배점이 객관식과 같지도 1점 더도 아니면 잡는다', () => {
+    const qs = paper();
+    qs[0].points = 2 + 2; // 1번은 표준 주관식이라 3점이나 2점이다
+    const v = checkPaper(qs);
+    expect(v.find((x) => x.rule === '배점')?.detail).toContain('1번(주관식 표준)은 3점이나');
   });
 
   it('배점이 난이도·형식과 안 맞으면 잡는다', () => {

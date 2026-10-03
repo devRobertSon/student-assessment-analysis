@@ -20,7 +20,8 @@
 //   5. 유형별 목표 수를 정하고(합 30, 각 3~5) 적은 유형부터 채운다.
 //      개수는 주 유형으로 세고, 주 유형만으로 3문항이 안 되는 유형만
 //      부 유형이 그 유형인 문항으로 채운다
-//   6. 난이도를 붙이고(표준 4~5·상 15~17·최상 9~10), 주관식 5문항을 고른다
+//   6. 난이도를 붙이고(표준 4~5·상 15~17·최상 9~10), 1점 더 받는 주관식 5문항을 고른다.
+//      객관식에서 선지만 떼어 간단한 주관식으로 바꾼 문항은 몇 개든 된다
 //   7. 단원 배분을 ±1 안으로 맞춘다
 //   8. 배점을 붙이고 checkPaper() 로 검사한다
 //
@@ -69,7 +70,7 @@ export interface PaperRules {
   count: number;
   total: number;
   levels: Record<Level, Band>;
-  formats: Record<Format, number>;
+  bonusEssays: number;
   points: Record<Format, Record<Level, number>>;
   perType: { min: number; max: number };
 }
@@ -94,16 +95,23 @@ export const PAPER_RULES: PaperRules = {
    */
   levels: { 표준: { min: 4, max: 5 }, 상: { min: 15, max: 17 }, 최상: { min: 9, max: 10 } },
 
-  /** 형식별 문항 수. */
-  formats: { 객관식: 25, 주관식: 5 },
+  /**
+   * 1점 더 받는 주관식 문항 수.
+   *
+   * 처음에는 객관식 25 · 주관식 5 로 정했다. 2026-10-03 에 원장님이 객관식
+   * 몇 문항을 선지만 떼어 주관식으로 바꾸기로 하면서, 그렇게 바꾼 간단한
+   * 주관식은 배점을 객관식과 같게 두기로 했다. 그래서 세는 것은 주관식
+   * 전체가 아니라 1점 더 받는 주관식이다. 이것이 5문항이어야 총점이 100이다.
+   */
+  bonusEssays: 5,
 
   /**
    * 배점. 난이도가 한 칸 오르면 1점 오르고, 주관식은 같은 난이도 객관식보다
-   * 1점 더 받는다.
+   * 1점 더 받는다. 다만 객관식에서 선지만 뗀 간단한 주관식은 객관식과 같다.
    *
-   * 웃돈이 난이도마다 같은 것이 중요하다. 그래서 주관식 5문항을 어느 난이도에
-   * 두든 총점이 100 그대로다. 주관식 난이도를 문제에 맞게 고를 수 있는 것이
-   * 이 덕분이다.
+   * 웃돈이 난이도마다 같은 것이 중요하다. 그래서 1점 더 받는 주관식 5문항을
+   * 어느 난이도에 두든 총점이 100 그대로다. 주관식 난이도를 문제에 맞게
+   * 고를 수 있는 것이 이 덕분이다.
    */
   points: {
     객관식: { 표준: 2, 상: 3, 최상: 4 },
@@ -120,7 +128,11 @@ export const PAPER_RULES: PaperRules = {
   perType: { min: 3, max: 5 },
 };
 
-/** 난이도와 형식이 정해지면 배점도 정해진다. 시험지를 만들 때 쓴다. */
+/**
+ * 난이도와 형식이 정해지면 배점도 정해진다. 시험지를 만들 때 쓴다.
+ *
+ * 주관식은 1점 더 받는 쪽을 돌려준다. 선지만 뗀 간단한 주관식은 `pointsFor('객관식', 난이도)` 다.
+ */
 export function pointsFor(format: Format, level: Level): number {
   return PAPER_RULES.points[format][level];
 }
@@ -294,18 +306,28 @@ export function checkPaper(questions: PaperQuestion[], plan?: UnitPlan): Violati
     add('총점', `${R.total}점이어야 하는데 ${sum}점입니다. 최상 문항이 표준보다 5개 많아야 100점이 됩니다.`);
   }
 
-  // 형식 구성.
-  for (const f of FORMATS) {
-    const got = count(questions, (q) => q.format === f);
-    if (got !== R.formats[f]) add('형식 구성', `${f}이 ${R.formats[f]}문항이어야 하는데 ${got}문항입니다.`);
+  // 형식 구성. 1점 더 받는 주관식만 센다. 선지만 뗀 간단한 주관식은 객관식과
+  // 배점이 같아 몇 문항이든 총점이 그대로다.
+  const bonus = count(
+    questions,
+    (q) => q.format === '주관식' && LEVELS.includes(q.level as Level) && q.points === pointsFor('주관식', q.level as Level),
+  );
+  if (bonus !== R.bonusEssays) {
+    add('형식 구성', `1점 더 받는 주관식이 ${R.bonusEssays}문항이어야 하는데 ${bonus}문항입니다.`);
   }
 
-  // 배점. 난이도와 형식이 정해지면 배점은 따라온다.
+  // 배점. 난이도와 형식이 정해지면 배점은 따라온다. 주관식은 객관식과 같거나 1점 더다.
   for (const q of questions) {
     if (!LEVELS.includes(q.level as Level) || !FORMATS.includes(q.format as Format)) continue;
-    const want = pointsFor(q.format as Format, q.level as Level);
-    if (q.points !== want) {
-      add('배점', `${q.no}번(${q.format} ${q.level})은 ${want}점이어야 하는데 ${q.points}점입니다.`);
+    const lv = q.level as Level;
+    const want = pointsFor(q.format as Format, lv);
+    if (q.format === '주관식') {
+      const simple = pointsFor('객관식', lv);
+      if (q.points !== want && q.points !== simple) {
+        add('배점', `${q.no}번(주관식 ${lv})은 ${want}점이나, 선지만 뗀 간단한 주관식이면 ${simple}점이어야 하는데 ${q.points}점입니다.`);
+      }
+    } else if (q.points !== want) {
+      add('배점', `${q.no}번(${q.format} ${lv})은 ${want}점이어야 하는데 ${q.points}점입니다.`);
     }
   }
 
