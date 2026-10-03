@@ -673,7 +673,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .rp-eg, .rp-muted { font-weight: 400; color: var(--ink-3); }
 .rp-checks { display: flex; flex-wrap: wrap; gap: 8px 22px; }
 .rp-check { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
-.rp-memo-box { background: #fcfcfa; border: 1px solid #e4e4de; border-radius: 4px; height: 105px; }
+.rp-memo-box { background: #fcfcfa; border: 1px solid #e4e4de; border-radius: 4px; height: 161px; }
 .rp-privacy { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; line-height: 1.55; color: #2e3136; }
 .rp-agree { margin: 2px 0 0; font-size: 13px; line-height: 1.6; }
 .rp-sign { display: flex; align-items: flex-end; gap: 26px; padding-top: 9px; border-top: 1px solid #edede8; font-size: 13px; }
@@ -1121,8 +1121,13 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 /* 20[   ]년[   ]월[   ]일. 숫자를 적을 빈 칸. */
 .rp-gap { display: inline-block; width: 38px; }
 .rp-line-checks { gap: 14px; }
+/* 메모 300자(MEMO_MAX)가 다 들어가는 크기. 칸 폭이 13px 글자 50자라, 띄어쓰기
+   없이 한글만 300자를 채워도 여섯 줄이다. 여섯 줄(23.4 × 6)에 위아래 여백과
+   테두리를 더해 161px 다. 2쪽에는 카드 사이에 나눠 주던 자리가 58px 남아 있어
+   그 안에서 늘렸다. 글자를 14px 로 두면 여섯 줄이 178px 라 쪽을 넘는다.
+   2026-10-03 */
 .rp-memo-box {
-  padding: 9px 12px; font-size: 14px; line-height: 1.9; color: #2e3136;
+  padding: 9px 12px; font-size: 13px; line-height: 1.8; color: #2e3136;
   white-space: pre-wrap; overflow: hidden;
 }
 /* 손으로 적는 선생님 의견. 쪽에 남는 자리를 이 칸이 다 가져간다. 그래서
