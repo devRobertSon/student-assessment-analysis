@@ -114,8 +114,17 @@ python poolsheet.py spec_h2.json "함수와 그래프" 21,25,28 <폴더> only
 그 단원 전체가 나온다. 나온 PDF 에는 교재 원문이 들어 있으므로 저장소에 넣지
 않는다.
 
-고른 뒤에는 `app/src/lib/paperRules.ts` 의 `checkPaper()` 로 구성이 규칙에
-맞는지 본다.
+고른 뒤에는 그 학기의 `_시험지_확정.json` 을 고치고 `sync.py` 로 옮긴 다음
+여덟 장을 한 번에 검사한다. 검사는 `app/src/lib/paperRules.ts` 의 `checkPaper()`
+가 한다.
+
+```bash
+npm run check:papers --prefix app
+```
+
+문항마다 `method`(핵심 풀이)를 적어야 한다. 단원이 달라도 같은 핵심 풀이가 둘
+있으면 걸린다. 무엇을 같은 핵심 풀이로 보는지는 `문항배정_순서.md` 의 '핵심
+풀이' 에 있다.
 
 ## 객관식을 주관식으로 바꿀 때
 

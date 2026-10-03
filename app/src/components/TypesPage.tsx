@@ -154,18 +154,19 @@ export default function TypesPage() {
 
         <h4 className="manual-h4">점수를 그대로 쓰는 이유</h4>
         <p className="muted">
-          배점이 이미 난이도를 담고 있습니다. 어려운 문항일수록 배점이 크고, 같은 난이도라도 주관식이 1점 더
-          높습니다. 다만 객관식에서 선지만 뗀 간단한 주관식은 객관식과 같은 점수입니다. 그래서 난이도 무게를
-          따로 매기지 않습니다. 선생님이 채점 화면에서 보는 점수와 등급을 매긴 값이 같습니다.
+          배점이 이미 난이도를 담고 있습니다. 어려운 문항일수록 배점이 크고, 같은 난이도라도 풀이 과정이 가장
+          복잡한 다섯 문항은 1점 더 받습니다. 중1-1부터 공통수학2까지 처음 만든 여덟 장은 원래 주관식 다섯 문항이
+          1점 더 받습니다. 그래서 난이도 무게를 따로 매기지 않습니다. 선생님이 채점 화면에서 보는 점수와 등급을
+          매긴 값이 같습니다.
         </p>
         <div className="table-scroll">
         <table className="assess-table manual-table">
           <thead>
             <tr>
               <th style={{ width: 88 }}>난이도</th>
-              <th style={{ width: 96 }}>객관식</th>
-              <th style={{ width: 96 }}>주관식</th>
-              <th>여덟 장 공통</th>
+              <th style={{ width: 96 }}>기본</th>
+              <th style={{ width: 96 }}>1점 더</th>
+              <th>모든 시험지 공통</th>
             </tr>
           </thead>
           <tbody>

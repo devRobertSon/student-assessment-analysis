@@ -13,9 +13,14 @@ import sys
 
 import 경로
 
-# 1점 더 받는 주관식 수. 객관식에서 선지만 뗀 간단한 주관식은 객관식과 배점이
+# 1점 더 받는 문항 수. 객관식에서 선지만 뗀 간단한 주관식은 객관식과 배점이
 # 같아 세지 않는다. 2026년 10월 3일에 원장님이 정했다. 그 전에는 주관식이 늘 5였다.
+#
+# 같은 날 새로 만드는 시험지(초6-1 부터)는 규칙이 다르다. 스펙 맨 위에
+# "bonusBy": "풀이" 를 적는다. 주관식은 원래 5 + 선지만 뗀 5 이고, 형식과
+# 상관없이 풀이가 가장 복잡한 5문항이 1점 더 받는다. 기존 여덟 장은 그대로다.
 웃돈주관식 = 5
+원래주관식, 바꾼주관식 = 5, 5
 객관식배점 = {'표준': 2, '상': 3, '최상': 4}
 유형최소, 유형최대 = 3, 5
 # 유형 상한을 넘겨도 되는 시험지. 중3-1 은 22·30번을 이차함수의 활용 문항으로
@@ -74,9 +79,19 @@ def check(f):
     print('%s문항 %d' % (ok(len(qs) == 30), len(qs)))
     print('%s배점 %d' % (ok(pts == 100), pts))
     print('   입학 심화형 %d' % adv)
-    print('%s주관식 %d (%d점) · 그중 1점 더 받는 것 %d'
-          % (ok(len(bonus) == 웃돈주관식), len(ess), sum(q['points'] for q in ess),
-             len(bonus)))
+    if spec.get('bonusBy') == '풀이':
+        conv = [q for q in ess if q['img'].endswith('_주관식.png')]
+        hard = [n for n, q in enumerate(qs, 1)
+                if q['points'] == 객관식배점.get(q['level'], 0) + 1]
+        print('%s주관식 %d · 원래 %d · 선지 뗀 것 %d'
+              % (ok(len(ess) - len(conv) == 원래주관식 and len(conv) == 바꾼주관식),
+                 len(ess), len(ess) - len(conv), len(conv)))
+        print('%s풀이가 복잡해 1점 더 받는 문항 %d %s'
+              % (ok(len(hard) == 웃돈주관식), len(hard), hard))
+    else:
+        print('%s주관식 %d (%d점) · 그중 1점 더 받는 것 %d'
+              % (ok(len(bonus) == 웃돈주관식), len(ess), sum(q['points'] for q in ess),
+                 len(bonus)))
     상한 = dict.fromkeys(types, 유형최대)
     상한.update(유형예외.get(spec['title'], {}))
     맞다 = (len(types) == 8

@@ -13,7 +13,8 @@
 //
 //   1. 문항 풀을 모두 읽어 풀이·유형·난이도·단원·근거를 붙인다
 //   2. 단원 안에서 쓰는 개념의 조합이 같은 것끼리 묶는다. 한 묶음에서 한 문항만 쓴다.
-//      문항 수가 많은 단원은 두 문항까지 쓰되 뼈대가 서로 달라야 한다
+//      문항 수가 많은 단원은 두 문항까지 쓰되 뼈대가 서로 달라야 한다.
+//      문항마다 핵심 풀이를 붙인다. 단원이 달라도 같은 핵심 풀이는 한 번만 쓴다
 //   3. 묶음을 하나씩만 세어 유형 × 난이도 표를 만든다
 //   4. 유형마다 3문항이 되는지 보고, 모자라면 그 유형에만 앞 학기 문항을
 //      모자란 만큼 가져온다. 앞 학기 문항이 5개를 넘으면 멈추고 알린다
@@ -66,11 +67,23 @@ export interface Band {
   max: number;
 }
 
+/**
+ * 1점 더 주는 문항을 무엇으로 고르는가.
+ *
+ * `주관식` 2026-10-03 전에 만든 여덟 장(중1-1 ~ 공통수학2). 원래 주관식 5문항이
+ *          1점 더 받는다. 원장님이 이 여덟 장은 그대로 두기로 했다.
+ * `풀이`   그 뒤에 새로 만드는 시험지(초6-1 부터). 형식과 상관없이 풀이 과정이
+ *          가장 복잡한 5문항이 1점 더 받는다. 주관식은 원래 주관식 5문항과
+ *          객관식에서 선지만 뗀 5문항으로 10문항이다.
+ */
+export type BonusRule = '주관식' | '풀이';
+
 export interface PaperRules {
   count: number;
   total: number;
   levels: Record<Level, Band>;
-  bonusEssays: number;
+  bonus: number;
+  essays: { original: number; converted: number };
   points: Record<Format, Record<Level, number>>;
   perType: { min: number; max: number };
 }
@@ -96,22 +109,31 @@ export const PAPER_RULES: PaperRules = {
   levels: { 표준: { min: 4, max: 5 }, 상: { min: 15, max: 17 }, 최상: { min: 9, max: 10 } },
 
   /**
-   * 1점 더 받는 주관식 문항 수.
+   * 1점 더 받는 문항 수. 이것이 5문항이어야 총점이 100이다.
    *
-   * 처음에는 객관식 25 · 주관식 5 로 정했다. 2026-10-03 에 원장님이 객관식
-   * 몇 문항을 선지만 떼어 주관식으로 바꾸기로 하면서, 그렇게 바꾼 간단한
-   * 주관식은 배점을 객관식과 같게 두기로 했다. 그래서 세는 것은 주관식
-   * 전체가 아니라 1점 더 받는 주관식이다. 이것이 5문항이어야 총점이 100이다.
+   * 무엇이 1점 더 받는지는 시험지가 만들어진 때에 따라 다르다(BonusRule).
+   * 처음에는 원래 주관식 5문항이었다. 2026-10-03 에 원장님이 객관식 몇 문항을
+   * 선지만 떼어 주관식으로 바꾸고, 그렇게 바꾼 간단한 주관식은 배점을 객관식과
+   * 같게 두었다. 같은 날 새로 만드는 시험지부터는 **주관식이라서가 아니라
+   * 풀이 과정이 복잡해서** 1점을 더 주기로 바꿨다. 기존 여덟 장은 그대로 둔다.
    */
-  bonusEssays: 5,
+  bonus: 5,
 
   /**
-   * 배점. 난이도가 한 칸 오르면 1점 오르고, 주관식은 같은 난이도 객관식보다
-   * 1점 더 받는다. 다만 객관식에서 선지만 뗀 간단한 주관식은 객관식과 같다.
+   * 새 시험지(BonusRule `풀이`)의 주관식. 원래 주관식 문항 5개와, 객관식에서
+   * 선지만 떼어 주관식으로 바꾼 5개다. 바꿀 5문항은 고르는 쪽이 정해 원장님께
+   * 승인을 받는다. 2026-10-03 에 원장님이 정했다.
+   */
+  essays: { original: 5, converted: 5 },
+
+  /**
+   * 배점. 난이도가 한 칸 오르면 1점 오르고, 1점 더 받는 문항은 같은 난이도의
+   * 다른 문항보다 1점 더 받는다. 표를 형식으로 나눈 것은 기존 여덟 장 때문이다.
+   * 그 여덟 장에서는 주관식이 1점 더 받았다. 새 시험지에서는 `주관식` 줄을
+   * '1점 더 받는 문항' 의 배점으로 읽는다.
    *
-   * 웃돈이 난이도마다 같은 것이 중요하다. 그래서 1점 더 받는 주관식 5문항을
-   * 어느 난이도에 두든 총점이 100 그대로다. 주관식 난이도를 문제에 맞게
-   * 고를 수 있는 것이 이 덕분이다.
+   * 웃돈이 난이도마다 같은 것이 중요하다. 그래서 1점 더 받는 5문항을
+   * 어느 난이도에 두든 총점이 100 그대로다.
    */
   points: {
     객관식: { 표준: 2, 상: 3, 최상: 4 },
@@ -179,6 +201,8 @@ export interface PaperQuestion {
   countAs?: string;
   level: string; // 난이도
   format: string; // 형식
+  /** 객관식에서 선지만 떼어 주관식으로 바꾼 문항이면 참. 새 시험지에서 센다. */
+  converted?: boolean;
   points: number; // 배점
   /**
    * 풀이 묶음. 그 문항을 푸는 데 쓰는 **개념의 조합**을 적는다.
@@ -201,9 +225,9 @@ export interface PaperQuestion {
    * 원래 규칙은 이렇다. 한 단원에 같은 방법으로
    * 푸는 문항이 여럿이면 그 단원에서 학생이 무엇을 못 하는지 가릴 수 없다.
    *
-   * 단원이 다르면 뼈대가 같아도 괜찮다. 단원마다 내용이 달라 학생이 겪는
-   * 것도 다르고, 단원을 넘어 견주려면 문항 풀 전체를 한 번에 들고 있어야
-   * 해서 실제로 하기도 어렵다.
+   * 묶음과 뼈대는 단원 안에서만 견준다. 개념 이름이 단원마다 달라 단원을
+   * 넘으면 같은 풀이도 다른 묶음 이름이 붙는다. 단원을 넘는 겹침은 핵심
+   * 풀이(method)로 거른다.
    */
   group: string;
   /**
@@ -221,6 +245,24 @@ export interface PaperQuestion {
    * 글자가 같은 것만 잡으므로, 묶음이 겹치는 짝은 13단계에서 눈으로 본다.
    */
   skeleton?: string;
+  /**
+   * 핵심 풀이. 이 문항을 푸는 **결정적인 한 수**를 한 구절로 적는다.
+   *
+   * 그 한 수를 아는 학생은 풀고 모르는 학생은 못 푸는 자리다. 숫자 · 단원 ·
+   * 앞뒤에 붙은 한 단계는 보지 않는다. 같은 한 수에는 시험지 안에서 늘 같은
+   * 글을 쓴다.
+   *
+   * **시험지 전체에서 같은 핵심 풀이는 한 문항만 쓴다. 단원이 달라도 그렇다.**
+   * 2026-10-03 에 원장님이 중3-1 의 두 문항을 보고 정했다. 14번(다항식)은
+   * `x - 1/x` 의 값에서, 22번(이차방정식)은 방정식을 x 로 나눠 얻은 `x + 1/x`
+   * 의 값에서, 둘 다 `x² + 1/x²` 을 곱셈 공식의 변형으로 구해 식을 두 덩어리로
+   * 갈라 넣었다. 단원도 묶음 이름도 뼈대 글도 달라 묶음 검사로는 못 걸렀다. 같은 것을 두 번 물으면 그 한 수를 모르는 학생이 두
+   * 번 틀려 성취도가 한쪽으로 쏠린다.
+   *
+   * 같은 공식을 쓰는 것만으로는 같지 않다. 근의 공식으로 근을 구하는 문항과
+   * 판별식으로 범위를 구하는 문항은 핵심 풀이가 다르다.
+   */
+  method: string;
   /**
    * 분류 근거. 이 문항을 틀린 학생이 무엇을 못 한 것인지 적는다.
    *
@@ -253,7 +295,7 @@ const count = <T>(xs: T[], hit: (x: T) => boolean) => xs.filter(hit).length;
  * 틀어지는 일이 흔한데, 하나씩 고쳐 가며 다시 돌리면 그때마다 다음 것이 새로
  * 나온다. 한 번에 다 보여 주는 편이 고치기 쉽다.
  */
-export function checkPaper(questions: PaperQuestion[], plan?: UnitPlan): Violation[] {
+export function checkPaper(questions: PaperQuestion[], plan?: UnitPlan, bonusBy: BonusRule = '주관식'): Violation[] {
   const v: Violation[] = [];
   const add = (rule: string, detail: string) => v.push({ rule, detail });
   const R = PAPER_RULES;
@@ -306,28 +348,58 @@ export function checkPaper(questions: PaperQuestion[], plan?: UnitPlan): Violati
     add('총점', `${R.total}점이어야 하는데 ${sum}점입니다. 최상 문항이 표준보다 5개 많아야 100점이 됩니다.`);
   }
 
-  // 형식 구성. 1점 더 받는 주관식만 센다. 선지만 뗀 간단한 주관식은 객관식과
-  // 배점이 같아 몇 문항이든 총점이 그대로다.
-  const bonus = count(
-    questions,
-    (q) => q.format === '주관식' && LEVELS.includes(q.level as Level) && q.points === pointsFor('주관식', q.level as Level),
-  );
-  if (bonus !== R.bonusEssays) {
-    add('형식 구성', `1점 더 받는 주관식이 ${R.bonusEssays}문항이어야 하는데 ${bonus}문항입니다.`);
-  }
+  if (bonusBy === '주관식') {
+    // 기존 여덟 장. 1점 더 받는 주관식만 센다. 선지만 뗀 간단한 주관식은
+    // 객관식과 배점이 같아 몇 문항이든 총점이 그대로다.
+    const bonus = count(
+      questions,
+      (q) => q.format === '주관식' && LEVELS.includes(q.level as Level) && q.points === pointsFor('주관식', q.level as Level),
+    );
+    if (bonus !== R.bonus) {
+      add('형식 구성', `1점 더 받는 주관식이 ${R.bonus}문항이어야 하는데 ${bonus}문항입니다.`);
+    }
 
-  // 배점. 난이도와 형식이 정해지면 배점은 따라온다. 주관식은 객관식과 같거나 1점 더다.
-  for (const q of questions) {
-    if (!LEVELS.includes(q.level as Level) || !FORMATS.includes(q.format as Format)) continue;
-    const lv = q.level as Level;
-    const want = pointsFor(q.format as Format, lv);
-    if (q.format === '주관식') {
-      const simple = pointsFor('객관식', lv);
-      if (q.points !== want && q.points !== simple) {
-        add('배점', `${q.no}번(주관식 ${lv})은 ${want}점이나, 선지만 뗀 간단한 주관식이면 ${simple}점이어야 하는데 ${q.points}점입니다.`);
+    // 배점. 난이도와 형식이 정해지면 배점은 따라온다. 주관식은 객관식과 같거나 1점 더다.
+    for (const q of questions) {
+      if (!LEVELS.includes(q.level as Level) || !FORMATS.includes(q.format as Format)) continue;
+      const lv = q.level as Level;
+      const want = pointsFor(q.format as Format, lv);
+      if (q.format === '주관식') {
+        const simple = pointsFor('객관식', lv);
+        if (q.points !== want && q.points !== simple) {
+          add('배점', `${q.no}번(주관식 ${lv})은 ${want}점이나, 선지만 뗀 간단한 주관식이면 ${simple}점이어야 하는데 ${q.points}점입니다.`);
+        }
+      } else if (q.points !== want) {
+        add('배점', `${q.no}번(${q.format} ${lv})은 ${want}점이어야 하는데 ${q.points}점입니다.`);
       }
-    } else if (q.points !== want) {
-      add('배점', `${q.no}번(${q.format} ${lv})은 ${want}점이어야 하는데 ${q.points}점입니다.`);
+    }
+  } else {
+    // 새 시험지. 주관식은 원래 주관식과 선지만 뗀 것이 정해진 수만큼이다.
+    const converted = count(questions, (q) => q.format === '주관식' && !!q.converted);
+    const original = count(questions, (q) => q.format === '주관식' && !q.converted);
+    if (original !== R.essays.original) {
+      add('형식 구성', `원래 주관식이 ${R.essays.original}문항이어야 하는데 ${original}문항입니다.`);
+    }
+    if (converted !== R.essays.converted) {
+      add('형식 구성', `객관식에서 바꾼 주관식이 ${R.essays.converted}문항이어야 하는데 ${converted}문항입니다.`);
+    }
+    for (const q of questions) {
+      if (q.converted && q.format !== '주관식') add('형식 구성', `${q.no}번은 주관식으로 바꿨다고 적혀 있는데 형식이 '${q.format}'입니다.`);
+    }
+
+    // 배점. 형식과 상관없이 난이도대로 주고, 풀이가 가장 복잡한 문항만 1점 더 준다.
+    let bonus = 0;
+    for (const q of questions) {
+      if (!LEVELS.includes(q.level as Level)) continue;
+      const lv = q.level as Level;
+      const base = pointsFor('객관식', lv);
+      if (q.points === base + 1) bonus += 1;
+      else if (q.points !== base) {
+        add('배점', `${q.no}번(${lv})은 ${base}점이나, 풀이가 복잡해 1점 더 받는 문항이면 ${base + 1}점이어야 하는데 ${q.points}점입니다.`);
+      }
+    }
+    if (bonus !== R.bonus) {
+      add('형식 구성', `풀이가 복잡해 1점 더 받는 문항이 ${R.bonus}문항이어야 하는데 ${bonus}문항입니다.`);
     }
   }
 
@@ -391,6 +463,21 @@ export function checkPaper(questions: PaperQuestion[], plan?: UnitPlan): Violati
         add('풀이 뼈대', `${unit} 단원의 ${first}, ${q.no}번이 '${g}' 묶음에 뼈대까지 같습니다.`);
       } else seen.set(k, q.no);
     }
+  }
+
+  // 핵심 풀이. 단원을 가리지 않고 시험지 전체에서 겹치면 안 된다. 묶음과 뼈대는
+  // 단원 안에서만 견주므로, 단원을 넘어 같은 한 수를 두 번 묻는 것은 여기서 거른다.
+  const byMethod = new Map<string, number[]>();
+  for (const q of questions) {
+    const m = (q.method ?? '').trim();
+    if (!m) add('핵심 풀이', `${q.no}번에 핵심 풀이가 없습니다.`);
+    else byMethod.set(m, [...(byMethod.get(m) ?? []), q.no]);
+  }
+  for (const [m, nos] of byMethod) {
+    if (nos.length < 2) continue;
+    const units = [...new Set(nos.map((n) => questions.find((q) => q.no === n)!.unit))];
+    const where = units.length > 1 ? `단원은 ${units.join(' · ')}로 다르지만` : `${units[0]} 단원이고,`;
+    add('핵심 풀이', `${nos.join(', ')}번이 '${m}' 로 핵심 풀이가 같습니다. ${where} 한 시험지에 한 문항입니다.`);
   }
 
   // 분류 근거. 있는지와 너무 짧지 않은지만 본다. 납득이 되는지는 사람이 읽고 정한다.

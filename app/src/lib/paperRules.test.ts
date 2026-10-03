@@ -40,6 +40,7 @@ function paper(): PaperQuestion[] {
       format,
       points: pointsFor(format, level),
       group: `뼈대-${no}`,
+      method: `한 수-${no}`,
       reason: `${no}번은 ${types[i]}를 못 해서 틀린다. 앞 단계는 대부분 넘어간다.`,
     };
   });
@@ -53,7 +54,7 @@ describe('PAPER_RULES', () => {
     const R = PAPER_RULES;
     expect(LEVELS.reduce((a, l) => a + R.levels[l].min, 0)).toBeLessThanOrEqual(R.count);
     expect(LEVELS.reduce((a, l) => a + R.levels[l].max, 0)).toBeGreaterThanOrEqual(R.count);
-    expect(R.bonusEssays).toBeLessThanOrEqual(R.count);
+    expect(R.bonus).toBeLessThanOrEqual(R.count);
   });
 
   it('난이도 폭이 표준 대 상 대 최상 = 1 대 4 대 3 을 담는다', () => {
@@ -93,7 +94,7 @@ describe('PAPER_RULES', () => {
       const u = s + 5;
       const t2 = R.count - s - u;
       const base = s * R.points.객관식.표준 + t2 * R.points.객관식.상 + u * R.points.객관식.최상;
-      const premium = (R.points.주관식.표준 - R.points.객관식.표준) * R.bonusEssays;
+      const premium = (R.points.주관식.표준 - R.points.객관식.표준) * R.bonus;
       expect(base + premium).toBe(R.total);
     }
   });
@@ -169,6 +170,47 @@ describe('checkPaper', () => {
     expect(v.find((x) => x.rule === '배점')?.detail).toContain('11번(객관식 상)은 3점이어야 하는데 5점');
   });
 
+  /**
+   * 2026-10-03 뒤에 만드는 시험지. 주관식은 원래 5 + 선지만 뗀 5 이고,
+   * 1점 더 받는 것은 형식이 아니라 풀이가 복잡한 문항이다.
+   */
+  function newPaper(): PaperQuestion[] {
+    const qs = paper();
+    for (const i of [2, 4, 12, 24, 28]) {
+      qs[i].format = '주관식';
+      qs[i].converted = true;
+    }
+    // 1번(원래 주관식 표준)의 1점을 2번(객관식 표준)으로 옮긴다
+    qs[0].points = 2;
+    qs[1].points = 3;
+    return qs;
+  }
+
+  it('새 시험지는 객관식도 풀이가 복잡하면 1점 더 받는다', () => {
+    expect(checkPaper(newPaper(), undefined, '풀이')).toEqual([]);
+  });
+
+  it('기존 규칙으로 보면 객관식이 1점 더 받는 것을 잡는다', () => {
+    expect(checkPaper(newPaper()).some((x) => x.rule === '배점')).toBe(true);
+  });
+
+  it('새 시험지에서 바꾼 주관식이 다섯이 아니면 잡는다', () => {
+    const qs = newPaper();
+    qs[2].converted = false; // 원래 주관식 6 · 바꾼 것 4 가 된다
+    const v = checkPaper(qs, undefined, '풀이').filter((x) => x.rule === '형식 구성');
+    expect(v.map((x) => x.detail)).toEqual([
+      '원래 주관식이 5문항이어야 하는데 6문항입니다.',
+      '객관식에서 바꾼 주관식이 5문항이어야 하는데 4문항입니다.',
+    ]);
+  });
+
+  it('새 시험지에서 1점 더 받는 문항이 다섯이 아니면 잡는다', () => {
+    const qs = newPaper();
+    qs[1].points = 2;
+    const v = checkPaper(qs, undefined, '풀이');
+    expect(v.find((x) => x.rule === '형식 구성')?.detail).toBe('풀이가 복잡해 1점 더 받는 문항이 5문항이어야 하는데 4문항입니다.');
+  });
+
   it('유형이 빠지거나 3문항에 못 미치면 잡는다', () => {
     const qs = paper();
     for (const q of qs) if (q.type === '식 설정') q.type = '연산 처리';
@@ -213,11 +255,28 @@ describe('checkPaper', () => {
     expect(heavyUnits({ 가: 6, 나: 6, 다: 6 })).toEqual([]);
   });
 
-  it('단원이 다르면 풀이 뼈대가 같아도 넘어간다', () => {
+  it('단원이 다르면 풀이 묶음으로는 안 걸린다', () => {
     const qs = paper();
     qs[8].group = qs[2].group; // 3번은 1단원, 9번은 2단원
     expect(qs[2].unit).not.toBe(qs[8].unit);
     expect(checkPaper(qs).some((x) => x.rule === '풀이 묶음')).toBe(false);
+  });
+
+  it('단원이 달라도 핵심 풀이가 같으면 잡는다', () => {
+    // 중3-1 의 14번(다항식)과 22번(이차방정식)이 그랬다. 묶음 이름도 뼈대 글도 달랐다.
+    const qs = paper();
+    qs[13].method = 'x ± 1/x 로 x² + 1/x² 을 구해 식을 갈라 넣기';
+    qs[21].method = 'x ± 1/x 로 x² + 1/x² 을 구해 식을 갈라 넣기';
+    expect(qs[13].unit).not.toBe(qs[21].unit);
+    const v = checkPaper(qs).filter((x) => x.rule === '핵심 풀이');
+    expect(v).toHaveLength(1);
+    expect(v[0].detail).toContain('14, 22번이');
+  });
+
+  it('핵심 풀이가 비어 있으면 잡는다', () => {
+    const qs = paper();
+    qs[4].method = ' ';
+    expect(checkPaper(qs).find((x) => x.rule === '핵심 풀이')?.detail).toBe('5번에 핵심 풀이가 없습니다.');
   });
 
   it('풀이 묶음이 비어 있으면 잡는다', () => {
