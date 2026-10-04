@@ -22,6 +22,7 @@
 - `--spread` 단원마다 표준은 한 문항까지, 최상은 한 문항 이상 단원 문항 수의
   절반까지. 앞의 여덟 장이 모두 단원마다 표준으로 열고 최상으로 닫았다
 - `--pin 문항 …` 꼭 넣는다. `--drop 문항 …` 뺀다
+- `--essay-cap N` 원래 주관식을 한 단원에 N 문항까지
 - `--apart "문항,문항,…" …` 묶음이나 핵심 풀이 글은 달라도 풀이가 닮은 문항들.
   한 무리에서 하나만 넣는다. `"2:문항,문항,…"` 처럼 앞에 수를 붙이면 그만큼까지
 """
@@ -42,19 +43,13 @@ PER_SOURCE = 30
 
 
 def plan_of(grade, items):
-    units = list(dict.fromkeys(u for _, _, u in P.files(grade) if u))
-    mixed = [q for q in items if q['letter'] in 'ABCDE']
-    cnt = collections.Counter(q['unit'] for q in mixed)
-    sets = len({q['letter'] for q in mixed}) or 1
-    raw = {u: cnt[u] / sets for u in units}
-    plan = {u: int(v) for u, v in raw.items()}
-    for u in sorted(units, key=lambda u: -(raw[u] - plan[u]))[:30 - sum(plan.values())]:
-        plan[u] += 1
+    # 단원 배분은 pool.py 가 정한다. 한 해짜리는 일곱 벌의 평균이다
+    units, plan, _ = P.plan(grade, items)
     return units, plan
 
 
 def solve(grade, seed=0, countas=(), plan=None, per_source=PER_SOURCE,
-          spread=False, pin=(), drop=(), apart=()):
+          spread=False, pin=(), drop=(), apart=(), essay_cap=0):
     items = P.load(grade)
     units, auto = plan_of(grade, items)
     plan = plan or auto
@@ -117,15 +112,22 @@ def solve(grade, seed=0, countas=(), plan=None, per_source=PER_SOURCE,
         prob += x[index[k]] == 0
     for cap, a in apart:
         prob += pulp.lpSum(x[index[k]] for k in a) <= cap
+    if essay_cap:
+        # 원래 주관식이 한 단원에 몰리지 않게 한다. 초5 에서 합동과 대칭에 셋이 몰렸다
+        for u in plan:
+            prob += pulp.lpSum(x[i] for i, q in enumerate(items) if q['unit'] == u and q['essay']) <= essay_cap
     if spread:
+        # 단원이 최상 문항 수(10)보다 많은 한 해짜리(12단원)는 모든 단원에 최상을
+        # 둘 수 없다. 그때는 최상 하한을 두지 않는다
+        top_min = 1 if len(plan) <= LEVEL_TARGET['최상'] else 0
         for u, n in plan.items():
             lv = lambda L: pulp.lpSum(x[i] for i, q in enumerate(items) if q['unit'] == u and q['level'] == L)
             prob += lv('표준') <= 1
-            prob += lv('최상') >= 1
+            prob += lv('최상') >= top_min
             prob += lv('최상') <= max(1, n // 2)
     for i, q in enumerate(items):
-        for other in re.split(r'[,\s·]+', q['overlap']):
-            j = index.get(other.strip())
+        for other in q.get('overlap_ids') or P.overlap_ids(q['overlap']):
+            j = index.get(other)
             if j is not None and j != i:
                 prob += x[i] + x[j] <= 1
 
@@ -173,9 +175,11 @@ if __name__ == '__main__':
     ap.add_argument('--pin', nargs='*', default=[])
     ap.add_argument('--drop', nargs='*', default=[])
     ap.add_argument('--apart', nargs='*', default=[])
+    ap.add_argument('--essay-cap', type=int, default=0)
     a = ap.parse_args()
     st, plan, out = solve(a.grade, a.seed, tuple(a.countas), per_source=a.per_source, spread=a.spread,
-                          pin=a.pin, drop=a.drop, apart=[parse_apart(g) for g in a.apart])
+                          pin=a.pin, drop=a.drop, apart=[parse_apart(g) for g in a.apart],
+                          essay_cap=a.essay_cap)
     show(st, plan, out)
     if a.out and out:
         json.dump(out, open(a.out, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)

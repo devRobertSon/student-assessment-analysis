@@ -8,6 +8,12 @@
 3단계에 쓸 표(단원 × 난이도, 유형별 개수, A~E 다섯 벌의 단원 배분)를 낸다.
 
 다른 스크립트가 `load(학기)` 로 문항 목록을 가져다 쓴다.
+
+한 해짜리(초5 · 초6)는 두 학기 풀과 한 해짜리 입학 TEST 의 새 문항을 합친다.
+문항 이름 앞에 학기를 붙여 `6-1 단원1-07` · `6-2 심화형-12` · `6 심화형-13` 처럼
+가른다. 두 학기에 같은 이름의 단원(초6 의 분수의 나눗셈 · 소수의 나눗셈)은
+`분수의 나눗셈(1학기)` 처럼 학기를 붙인다. 한 해짜리 입학 TEST 에서 학기 교재와
+그림까지 같은 문항은 다시 읽지 않고 파일 머리의 표로 짝만 적는다.
 """
 import collections
 import io
@@ -22,6 +28,10 @@ LEVELS = ['표준', '상', '최상']
 # A~E 파일 이름과 글자. 단원 TEST 파일은 앞 번호 차례대로 F, G, H … 다
 MIXED = {'입학_심화형': 'A', '총괄_심화': 'B', '총괄_응용': 'C', '입학_일반형': 'D', '총괄_기본': 'E'}
 UNIT_LETTERS = 'FGHIJK'
+# 한 해짜리 시험지와 그 두 학기
+YEAR = {'초5': ['초5-1', '초5-2'], '초6': ['초6-1', '초6-2']}
+# 문항 이름. 한 해짜리에서는 앞에 `6-1 ` 같은 학기가 붙는다
+ID = r'(?:(?<![\d-])(\d-\d|\d) )?((?:단원\d+|심화형|심화|응용|일반형|기본)-\d+)'
 
 
 def _field(body, name):
@@ -55,11 +65,27 @@ def concepts(path):
     """단원 TEST 파일 머리의 개념 목록."""
     raw = io.open(path, encoding='utf-8').read()
     m = re.search(r'이 단원의 개념은 이렇다\.\s*\n\s*\n(.*?)\n\s*\n', raw, re.S)
-    return [c.strip() for c in ' '.join(m.group(1).split()).split('·')] if m else []
+    # 굵은 글씨(**…**)로 적은 목록도 있다. 표시는 떼고 이름만 쓴다
+    return [c.strip().strip('*').strip() for c in ' '.join(m.group(1).split()).split('·')] if m else []
+
+
+def overlap_ids(text, prefix=''):
+    """겹침 표시 글에서 문항 이름을 뽑는다. 학기가 없는 이름에는 prefix 를 붙인다."""
+    out = []
+    for sem, k in re.findall(ID, text or ''):
+        out.append(('%s %s' % (sem, k)) if sem else (prefix + k))
+    return out
 
 
 def load(grade):
     """문항 목록. 문항마다 dict 하나."""
+    if grade in YEAR:
+        return load_year(grade)
+    return load_plain(grade)
+
+
+def load_plain(grade):
+    """{학기}_문항분석 폴더 하나를 그대로 읽는다."""
     out = []
     for path, letter, unit in files(grade):
         raw = io.open(path, encoding='utf-8').read()
@@ -91,18 +117,112 @@ def load(grade):
                 'method': _field(body, '핵심 풀이'),
                 'skel': ' '.join(skel.group(1).split()) if skel else '',
             })
+            out[-1]['overlap_ids'] = overlap_ids(out[-1]['overlap'])
     return out
+
+
+def sem_units(sem):
+    return [u for _, _, u in files(sem) if u]
+
+
+def year_unit(grade, sem, u):
+    """한 해짜리 시험지에 쓰는 단원 이름. 두 학기에 같은 이름이 있으면 학기를 붙인다."""
+    a, b = (sem_units(x) for x in YEAR[grade])
+    if u in a and u in b:
+        return '%s(%s학기)' % (u, sem[-1])
+    return u
+
+
+def year_same(grade):
+    """한 해짜리 입학 TEST 에서 학기 교재와 같은 문항. {(글자, 번호): '6-1 심화형-02'}"""
+    out = {}
+    for path, letter, _ in files(grade):
+        raw = io.open(path, encoding='utf-8').read()
+        for no, other in re.findall(r'^\|\s*\S+-(\d+)\s*\|\s*(\d-\d \S+-\d+)\s*\|', raw, re.M):
+            out[letter, int(no)] = other
+    return out
+
+
+def load_year(grade):
+    out = []
+    for sem in YEAR[grade]:
+        tag = sem[1:]
+        for q in load(sem):
+            q = dict(q)
+            q['id'] = '%s %s' % (tag, q['id'])
+            q['sem'] = sem
+            q['unit'] = year_unit(grade, sem, q['unit'])
+            q['unitSem'] = sem
+            q['overlap_ids'] = overlap_ids(q['overlap'], tag + ' ')
+            out.append(q)
+    tag = grade[1:]
+    for q in load_plain(grade):
+        q = dict(q)
+        m = re.match(r'(\d-\d) (.+)$', q['unit'])
+        sem = '초' + m.group(1) if m else None
+        q['id'] = '%s %s' % (tag, q['id'])
+        q['sem'] = grade
+        q['unit'] = year_unit(grade, sem, m.group(2)) if m else q['unit']
+        q['unitSem'] = sem
+        q['overlap_ids'] = overlap_ids(q['overlap'], tag + ' ')
+        out.append(q)
+    return out
+
+
+def unit_concepts(grade):
+    """{단원 이름: 개념 목록}. 단원 차례대로."""
+    out = {}
+    for sem in YEAR.get(grade, [grade]):
+        for path, letter, unit in files(sem):
+            if unit:
+                out[year_unit(grade, sem, unit) if grade in YEAR else unit] = concepts(path)
+    return out
+
+
+def plan(grade, items=None):
+    """단원별 문항 수(합 30). (단원 차례, {단원: 수}, {단원: 평균}) 을 돌려준다.
+
+    학기 시험지는 A~E 다섯 벌의 평균이다. 한 해짜리는 한 해짜리 입학 TEST 두 벌과,
+    두 학기의 같은 글자를 이어 붙여 반으로 줄인 다섯 벌, 모두 일곱 벌의 평균이다.
+    한 해짜리 입학 TEST 에서 학기 교재와 같은 문항은 짝지은 학기 문항의 단원으로 센다.
+    """
+    items = items if items is not None else load(grade)
+    units = list(unit_concepts(grade))
+    sets = []
+    if grade in YEAR:
+        same = year_same(grade)
+        byid = {q['id']: q for q in items}
+        for L in 'AD':
+            c = collections.Counter(q['unit'] for q in items if q['sem'] == grade and q['letter'] == L)
+            for (l, no), other in same.items():
+                if l == L and other in byid:
+                    c[byid[other]['unit']] += 1
+            sets.append((c, 1.0))
+        for L in 'ABCDE':
+            c = collections.Counter(q['unit'] for q in items
+                                    if q['sem'] in YEAR[grade] and q['letter'] == L)
+            if c:
+                sets.append((c, 0.5))
+    else:
+        for L in 'ABCDE':
+            c = collections.Counter(q['unit'] for q in items if q['letter'] == L)
+            if c:
+                sets.append((c, 1.0))
+    n = len(sets) or 1
+    raw = {u: sum(c[u] * w for c, w in sets) / n for u in units}
+    cnt = {u: int(v) for u, v in raw.items()}
+    for u in sorted(units, key=lambda u: -(raw[u] - cnt[u]))[:30 - sum(cnt.values())]:
+        cnt[u] += 1
+    return units, cnt, raw
 
 
 def check(grade):
     pool = load(grade)
     bad = []
-    units = {}
-    for path, letter, unit in files(grade):
-        if unit:
-            units[unit] = concepts(path)
-            if not units[unit]:
-                bad.append('%s: 개념 목록이 없다' % os.path.basename(path))
+    units = unit_concepts(grade)
+    for u, cs in units.items():
+        if not cs:
+            bad.append('%s: 개념 목록이 없다' % u)
     seen = collections.Counter(q['id'] for q in pool)
     for k, n in seen.items():
         if n > 1:
@@ -152,17 +272,10 @@ def report(grade):
     subs = collections.Counter(q['sub'] for q in pool)
     for t in TYPES:
         print('   %-6s 주 %3d · 부 %3d' % (t, mains[t], subs[t]))
-    mixed = [q for q in pool if q['letter'] in 'ABCDE']
-    if mixed:
-        print('\nA~E 다섯 벌의 단원 배분 (30문항 환산, 큰 나머지부터 올림)')
-        cnt = collections.Counter(q['unit'] for q in mixed)
-        sets = len({q['letter'] for q in mixed})
-        raw = {u: cnt[u] / sets for u in units}
-        plan = {u: int(v) for u, v in raw.items()}
-        for u in sorted(units, key=lambda u: -(raw[u] - plan[u]))[:30 - sum(plan.values())]:
-            plan[u] += 1
-        for u in units:
-            print('   %-18s 합 %3d · 평균 %4.1f → %d' % (u, cnt[u], raw[u], plan[u]))
+    order, cnt, raw = plan(grade, pool)
+    print('\n단원 배분 (30문항 환산, 큰 나머지부터 올림)')
+    for u in order:
+        print('   %-18s 평균 %4.1f → %d' % (u, raw[u], cnt[u]))
     print('\n점검: %s' % ('어긋난 것 없음' if not bad else '%d건' % len(bad)))
     for b in bad:
         print('   !! ' + b)
