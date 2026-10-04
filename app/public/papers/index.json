@@ -1,6 +1,72 @@
 {
   "groups": [
     {
+      "name": "초5 진단평가",
+      "files": [
+        {
+          "kind": "시험지",
+          "label": "시험지 CSV",
+          "file": "초5_진단평가_시험지.csv",
+          "ext": "csv",
+          "size": 4689
+        },
+        {
+          "kind": "문제지",
+          "label": "문제지 PDF",
+          "file": "초5_진단평가_문제지.pdf",
+          "ext": "pdf",
+          "size": 1932639
+        },
+        {
+          "kind": "해설",
+          "label": "해설 PDF",
+          "file": "초5_진단평가_해설.pdf",
+          "ext": "pdf",
+          "size": 1487627
+        },
+        {
+          "kind": "출제표",
+          "label": "출제표 CSV",
+          "file": "초5_진단평가_출제표.csv",
+          "ext": "csv",
+          "size": 3709
+        }
+      ]
+    },
+    {
+      "name": "초6 진단평가",
+      "files": [
+        {
+          "kind": "시험지",
+          "label": "시험지 CSV",
+          "file": "초6_진단평가_시험지.csv",
+          "ext": "csv",
+          "size": 4699
+        },
+        {
+          "kind": "문제지",
+          "label": "문제지 PDF",
+          "file": "초6_진단평가_문제지.pdf",
+          "ext": "pdf",
+          "size": 2633178
+        },
+        {
+          "kind": "해설",
+          "label": "해설 PDF",
+          "file": "초6_진단평가_해설.pdf",
+          "ext": "pdf",
+          "size": 1411413
+        },
+        {
+          "kind": "출제표",
+          "label": "출제표 CSV",
+          "file": "초6_진단평가_출제표.csv",
+          "ext": "csv",
+          "size": 3719
+        }
+      ]
+    },
+    {
       "name": "초6-1 진단평가",
       "files": [
         {

@@ -23,8 +23,14 @@ const LEVEL_HUE: Record<string, [string, string]> = {
   [NO_LEVEL]: ['#e4e6ea', '#5b606b'],
 };
 
-/** 단원 띠에 돌려 쓰는 색. 뜻이 없는 구분용이라 이름을 항상 함께 적는다. */
-const UNIT_HUES = ['#16224e', '#3c5a9a', '#5b8fc9', '#8fb5d8', '#bcd3e8', '#9c8fc4', '#c08bb0', '#d9a066'];
+/**
+ * 단원 띠에 돌려 쓰는 색. 뜻이 없는 구분용이라 이름을 항상 함께 적는다.
+ * 초5 · 초6 은 한 해 12단원이라 열두 색을 둔다. 앞 여덟 색은 그대로다.
+ */
+const UNIT_HUES = [
+  '#16224e', '#3c5a9a', '#5b8fc9', '#8fb5d8', '#bcd3e8', '#9c8fc4', '#c08bb0', '#d9a066',
+  '#4f8a6e', '#9cc3a4', '#b5863f', '#7d5a4a',
+];
 
 const levelOf = (q: ExamQuestion) => q.level?.trim() || NO_LEVEL;
 const unitOf = (q: ExamQuestion) => q.unit?.trim() || '단원 없음';
