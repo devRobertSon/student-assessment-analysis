@@ -23,6 +23,7 @@ import {
   statsForResult,
   todayStr,
 } from '../lib/assessment';
+import { sortExams } from '../lib/examOrder';
 import { rateTag } from './TypeRadar';
 import ConfirmDialog from './ConfirmDialog';
 import Select from './Select';
@@ -286,7 +287,7 @@ ${listNos(left)}`
                     if (await okToDiscard()) setExamId(v);
                   }}
                   disabled={!studentId}
-                  options={data.exams.map((ex) => ({
+                  options={sortExams(data.exams).map((ex) => ({
                     value: ex.id,
                     label: ex.title,
                     note: `${ex.questions.length}문항`,

@@ -1,5 +1,6 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { AssessmentData, splitTypes } from '../lib/assessment';
+import { sortExams } from '../lib/examOrder';
 import ExamFiles from './ExamFiles';
 import ExamComposition from './ExamComposition';
 
@@ -15,6 +16,8 @@ interface Props {
  */
 export default function ExamManager({ data }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
+  // 들어온 차례가 아니라 과목별 · 학년별로 보여 준다
+  const exams = useMemo(() => sortExams(data.exams), [data.exams]);
 
   return (
     <div className="assess-pane">
@@ -51,7 +54,7 @@ export default function ExamManager({ data }: Props) {
               </tr>
             </thead>
             <tbody>
-              {data.exams.map((ex) => (
+              {exams.map((ex) => (
                 <Fragment key={ex.id}>
                   <tr>
                     <td>{ex.title}</td>
