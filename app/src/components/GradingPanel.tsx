@@ -177,9 +177,19 @@ export default function GradingPanel({ data, setData }: Props) {
   const fullPoints = exam ? exam.questions.reduce((a, q) => a + pointsOf(q), 0) : 0;
   // 세 칸 채점 시험지인가. 과학 영재성평가처럼 전부 서술형인 시험지가 이것을 쓴다.
   const threeWay = exam?.grading === 'half';
-  // 채점 격자의 줄 수. 넓은 화면에서 한 줄에 두 칸 채점은 5문항, 세 칸 채점은
-  // 4문항이 들어간다(styles.css 의 .ox-grid). 번호를 세로로 매기려면 줄 수를 안다
-  const oxRows = Math.max(1, Math.ceil((exam?.questions.length ?? 0) / (threeWay ? 4 : 5)));
+  // 채점 격자. 번호를 세로로 매기고 한 세로줄에 넣을 문항 수를 정해 둔다
+  // (2026-10-06 원장님 말씀). 넓을 때는 두 칸 채점 5문항(30문항이면 여섯 줄),
+  // 세 칸 채점 8문항(32문항이면 네 줄), 휴대폰처럼 좁을 때는 10문항이다.
+  // 넓고 좁음은 styles.css 의 .ox-wrap 이 칸이 놓인 자리의 폭으로 가른다.
+  const oxCount = exam?.questions.length ?? 0;
+  const oxPerWide = threeWay ? 8 : 5;
+  const oxPerNarrow = 10;
+  const oxVars = {
+    '--rows-w': oxPerWide,
+    '--cols-w': Math.max(1, Math.ceil(oxCount / oxPerWide)),
+    '--rows-n': oxPerNarrow,
+    '--cols-n': Math.max(1, Math.ceil(oxCount / oxPerNarrow)),
+  } as CSSProperties;
 
   const save = async () => {
     if (!studentId || !exam) {
@@ -338,13 +348,10 @@ ${listNos(left)}`
                   </button>
                 </div>
 
-                {/* 번호는 세로로 매긴다(1~6 이 첫 칸). 줄 수를 넘겨 주면 CSS 가
-                    칸마다 위에서 아래로 채운다. 넓은 화면의 칸 수(두 칸 채점 5,
-                    세 칸 채점 4)로 센 줄 수다. */}
-                <div
-                  className={`ox-grid ${threeWay ? 'three' : ''}`}
-                  style={{ '--ox-rows': oxRows } as CSSProperties}
-                >
+                {/* 번호는 세로로 매긴다. 한 세로줄의 문항 수와 줄 수를 넘겨 주면
+                    CSS 가 줄마다 위에서 아래로 채운다(oxVars). */}
+                <div className="ox-wrap">
+                <div className={`ox-grid ${threeWay ? 'three' : ''}`} style={oxVars}>
                   {exam.questions.map((q, i) => {
                     const v = cells[q.no];
                     const pts = pointsOf(q);
@@ -353,11 +360,14 @@ ${listNos(left)}`
                         key={q.no}
                         /* 한 문항도 안 누른 처음에는 표시하지 않는다. 서른 개가
                            모두 켜지면 '안 누른 것'을 짚어 주는 뜻이 사라진다.
-                           band 는 짝수째 칸(7~12, 19~24)이다. 바탕을 깔아 세는
-                           자리를 잃지 않게 한다. */
+                           band-w · band-n 은 넓을 때 · 좁을 때 짝수째 세로줄이다
+                           (6~10, 16~20 / 11~20). 바탕을 깔아 세는 자리를 잃지
+                           않게 한다. */
                         className={`ox-item ${isEssay(q) ? 'essay' : ''} ${
                           entered > 0 && (v === null || v === undefined) ? 'blank' : ''
-                        } ${Math.floor(i / oxRows) % 2 === 1 ? 'band' : ''}`}
+                        } ${Math.floor(i / oxPerWide) % 2 === 1 ? 'band-w' : ''} ${
+                          Math.floor(i / oxPerNarrow) % 2 === 1 ? 'band-n' : ''
+                        }`}
                       >
                         <span className="ox-no">{q.no}</span>
                         <span className="ox-btns">
@@ -391,6 +401,7 @@ ${listNos(left)}`
                       </div>
                     );
                   })}
+                </div>
                 </div>
               </>
             )}
