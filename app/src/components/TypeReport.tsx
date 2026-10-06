@@ -16,6 +16,7 @@ import {
 import { logoUrl, sealUrl } from '../lib/brand';
 import { ask, notify } from '../lib/notice';
 import { setLeaveGuard } from '../lib/leaveGuard';
+import { readSession, writeSession } from '../lib/sessionState';
 import TypeRadar from './TypeRadar';
 import { autoSummary } from '../lib/summary';
 import DatePicker from './DatePicker';
@@ -79,6 +80,17 @@ interface Props {
 
 /** 기간 고르는 방식. custom 일 때만 날짜 두 칸이 나온다. */
 type RangeMode = 'all' | 'm3' | 'm6' | 'year' | 'custom';
+
+/** 고른 과목 · 응시 · 기간. F5 로 새로 불러와도 되살리려고 적어 둔다. */
+interface ReportPick {
+  /** 고를 때의 학생과 응시 목록. 이것이 그대로일 때만 되살린다. */
+  of: string;
+  subject: string;
+  ids: string[];
+  rangeMode: RangeMode;
+  fromDate: string;
+  toDate: string;
+}
 
 // 인쇄물에만 쓰이고 저장하지 않는 입력들
 interface SessionFields {
@@ -144,7 +156,33 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
     [studentResults, examById, subject]
   );
 
+  /**
+   * F5 로 새로 불러오기 전에 고른 것. 열 때 한 번 읽는다.
+   *
+   * 학생과 응시 목록이 고를 때와 같을 때만 되살린다. 그사이 새로 채점한
+   * 시험이 있으면 처음처럼 마지막 과목을 전부 고른다. 되살린 목록에는 새
+   * 시험이 빠져 있어, 모르고 인쇄하면 리포트에서 그 시험이 빠진다.
+   */
+  const [restore] = useState(() => readSession<ReportPick | null>('report', null));
+  const resultsKey = `${studentId}:${studentResults.map((r) => r.id).join(',')}`;
+  // 되살린 때의 목록. 한 번 다른 학생으로 옮겨 가면 다시 되살리지 않는다.
+  // 개발 모드(StrictMode)는 아래 효과를 두 번 돌리므로 같은 목록이면 한 번 더 되살린다.
+  const restoredAt = useRef<string | null>(null);
+
   useEffect(() => {
+    if (
+      restore?.of === resultsKey &&
+      (restoredAt.current === null || restoredAt.current === resultsKey)
+    ) {
+      restoredAt.current = resultsKey;
+      setSubject(restore.subject);
+      setSelectedIds(new Set(restore.ids));
+      setRangeMode(restore.rangeMode);
+      setFromDate(restore.fromDate);
+      setToDate(restore.toDate);
+      return;
+    }
+    restoredAt.current = '';
     setFromDate('');
     setToDate('');
     setRangeMode('all');
@@ -154,7 +192,12 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
       : '';
     setSubject(last);
     setSelectedIds(new Set(studentResults.filter((r) => (examById.get(r.examId)?.subject ?? '기타') === last).map((r) => r.id)));
-  }, [studentId, studentResults.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [resultsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const pick: ReportPick = { of: resultsKey, subject, ids: [...selectedIds], rangeMode, fromDate, toDate };
+    writeSession('report', pick);
+  }, [resultsKey, subject, selectedIds, rangeMode, fromDate, toDate]);
 
   /** 과목을 바꾸면 그 과목을 전부 고른 상태에서 시작한다. */
   const pickSubject = (s: string) => {

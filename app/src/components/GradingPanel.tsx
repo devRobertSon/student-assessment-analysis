@@ -24,6 +24,7 @@ import {
   todayStr,
 } from '../lib/assessment';
 import { sortExams } from '../lib/examOrder';
+import { useSessionState } from '../lib/sessionState';
 import { rateTag } from './TypeRadar';
 import ConfirmDialog from './ConfirmDialog';
 import Select from './Select';
@@ -53,8 +54,10 @@ function listNos(nos: number[], max = 24): string {
 }
 
 export default function GradingPanel({ data, setData }: Props) {
-  const [studentId, setStudentId] = useState('');
-  const [examId, setExamId] = useState('');
+  // 고른 학생 · 시험지는 F5 로 새로 불러와도 남는다. 입력하던 칸은 남지 않는다
+  // (저장하기 전에는 새로고침할 때 한 번 묻는다).
+  const [studentId, setStudentId] = useSessionState('grading.student', '');
+  const [examId, setExamId] = useSessionState('grading.exam', '');
   const [cells, setCells] = useState<Record<number, Cell>>({});
   const [date, setDate] = useState(todayStr());
   const [axis, setAxis] = useState<Axis>('type');

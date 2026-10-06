@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   AssessmentData,
   MEMO_MAX,
@@ -18,6 +18,7 @@ import ConfirmDialog from './ConfirmDialog';
 import CounselCopy from './CounselCopy';
 import Select from './Select';
 import { ask } from '../lib/notice';
+import { useSessionState } from '../lib/sessionState';
 
 const GRADES = ['초3', '초4', '초5', '초6', '중1', '중2', '중3', '고1', '고2', '고3'];
 const DEFAULT_GRADE = '중1';
@@ -77,11 +78,20 @@ export default function StudentManager({
    * 여러 번 본 학생은 시험마다 결과가 다르다. 합쳐 놓으면 어느 시험의 그림인지
    * 알 수 없고, 수학과 과학을 같이 놓으면 재는 유형이 달라 한 그림에 섞인다.
    * 줄 앞을 눌러 번갈아 본다. 처음에는 마지막으로 본 시험이 잡힌다.
+   *
+   * 고른 것은 F5 로 새로 불러와도 남는다. 다만 고를 때의 응시 목록(of)과 함께
+   * 적어 두고, 학생이 바뀌거나 응시가 늘고 줄면 다시 마지막 시험으로 돌아간다.
+   * 새로 채점하고 들어왔는데 예전 시험이 잡혀 있으면 안 된다.
    */
-  const [pickedId, setPickedId] = useState('');
-  useEffect(() => {
-    setPickedId(studentResults.length ? studentResults[studentResults.length - 1].id : '');
-  }, [selectedId, studentResults.length]);
+  const [shownResult, setShownResult] = useSessionState('student.result', { id: '', of: '' });
+  const resultsKey = `${selectedId}:${studentResults.map((r) => r.id).join(',')}`;
+  const pickedId =
+    shownResult.of === resultsKey
+      ? shownResult.id
+      : studentResults.length
+        ? studentResults[studentResults.length - 1].id
+        : '';
+  const setPickedId = (id: string) => setShownResult({ id, of: resultsKey });
   const picked = studentResults.find((r) => r.id === pickedId);
 
   const view = useMemo(() => {

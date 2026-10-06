@@ -13,6 +13,7 @@ import TypeReport from './components/TypeReport';
 import ManualPage from './components/ManualPage';
 import TypesPage from './components/TypesPage';
 import { canLeave } from './lib/leaveGuard';
+import { useSessionState } from './lib/sessionState';
 
 type View = 'home' | 'students' | 'exams' | 'grading' | 'report' | 'types' | 'manual';
 
@@ -46,8 +47,9 @@ export default function App() {
     const want = view === 'home' ? '' : `#${view}`;
     if (hash !== want) window.history.replaceState(null, '', pathname + search + want);
   }, [view]);
-  // 학생 선택은 학생 화면·채점·리포트가 함께 쓰므로 여기에서 들고 있는다.
-  const [studentId, setStudentId] = useState('');
+  // 학생 선택은 학생 화면·리포트가 함께 쓰므로 여기에서 들고 있는다.
+  // F5 로 새로 불러와도 고른 학생이 남는다.
+  const [studentId, setStudentId] = useSessionState('student', '');
   const fileRef = useRef<HTMLInputElement>(null);
   // 시험지는 저장소의 papers/ 에서만 들어온다.
   const dataRef = useRef(data);
