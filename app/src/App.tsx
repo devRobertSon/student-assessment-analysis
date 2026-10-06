@@ -26,13 +26,26 @@ const NAV: { key: View; label: string }[] = [
   { key: 'manual', label: '사용법' },
 ];
 
+/** 주소 끝(#grading)에서 보던 화면을 읽는다. 없거나 모르는 이름이면 홈. */
+function viewFromHash(): View {
+  const key = window.location.hash.slice(1);
+  return NAV.some((t) => t.key === key) ? (key as View) : 'home';
+}
+
 export default function App() {
   const { value: data, setValue: setData, status: cloudStatus } = useCloudDoc(
     CLOUD_DOC,
     loadAssessment,
     saveAssessment
   );
-  const [view, setView] = useState<View>('home');
+  const [view, setView] = useState<View>(viewFromHash);
+  // F5 로 새로 불러와도 보던 화면에 머물도록 주소 끝에 적어 둔다. 방문 기록은
+  // 쌓지 않고 바꿔 적기만 하므로, 뒤로 가기는 전처럼 사이트를 떠난다.
+  useEffect(() => {
+    const { pathname, search, hash } = window.location;
+    const want = view === 'home' ? '' : `#${view}`;
+    if (hash !== want) window.history.replaceState(null, '', pathname + search + want);
+  }, [view]);
   // 학생 선택은 학생 화면·채점·리포트가 함께 쓰므로 여기에서 들고 있는다.
   const [studentId, setStudentId] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
