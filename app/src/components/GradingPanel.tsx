@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import { ask, notify } from '../lib/notice';
 import { setLeaveGuard } from '../lib/leaveGuard';
 import {
@@ -177,6 +177,9 @@ export default function GradingPanel({ data, setData }: Props) {
   const fullPoints = exam ? exam.questions.reduce((a, q) => a + pointsOf(q), 0) : 0;
   // 세 칸 채점 시험지인가. 과학 영재성평가처럼 전부 서술형인 시험지가 이것을 쓴다.
   const threeWay = exam?.grading === 'half';
+  // 채점 격자의 줄 수. 넓은 화면에서 한 줄에 두 칸 채점은 5문항, 세 칸 채점은
+  // 4문항이 들어간다(styles.css 의 .ox-grid). 번호를 세로로 매기려면 줄 수를 안다
+  const oxRows = Math.max(1, Math.ceil((exam?.questions.length ?? 0) / (threeWay ? 4 : 5)));
 
   const save = async () => {
     if (!studentId || !exam) {
@@ -335,18 +338,26 @@ ${listNos(left)}`
                   </button>
                 </div>
 
-                <div className={`ox-grid ${threeWay ? 'three' : ''}`}>
-                  {exam.questions.map((q) => {
+                {/* 번호는 세로로 매긴다(1~6 이 첫 칸). 줄 수를 넘겨 주면 CSS 가
+                    칸마다 위에서 아래로 채운다. 넓은 화면의 칸 수(두 칸 채점 5,
+                    세 칸 채점 4)로 센 줄 수다. */}
+                <div
+                  className={`ox-grid ${threeWay ? 'three' : ''}`}
+                  style={{ '--ox-rows': oxRows } as CSSProperties}
+                >
+                  {exam.questions.map((q, i) => {
                     const v = cells[q.no];
                     const pts = pointsOf(q);
                     return (
                       <div
                         key={q.no}
                         /* 한 문항도 안 누른 처음에는 표시하지 않는다. 서른 개가
-                           모두 켜지면 '안 누른 것'을 짚어 주는 뜻이 사라진다. */
+                           모두 켜지면 '안 누른 것'을 짚어 주는 뜻이 사라진다.
+                           band 는 짝수째 칸(7~12, 19~24)이다. 바탕을 깔아 세는
+                           자리를 잃지 않게 한다. */
                         className={`ox-item ${isEssay(q) ? 'essay' : ''} ${
                           entered > 0 && (v === null || v === undefined) ? 'blank' : ''
-                        }`}
+                        } ${Math.floor(i / oxRows) % 2 === 1 ? 'band' : ''}`}
                       >
                         <span className="ox-no">{q.no}</span>
                         <span className="ox-btns">

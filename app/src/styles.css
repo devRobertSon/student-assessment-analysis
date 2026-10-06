@@ -434,27 +434,26 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 /* 번호와 O/X만 두어 한 줄에 여러 문항이 들어가게 한다. 답안지를 보며
    번호만 따라 내려가면 되므로 유형 이름은 여기서 읽을 일이 없다. */
 /* 한 줄에 다섯 문항으로 고정한다. auto-fill 로 두면 채점하는 동안 오른쪽 집계가
-   길어지면서 이 칸이 좁아져 한 줄에 일곱 개이던 것이 여섯 개로 바뀐다. */
-.ox-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px 10px; }
+   길어지면서 이 칸이 좁아져 한 줄에 일곱 개이던 것이 여섯 개로 바뀐다.
+   번호는 세로로 매긴다. 칸마다 위에서 아래로 1~6, 7~12 … 가 이어진다
+   (2026-10-06 원장님 말씀). 줄 수는 JSX 가 --ox-rows 로 넘긴다. */
+.ox-grid {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows: repeat(var(--ox-rows, 6), auto); grid-auto-flow: column; gap: 6px 10px;
+}
 .ox-item { display: flex; align-items: center; gap: 7px; padding: 5px 7px; border-radius: 8px; background: var(--fill); }
-/* 한 줄씩 번갈아 바탕을 깔아 세는 자리를 잃지 않게 한다. 줄 수가 화면 폭에
-   따라 달라지므로 JSX 에서 세지 않고 nth-child 로 잡는다. 다섯 칸일 때
-   두 번째 줄은 6~10, 네 번째 줄은 16~20 이다. */
-.ox-item:nth-child(10n + 6),
-.ox-item:nth-child(10n + 7),
-.ox-item:nth-child(10n + 8),
-.ox-item:nth-child(10n + 9),
-.ox-item:nth-child(10n) { background: #e4e8f0; }
+/* 이어지는 번호가 한 칸(세로)에 모이므로 칸마다 번갈아 바탕을 깔아 세는 자리를
+   잃지 않게 한다. 다섯 칸일 때 둘째 칸은 7~12, 넷째 칸은 19~24 다. 어느 칸이
+   짝수째인지는 JSX 가 band 로 단다. */
+.ox-item.band { background: #e4e8f0; }
 
 /* 휴대폰에서는 한 칸이 100px 은 되어야 번호와 O·X 가 들어간다. 다섯 칸은
-   들어가지 않으므로 두 칸으로 내리고, 띠도 두 칸 기준으로 다시 잡는다. */
+   들어가지 않으므로 두 칸으로 내린다. 두 칸에서 세로로 매기면 1~15 를 다
+   내려갔다가 16 을 찾아 다시 올라와야 하므로 좁은 화면은 가로로 매기고,
+   띠도 두 칸 기준 줄 띠로 다시 잡는다. */
 @media (max-width: 640px) {
-  .ox-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ox-item:nth-child(10n + 6),
-  .ox-item:nth-child(10n + 7),
-  .ox-item:nth-child(10n + 8),
-  .ox-item:nth-child(10n + 9),
-  .ox-item:nth-child(10n) { background: var(--fill); }
+  .ox-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; grid-auto-flow: row; }
+  .ox-item.band { background: var(--fill); }
   .ox-item:nth-child(4n + 3),
   .ox-item:nth-child(4n + 4) { background: #e4e8f0; }
 }
@@ -466,28 +465,17 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .ox-x.on { color: #fff; background: var(--bad-ink); border-color: var(--bad-ink); }
 /* 세 칸 채점: 단추가 하나 더 붙으므로 한 칸이 그만큼 넓어진다. 다섯 칸을
    지키려고 단추를 좁히면 손가락으로 누르기 어려워지므로, 한 줄에 네 문항으로
-   줄이고 단추 크기는 그대로 둔다. 띠도 네 칸 기준으로 다시 잡는다. */
+   줄이고 단추 크기는 그대로 둔다. 줄 수와 띠는 JSX 가 네 칸 기준으로 센다. */
 .ox-grid.three { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.ox-grid.three .ox-item:nth-child(10n + 6),
-.ox-grid.three .ox-item:nth-child(10n + 7),
-.ox-grid.three .ox-item:nth-child(10n + 8),
-.ox-grid.three .ox-item:nth-child(10n + 9),
-.ox-grid.three .ox-item:nth-child(10n) { background: var(--fill); }
-.ox-grid.three .ox-item:nth-child(8n + 5),
-.ox-grid.three .ox-item:nth-child(8n + 6),
-.ox-grid.three .ox-item:nth-child(8n + 7),
-.ox-grid.three .ox-item:nth-child(8n) { background: #e4e8f0; }
 
-/* 휴대폰에서는 세 칸도 두 칸 격자를 쓴다. **이 블록은 위 네 칸 규칙보다
+/* 휴대폰에서는 세 칸도 한 칸 격자를 쓴다. **이 블록은 위 네 칸 규칙보다
    뒤에 와야 한다.** 굵기가 같아서 앞에 두면 네 칸 규칙에 덮인다. */
 @media (max-width: 640px) {
   /* 한 칸에 112px 뿐인데 번호와 단추 셋은 155px 을 쓴다. 단추를 좁혀 맞추면
      24px 까지 줄어 누르기 어려워지므로 한 줄에 한 문항만 둔다. */
   .ox-grid.three { grid-template-columns: 1fr; }
-  .ox-grid.three .ox-item:nth-child(8n + 5),
-  .ox-grid.three .ox-item:nth-child(8n + 6),
-  .ox-grid.three .ox-item:nth-child(8n + 7),
-  .ox-grid.three .ox-item:nth-child(8n) { background: var(--fill); }
+  .ox-grid.three .ox-item:nth-child(4n + 3),
+  .ox-grid.three .ox-item:nth-child(4n + 4) { background: var(--fill); }
   .ox-grid.three .ox-item:nth-child(even) { background: #e4e8f0; }
   /* 도구 줄이 좁아 한 글자씩 세로로 접힌다. 머리글이 같은 말을 이미 하므로 뺀다. */
   .ox-hint { display: none; }
