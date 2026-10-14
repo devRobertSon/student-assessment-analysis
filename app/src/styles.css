@@ -1070,6 +1070,19 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
 .sel-field:disabled { color: var(--ink-3); background: var(--fill); }
 .sel-field.empty span { color: var(--ink-3); font-weight: 400; }
 .sel-field svg { flex: none; color: var(--ink-3); }
+/* 글자를 쳐서 찾는 칸. 바깥 틀은 고르는 칸과 같고, 안의 입력 칸은 테두리 없이
+   틀에 녹아든다. 초점 테두리는 입력 칸이 아니라 틀에 그린다. */
+.sel-find { cursor: text; }
+.sel-find:focus-within { outline: 2px solid var(--navy); outline-offset: -1px; }
+/* 입력 칸은 제 너비(글자 스무 자쯤)를 가져 틀이 옆 칸보다 훨씬 넓어진다.
+   이름 여덟 자쯤으로 맞춘다. */
+.sel-find input[type='text'] {
+  flex: 1; width: 8em; min-width: 0; padding: 0; border: 0; border-radius: 0; outline: none;
+  background: transparent; font-size: 14px; font-weight: 500; color: var(--ink);
+}
+.sel-find input[type='text']::placeholder { color: var(--ink-3); font-weight: 400; }
+.sel-find.off { background: var(--fill); cursor: default; }
+.sel-find.off input[type='text'] { color: var(--ink-3); }
 
 .sel-pop {
   position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; min-width: 100%;

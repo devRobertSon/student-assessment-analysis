@@ -17,12 +17,14 @@ import { useSessionState } from './lib/sessionState';
 
 type View = 'home' | 'students' | 'exams' | 'grading' | 'report' | 'types' | 'manual';
 
+// 메뉴 차례는 하는 일의 차례다. 학생을 고르고 리포트를 보고, 채점하고, 시험지는
+// 가끔 본다(2026-10-14 원장님 말씀).
 const NAV: { key: View; label: string }[] = [
   { key: 'home', label: '홈' },
   { key: 'students', label: '학생' },
-  { key: 'exams', label: '시험지' },
-  { key: 'grading', label: '채점' },
   { key: 'report', label: '리포트' },
+  { key: 'grading', label: '채점' },
+  { key: 'exams', label: '시험지' },
   { key: 'types', label: '유형 분석' },
   { key: 'manual', label: '사용법' },
 ];
@@ -47,8 +49,8 @@ export default function App() {
     const want = view === 'home' ? '' : `#${view}`;
     if (hash !== want) window.history.replaceState(null, '', pathname + search + want);
   }, [view]);
-  // 학생 선택은 학생 화면·리포트가 함께 쓰므로 여기에서 들고 있는다.
-  // F5 로 새로 불러와도 고른 학생이 남는다.
+  // 학생 선택은 학생 화면·리포트·채점이 함께 쓰므로 여기에서 들고 있는다.
+  // 한 화면에서 고르면 다른 화면에도 그 학생이 잡혀 있다. F5 로 새로 불러와도 남는다.
   const [studentId, setStudentId] = useSessionState('student', '');
   const fileRef = useRef<HTMLInputElement>(null);
   // 시험지는 저장소의 papers/ 에서만 들어온다.
@@ -160,7 +162,7 @@ export default function App() {
       {view === 'grading' && (
         <main className="pane">
           <section className="assess-card">
-            <GradingPanel data={data} setData={setData} />
+            <GradingPanel data={data} setData={setData} studentId={studentId} setStudentId={setStudentId} />
           </section>
         </main>
       )}

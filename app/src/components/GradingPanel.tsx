@@ -25,6 +25,7 @@ import {
 } from '../lib/assessment';
 import { sortExams } from '../lib/examOrder';
 import { useSessionState } from '../lib/sessionState';
+import { sortStudents } from '../lib/studentOrder';
 import { rateTag } from './TypeRadar';
 import ConfirmDialog from './ConfirmDialog';
 import Select from './Select';
@@ -33,6 +34,9 @@ import DatePicker from './DatePicker';
 interface Props {
   data: AssessmentData;
   setData: (d: AssessmentData) => void;
+  /** 고른 학생. [학생] · [리포트] 와 함께 쓴다(App 이 들고 있다). */
+  studentId: string;
+  setStudentId: (id: string) => void;
 }
 
 // 칸에 담기는 값은 '득점'이다. 객관식은 0 아니면 배점,
@@ -53,11 +57,16 @@ function listNos(nos: number[], max = 24): string {
   return nos.slice(0, max).join(', ') + `번 외 ${nos.length - max}문항`;
 }
 
-export default function GradingPanel({ data, setData }: Props) {
-  // 고른 학생 · 시험지는 F5 로 새로 불러와도 남는다. 입력하던 칸은 남지 않는다
-  // (저장하기 전에는 새로고침할 때 한 번 묻는다).
-  const [studentId, setStudentId] = useSessionState('grading.student', '');
-  const [examId, setExamId] = useSessionState('grading.exam', '');
+export default function GradingPanel({ data, setData, studentId, setStudentId }: Props) {
+  // 학생은 [학생] · [리포트] 와 같은 학생이다. [학생]에서 고르고 [채점]으로 오면
+  // 그 학생이 잡혀 있어 시험지만 고르면 된다(2026-10-14 원장님 말씀).
+  //
+  // 시험지는 그 학생에게 고른 것만 남긴다. 학생이 바뀌면(여기서든 다른 화면에서든)
+  // 처음처럼 비운다. 고른 학생 · 시험지는 F5 로 새로 불러와도 남는다. 입력하던
+  // 칸은 남지 않는다(저장하기 전에는 새로고침할 때 한 번 묻는다).
+  const [examPick, setExamPick] = useSessionState('grading.examFor', { examId: '', studentId: '' });
+  const examId = examPick.studentId === studentId ? examPick.examId : '';
+  const setExamId = (id: string) => setExamPick({ examId: id, studentId });
   const [cells, setCells] = useState<Record<number, Cell>>({});
   const [date, setDate] = useState(todayStr());
   const [axis, setAxis] = useState<Axis>('type');
@@ -283,15 +292,21 @@ ${listNos(left)}`
             <div className="assess-row wrap">
               <label className="assess-field">
                 학생
+                {/* 이름을 쳐서 찾는다. 목록은 가나다 차례이고, 동명이인을 가리도록
+                    학교와 학년을 곁에 적는다. 학생이 바뀌면 시험지는 저절로 비워진다. */}
                 <Select
                   label="학생"
+                  searchable
+                  placeholder="이름을 입력하세요"
                   value={studentId}
                   onChange={async (v) => {
-                    if (!(await okToDiscard())) return;
-                    setStudentId(v);
-                    setExamId('');
+                    if (await okToDiscard()) setStudentId(v);
                   }}
-                  options={data.students.map((s) => ({ value: s.id, label: s.name, note: s.grade }))}
+                  options={sortStudents(data.students).map((s) => ({
+                    value: s.id,
+                    label: s.name,
+                    note: [s.school, s.grade].filter(Boolean).join(' '),
+                  }))}
                 />
               </label>
               <label className="assess-field">

@@ -19,6 +19,7 @@ import CounselCopy from './CounselCopy';
 import Select from './Select';
 import { ask } from '../lib/notice';
 import { useSessionState } from '../lib/sessionState';
+import { sortStudents } from '../lib/studentOrder';
 
 const GRADES = ['초3', '초4', '초5', '초6', '중1', '중2', '중3', '고1', '고2', '고3'];
 const DEFAULT_GRADE = '중1';
@@ -65,7 +66,8 @@ export default function StudentManager({
     setSideOpen(false);
   };
 
-  const shown = data.students.filter((s) => s.name.includes(query.trim()));
+  // 등록한 차례가 아니라 가나다 차례로 보인다(2026-10-14 원장님 말씀).
+  const shown = sortStudents(data.students).filter((s) => s.name.includes(query.trim()));
 
   const studentResults = useMemo(
     () => data.results.filter((r) => r.studentId === selectedId).sort((a, b) => a.date.localeCompare(b.date)),

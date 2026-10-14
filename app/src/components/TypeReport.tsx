@@ -17,6 +17,7 @@ import { logoUrl, sealUrl } from '../lib/brand';
 import { ask, notify } from '../lib/notice';
 import { setLeaveGuard } from '../lib/leaveGuard';
 import { readSession, writeSession } from '../lib/sessionState';
+import { sortStudents } from '../lib/studentOrder';
 import TypeRadar from './TypeRadar';
 import { autoSummary } from '../lib/summary';
 import DatePicker from './DatePicker';
@@ -525,12 +526,18 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
           {/* '학생' 이라는 라벨은 적지 않는다. 고르는 칸에 이름이 들어가
               무엇을 고르는 칸인지 드러난다. 돌아가는 단추도 두지 않는다.
               위 메뉴에 [학생] 이 늘 있다. */}
+          {/* [채점]과 같이 이름을 쳐서 찾고, 목록은 가나다 차례다. */}
           <Select
             label="학생"
+            searchable
             value={studentId}
             onChange={pickStudent}
-            placeholder="학생 고르기"
-            options={data.students.map((s) => ({ value: s.id, label: s.name, note: s.grade }))}
+            placeholder="이름을 입력하세요"
+            options={sortStudents(data.students).map((s) => ({
+              value: s.id,
+              label: s.name,
+              note: [s.school, s.grade].filter(Boolean).join(' '),
+            }))}
           />
         </div>
         {student && selectedResults.length > 0 && (
