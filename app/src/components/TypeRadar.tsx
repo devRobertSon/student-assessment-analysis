@@ -26,9 +26,9 @@ export function rateTag(rate: number, scale: Scale = MATH_SCALE): { label: strin
  * 평가원 행동 영역 넷. 수학 8유형이 둘씩 여기에 묶인다.
  *
  * 차례는 [유형 분석] 화면의 표와 같다. 도형에서도 이 차례를 지켜야 짝이
- * 붙어 있어 한 영역이 사분면 하나를 차지한다.
+ * 붙어 있어 한 영역이 사분면 하나를 차지한다. 홈 화면의 예시 레이더도 이것을 쓴다.
  */
-const AREAS: { name: string; types: [string, string]; bg: string; ink: string }[] = [
+export const AREAS:{ name: string; types: [string, string]; bg: string; ink: string }[] = [
   { name: '계산', types: ['연산 처리', '공식 활용'], bg: '#eef2fa', ink: '#2f4a86' },
   { name: '이해', types: ['개념 이해', '표현 해석'], bg: '#eef7f1', ink: '#2b6b45' },
   { name: '추론', types: ['규칙 발견', '근거 제시'], bg: '#faf3ea', ink: '#8a5a1e' },

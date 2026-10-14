@@ -166,6 +166,36 @@ h1, h2, h3 { margin: 0; }
 .home-card.accent .n { color: var(--navy-soft); }
 .home-card.accent .t { color: #fff; }
 .home-card.accent .d { color: var(--navy-pale); }
+/* 카드 아래 가운데의 8각형 레이더(예시). 카드와 같은 바탕·테두리의 판에 얹는다.
+   카드 줄이 아래 여백을 이미 두고 있어 위 여백은 주지 않는다. */
+.home-radar {
+  align-self: center;
+  width: min(calc(100% - 112px), 620px);
+  margin: -16px 0 56px;
+  padding: 22px 28px 20px;
+  background: var(--card);
+  border: 1px solid var(--cream-line);
+  border-radius: var(--r-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.home-radar svg { width: 100%; max-width: 520px; height: auto; display: block; }
+.home-radar figcaption {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  text-align: center;
+  word-break: keep-all;
+}
+/* 휴대폰에서는 그림이 절반 남짓으로 줄어 유형 이름이 6px 쯤이 된다. 그림 안의
+   글자만 키운다(그림 단위 20 → 화면에서 11px 쯤). 20 까지는 가장 긴 '단계별 해결'
+   도 그림 왼쪽 끝 안에 든다. 판의 안쪽 여백도 줄여 그림을 조금이라도 키운다. */
+@media (max-width: 640px) {
+  .home-radar { padding: 14px 8px 14px; }
+  .home-radar .rl { font-size: 20px; }
+}
 
 /* ── 본문 영역 ────────────────────────────────────── */
 .card, .assess-card {
@@ -758,6 +788,7 @@ button.del-btn { font-size: 13px; color: var(--bad-ink); border-color: #e8cfcf; 
   .home-stats { gap: 28px; }
   .home-stat b { font-size: 32px; }
   .home-cards { padding: 28px 32px 40px; gap: 14px; }
+  .home-radar { width: min(calc(100% - 64px), 620px); margin: -12px 0 40px; }
   .card { margin: 16px 20px; }
 }
 

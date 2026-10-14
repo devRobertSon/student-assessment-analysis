@@ -1,4 +1,5 @@
 import { AssessmentData, countTypes } from '../lib/assessment';
+import HomeRadar from './HomeRadar';
 
 // 숫자가 적을 때는 보여주지 않는다. 학부모 앞에서 여는 화면이라
 // "시험지 3개"처럼 빈약한 숫자는 오히려 안 보이는 편이 낫다.
@@ -59,6 +60,8 @@ export default function HomePage({
           </button>
         ))}
       </div>
+
+      <HomeRadar />
     </div>
   );
 }
