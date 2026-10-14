@@ -109,6 +109,8 @@ const EMPTY_SESSION: SessionFields = {
 export default function TypeReport({ data, studentId, setStudentId }: Props) {
   const [session, setSession] = useState<SessionFields>(EMPTY_SESSION);
   const [summaryTouched, setSummaryTouched] = useState(false);
+  /** 상담 메모 칸이 [학생]의 메모로 처음 채워진 글. 이것과 같으면 손댄 것이 아니다. */
+  const [startMemo, setStartMemo] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
@@ -215,6 +217,7 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
     // 리포트를 낼 때 다시 치지 않게 한다. 여기서 고쳐도 학생 정보는 그대로다.
     const memo = data.students.find((s) => s.id === studentId)?.memo ?? '';
     setSession({ ...EMPTY_SESSION, memo });
+    setStartMemo(memo);
     setSummaryTouched(false);
     setPdfSaved(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -297,11 +300,15 @@ export default function TypeReport({ data, studentId, setStudentId }: Props) {
    * 이 칸들은 아무 데도 저장되지 않는다. PDF 로 내보내야만 남는다. 그래서
    * 학생을 바꾸거나 화면을 떠나기 전에 한 번 묻는다. 자동 문안은 손대기
    * 전까지 세지 않는다. 고치지 않았으면 언제든 다시 만들어진다.
+   *
+   * 상담 메모도 같다. [학생]의 메모로 채워진 그대로면 묻지 않는다. 그 글은
+   * [학생]에 남아 있어 버려지는 것이 없다. 전에는 메모가 있는 학생이면 아무것도
+   * 안 고쳐도 떠날 때마다 물었다(2026-10-14 원장님 말씀으로 고침).
    */
   const typed =
     !pdfSaved &&
     (summaryTouched ||
-      session.memo.trim() !== '' ||
+      session.memo.trim() !== startMemo.trim() ||
       session.signName.trim() !== '' ||
       session.consultDate !== '');
 
