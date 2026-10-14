@@ -155,9 +155,25 @@ export const MEMO_MAX = 300;
  *
  * 만든 글은 그대로 쓰는 것이 아니라 띄운 창에서 고칠 수 있다. 상담마다 덧붙일
  * 말이 다르므로 여기서는 적어 둔 값만 모아 첫 꼴을 내준다.
+ *
+ * 맨 앞은 학생 정보다(2026-10-14 원장님 말씀). 이름과 학년은 늘 있고, 학교와
+ * 연락처 둘은 적어 둔 것만 넣는다. 이름표는 [학생] 화면의 칸 이름과 같다.
  */
 export function counselText(s: Student): string {
   const blocks: string[] = [];
+
+  const info: [string, string | undefined][] = [
+    ['이름', s.name],
+    ['학교', s.school],
+    ['학년', s.grade],
+    ['학생 연락처', s.contact],
+    ['학부모 연락처', s.parentContact],
+  ];
+  const infoRows = info
+    .map(([label, v]) => [label, (v ?? '').trim()])
+    .filter(([, v]) => v)
+    .map(([label, v]) => `${label} : ${v}`);
+  if (infoRows.length) blocks.push(['[학생 정보]', ...infoRows].join('\n'));
 
   const schools = (s.targetSchools ?? []).filter((t) => t.trim());
   if (schools.length) blocks.push(`[목표 고등학교] ${schools.join(', ')}`);

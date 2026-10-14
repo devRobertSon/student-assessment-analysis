@@ -158,9 +158,12 @@ describe('채점 칸 수', () => {
     const 학생 = (p: Partial<Student> = {}): Student => ({
       id: 's', name: '홍길동', grade: '중2', ...p,
     });
+    /** 이름과 학년만 있는 학생의 첫 토막. 둘은 늘 적혀 있어 어느 글에나 붙는다. */
+    const 머리 = '[학생 정보]\n이름 : 홍길동\n학년 : 중2';
 
-    it('세 토막을 이름표를 달아 줄로 잇는다', () => {
+    it('네 토막을 이름표를 달아 줄로 잇는다', () => {
       const t = counselText(학생({
+        school: '대치중', contact: '010-1111-2222', parentContact: '010-3333-4444',
         targetSchools: ['영재학교', '과학고'],
         mathProgress: '중3-2, 대수', mathBooks: '중등 - 쎈',
         sciProgress: '중2 전범위', sciBooks: '하이탑',
@@ -168,6 +171,13 @@ describe('채점 칸 수', () => {
       }));
       expect(t).toBe(
         [
+          '[학생 정보]',
+          '이름 : 홍길동',
+          '학교 : 대치중',
+          '학년 : 중2',
+          '학생 연락처 : 010-1111-2222',
+          '학부모 연락처 : 010-3333-4444',
+          '',
           '[목표 고등학교] 영재학교, 과학고',
           '',
           '[현재 진도]',
@@ -182,22 +192,33 @@ describe('채점 칸 수', () => {
 
     it('비어 있는 항목은 이름표째 뺀다', () => {
       // 목표 고등학교만 적힌 학생
-      expect(counselText(학생({ targetSchools: ['과학고'] }))).toBe('[목표 고등학교] 과학고');
+      expect(counselText(학생({ targetSchools: ['과학고'] }))).toBe(`${머리}\n\n[목표 고등학교] 과학고`);
       // 메모만 적힌 학생
-      expect(counselText(학생({ memo: '조용하다.' }))).toBe('[메모]\n조용하다.');
-      // 아무것도 없으면 빈 글
-      expect(counselText(학생())).toBe('');
+      expect(counselText(학생({ memo: '조용하다.' }))).toBe(`${머리}\n\n[메모]\n조용하다.`);
+      // 아무것도 없으면 이름과 학년만 남는다
+      expect(counselText(학생())).toBe(머리);
       // 빈 문자열과 공백만 있는 값도 없는 것으로 본다
-      expect(counselText(학생({ memo: '   ', targetSchools: ['', ' '] }))).toBe('');
+      expect(
+        counselText(학생({ memo: '   ', targetSchools: ['', ' '], school: ' ', contact: '', parentContact: '  ' }))
+      ).toBe(머리);
+    });
+
+    it('학생 정보도 적어 둔 것만 넣는다', () => {
+      // 학부모 연락처만 있는 학생: 학교와 학생 연락처 줄은 없다
+      expect(counselText(학생({ parentContact: '010-3333-4444' }))).toBe(
+        '[학생 정보]\n이름 : 홍길동\n학년 : 중2\n학부모 연락처 : 010-3333-4444'
+      );
+      // 앞뒤 공백은 떼고 넣는다
+      expect(counselText(학생({ school: ' 대치중 ' }))).toBe('[학생 정보]\n이름 : 홍길동\n학교 : 대치중\n학년 : 중2');
     });
 
     it('진도와 학습 내용 가운데 하나만 적혀도 그 과목 줄은 나온다', () => {
-      expect(counselText(학생({ mathProgress: '중3-2' }))).toBe('[현재 진도]\n수학 : 중3-2');
-      expect(counselText(학생({ sciBooks: '하이탑' }))).toBe('[현재 진도]\n과학 : 하이탑');
+      expect(counselText(학생({ mathProgress: '중3-2' }))).toBe(`${머리}\n\n[현재 진도]\n수학 : 중3-2`);
+      expect(counselText(학생({ sciBooks: '하이탑' }))).toBe(`${머리}\n\n[현재 진도]\n과학 : 하이탑`);
     });
 
     it('메모의 줄바꿈은 그대로 둔다', () => {
-      expect(counselText(학생({ memo: '첫 줄\n둘째 줄' }))).toBe('[메모]\n첫 줄\n둘째 줄');
+      expect(counselText(학생({ memo: '첫 줄\n둘째 줄' }))).toBe(`${머리}\n\n[메모]\n첫 줄\n둘째 줄`);
     });
   });
 
