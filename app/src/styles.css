@@ -172,23 +172,14 @@ h1, h2, h3 { margin: 0; }
   align-self: center;
   width: min(calc(100% - 112px), 620px);
   margin: -16px 0 56px;
-  padding: 22px 28px 20px;
+  padding: 22px 28px;
   background: var(--card);
   border: 1px solid var(--cream-line);
   border-radius: var(--r-lg);
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
+  justify-content: center;
 }
 .home-radar svg { width: 100%; max-width: 520px; height: auto; display: block; }
-.home-radar figcaption {
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--ink-2);
-  text-align: center;
-  word-break: keep-all;
-}
 /* 휴대폰에서는 그림이 절반 남짓으로 줄어 유형 이름이 6px 쯤이 된다. 그림 안의
    글자만 키운다(그림 단위 20 → 화면에서 11px 쯤). 20 까지는 가장 긴 '단계별 해결'
    도 그림 왼쪽 끝 안에 든다. 판의 안쪽 여백도 줄여 그림을 조금이라도 키운다. */
