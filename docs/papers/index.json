@@ -133,6 +133,39 @@
       ]
     },
     {
+      "name": "중1 진단평가",
+      "files": [
+        {
+          "kind": "시험지",
+          "label": "시험지 CSV",
+          "file": "중1_진단평가_시험지.csv",
+          "ext": "csv",
+          "size": 4640
+        },
+        {
+          "kind": "문제지",
+          "label": "문제지 PDF",
+          "file": "중1_진단평가_문제지.pdf",
+          "ext": "pdf",
+          "size": 2203748
+        },
+        {
+          "kind": "해설",
+          "label": "해설 PDF",
+          "file": "중1_진단평가_해설.pdf",
+          "ext": "pdf",
+          "size": 1461984
+        },
+        {
+          "kind": "출제표",
+          "label": "출제표 CSV",
+          "file": "중1_진단평가_출제표.csv",
+          "ext": "csv",
+          "size": 3660
+        }
+      ]
+    },
+    {
       "name": "중1-1 진단평가",
       "files": [
         {
@@ -232,6 +265,39 @@
       ]
     },
     {
+      "name": "중2 진단평가",
+      "files": [
+        {
+          "kind": "시험지",
+          "label": "시험지 CSV",
+          "file": "중2_진단평가_시험지.csv",
+          "ext": "csv",
+          "size": 4382
+        },
+        {
+          "kind": "문제지",
+          "label": "문제지 PDF",
+          "file": "중2_진단평가_문제지.pdf",
+          "ext": "pdf",
+          "size": 2151753
+        },
+        {
+          "kind": "해설",
+          "label": "해설 PDF",
+          "file": "중2_진단평가_해설.pdf",
+          "ext": "pdf",
+          "size": 1389694
+        },
+        {
+          "kind": "출제표",
+          "label": "출제표 CSV",
+          "file": "중2_진단평가_출제표.csv",
+          "ext": "csv",
+          "size": 3402
+        }
+      ]
+    },
+    {
       "name": "중2-1 진단평가",
       "files": [
         {
@@ -294,6 +360,39 @@
           "file": "중2-2_진단평가_출제표.csv",
           "ext": "csv",
           "size": 3213
+        }
+      ]
+    },
+    {
+      "name": "중3 진단평가",
+      "files": [
+        {
+          "kind": "시험지",
+          "label": "시험지 CSV",
+          "file": "중3_진단평가_시험지.csv",
+          "ext": "csv",
+          "size": 4394
+        },
+        {
+          "kind": "문제지",
+          "label": "문제지 PDF",
+          "file": "중3_진단평가_문제지.pdf",
+          "ext": "pdf",
+          "size": 2184427
+        },
+        {
+          "kind": "해설",
+          "label": "해설 PDF",
+          "file": "중3_진단평가_해설.pdf",
+          "ext": "pdf",
+          "size": 1385741
+        },
+        {
+          "kind": "출제표",
+          "label": "출제표 CSV",
+          "file": "중3_진단평가_출제표.csv",
+          "ext": "csv",
+          "size": 3414
         }
       ]
     },
